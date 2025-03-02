@@ -20,7 +20,7 @@ class TodoCategories(
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = true)
-    val category: Category,
+    val category: Category?,
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
