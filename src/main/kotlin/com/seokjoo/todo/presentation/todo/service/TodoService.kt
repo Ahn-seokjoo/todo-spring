@@ -6,5 +6,4 @@ import org.springframework.stereotype.Service
 @Service
 class TodoService(
     private val todoRepository: TodoRepository,
-) {
-}
+)

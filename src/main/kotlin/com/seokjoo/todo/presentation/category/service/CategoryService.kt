@@ -6,5 +6,4 @@ import org.springframework.stereotype.Service
 @Service
 class CategoryService(
     private val repository: CategoryRepository,
-) {
-}
+)
