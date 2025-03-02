@@ -1,4 +1,4 @@
-package com.seokjoo.todo.controller
+package com.seokjoo.todo.presentation.todo.controller
 
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
