@@ -8,6 +8,8 @@ import org.springframework.stereotype.Repository
 @Repository
 interface CategoryRepository : JpaRepository<Category, Long> {
 
-    @Query("select count(tc) from TodoCategories tc where tc.category.id = :categoryId")
+    @Query("select count(tc) from TodoCategory tc where tc.category.id = :categoryId")
     fun countByCategoryId(categoryId: Long): Long
+
+    fun findByName(name: String): Category?
 }

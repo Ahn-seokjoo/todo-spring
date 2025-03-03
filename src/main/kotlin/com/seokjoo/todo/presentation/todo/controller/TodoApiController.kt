@@ -1,37 +1,47 @@
 package com.seokjoo.todo.presentation.todo.controller
 
+import com.seokjoo.todo.presentation.todo.dto.request.TodoRequest
+import com.seokjoo.todo.presentation.todo.dto.response.TodoResponse
+import com.seokjoo.todo.presentation.todo.service.TodoService
+import org.springframework.http.ResponseEntity
+import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-class TodoApiController {
+@RequestMapping("/api/v1")
+class TodoApiController(
+    private val todoService: TodoService,
+) {
 
-    @GetMapping("/api/v1/todos")
-    fun getAllTodos(): String {
-        return "ok"
+    @GetMapping("/todos")
+    fun getAllTodos(): ResponseEntity<List<TodoResponse>> {
+        return todoService.getAllTodos()
     }
 
-    @GetMapping("/api/v1/todos/{id}")
-    fun getTodoById(@PathVariable id: Long): String {
-        return "ok"
+    @GetMapping("/todos/{id}")
+    fun getTodoById(@PathVariable id: Long): ResponseEntity<TodoResponse> {
+        return todoService.getTodoById(id)
     }
 
-    @PostMapping("/api/v1/todos")
-    fun createTodo(): String {
-        return "ok"
+    @PostMapping("/todos")
+    fun createTodo(@RequestBody @Validated request: TodoRequest): ResponseEntity<String> {
+        return todoService.createTodo(request = request)
     }
 
-    @PatchMapping("/api/v1/todos/{id}")
-    fun updateTodo(@PathVariable id: Long): String {
-        return "ok"
+    @PatchMapping("/todos/{id}")
+    fun updateTodo(@PathVariable id: Long, @RequestBody @Validated request: TodoRequest): ResponseEntity<TodoResponse> {
+        return todoService.updateTodo(id = id, request = request)
     }
 
-    @DeleteMapping("/api/v1/todos/{id}")
-    fun deleteTodo(@PathVariable id: Long): String {
-        return "ok"
+    @DeleteMapping("/todos/{id}")
+    fun deleteTodo(@PathVariable id: Long): ResponseEntity<String> {
+        return todoService.deleteTodo(id)
     }
 }

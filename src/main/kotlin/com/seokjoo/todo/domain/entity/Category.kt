@@ -16,7 +16,7 @@ class Category(
     val name: String,
 
     @OneToMany(cascade = [CascadeType.ALL], mappedBy = "category")
-    val todoCategories: MutableList<TodoCategories> = mutableListOf(),
+    val todoCategories: MutableList<TodoCategory> = mutableListOf(),
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -24,7 +24,7 @@ class Category(
     val id: Long? = null,
 ) : BaseEntity() {
     fun addTodo(todo: Todo) {
-        val todoCategory = TodoCategories(todo = todo, category = this)
+        val todoCategory = TodoCategory(todo = todo, category = this)
         todoCategories.add(todoCategory)
         todo.todoCategories.add(todoCategory)
     }
