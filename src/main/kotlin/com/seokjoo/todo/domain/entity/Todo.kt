@@ -6,7 +6,6 @@ import jakarta.persistence.Entity
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
-import jakarta.persistence.JoinColumn
 import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
 
@@ -17,8 +16,7 @@ class Todo(
     var isDone: Boolean = false,
 
     @OneToMany(cascade = [CascadeType.ALL], mappedBy = "todo", orphanRemoval = true)
-    @JoinColumn(name = "todo_categories_id")
-    var todoCategories: MutableList<TodoCategories>,
+    var todoCategories: MutableList<TodoCategories> = mutableListOf(),
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

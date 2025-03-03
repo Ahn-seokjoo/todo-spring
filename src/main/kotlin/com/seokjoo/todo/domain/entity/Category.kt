@@ -6,7 +6,6 @@ import jakarta.persistence.Entity
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
-import jakarta.persistence.JoinColumn
 import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
 
@@ -17,7 +16,6 @@ class Category(
     val name: String,
 
     @OneToMany(cascade = [CascadeType.ALL], mappedBy = "category")
-    @JoinColumn(name = "todo_categories_id")
     val todoCategories: MutableList<TodoCategories> = mutableListOf(),
 
     @Id
