@@ -1,12 +1,14 @@
 spring:
+  config:
+    import: optional:file:.env[.properties]
   application:
     name: todo
   datasource:
     driver-class-name: org.postgresql.Driver
     url: jdbc:postgresql://localhost:5432/todo
     platform: postgresql
-    username: admin
-    password: admin
+    username: ${POSTGRESQL_USERNAME}
+    password: ${POSTGRESQL_PASSWORD}
   jpa:
     hibernate:
       ddl-auto: update
