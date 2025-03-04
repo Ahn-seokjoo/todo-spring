@@ -1,0 +1,41 @@
+x-environment: &common_environment
+  - POSTGRESQL_POSTGRES_PASSWORD: admin
+  - POSTGRESQL_USERNAME: admin
+  - POSTGRESQL_PASSWORD: admin
+  - POSTGRESQL_DATABASE: todo
+  - REPMGR_PASSWORD: repmgradmin
+  - REPMGR_PRIMARY_HOST: postgres-primary-0
+  - REPMGR_PRIMARY_PORT: 5432
+  - REPMGR_PORT_NUMBER: 5432
+  - REPMGR_PARTNER_NODES: postgres-primary-0,postgres-standby-1:5432
+
+services:
+  postgres-primary-0:
+    image: bitnami/postgresql-repmgr
+    volumes:
+      - postgres_primary_data:/var/lib/postgresql/data
+    restart: always
+    environment:
+      <<: *common_environment
+      REPMGR_NODE_NAME: postgres-primary-0
+      REPMGR_NODE_NETWORK_NAME: postgres-primary-0
+    ## 추후에 백엔드 서버도 도커로 구성하면, expose 로 수정하여 외부접근 차단 해야함
+    ports:
+      - "5432:5432"
+
+  postgres-standby-1:
+    image: bitnami/postgresql-repmgr
+    volumes:
+      - postgres_standby_data:/var/lib/postgresql/data
+    restart: always
+    environment:
+      <<: *common_environment
+      REPMGR_NODE_NAME: postgres-standby-1
+      REPMGR_NODE_NETWORK_NAME: postgres-standby-1
+    ## 추후에 백엔드 서버도 도커로 구성하면, expose 로 수정하여 외부접근 차단 해야함 - standby 는 5433으로 세팅
+    ports:
+      - "5433:5432"
+
+volumes:
+  postgres_primary_data:
+  postgres_standby_data:
