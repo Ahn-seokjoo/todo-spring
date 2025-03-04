@@ -29,14 +29,14 @@ class TodoService(
 
     @Transactional
     fun createTodo(request: TodoRequest): ResponseEntity<String> {
-        val todo = Todo(todo = request.todo, isDone = request.isDone).apply {
-            checkAndAddCategory(request)
-        }
+        // 1. 저장하여 영속화 먼저
+        val todo = Todo(todo = request.todo, isDone = request.isDone)
         todoRepository.save(todo)
+
+        checkExistAndAddCategory(request, todo)
         return ResponseEntity.ok("ok")
     }
 
-    // 더티 체킹으로 save 할 필요 없음
     @Transactional
     fun updateTodo(id: Long, request: TodoRequest): ResponseEntity<TodoResponse> {
         val todo = todoRepository.findById(id).getOrElse { throw IllegalArgumentException("id가 없음") }
@@ -44,9 +44,11 @@ class TodoService(
         todo.apply {
             this.todo = request.todo
             this.isDone = request.isDone
-
-            checkAndAddCategory(request)
         }
+        // 더티 체킹으로 save 할 필요 없지만 그냥 명시적으로 해줌
+        todoRepository.save(todo)
+
+        checkExistAndAddCategory(request, todo)
         return ResponseEntity.ok(TodoResponse.from(todo))
     }
 
@@ -57,12 +59,15 @@ class TodoService(
         return ResponseEntity.ok("삭제 성공")
     }
 
-    private fun Todo.checkAndAddCategory(request: TodoRequest) {
+    private fun checkExistAndAddCategory(
+        request: TodoRequest,
+        todo: Todo,
+    ) {
         if (request.categories.isNotEmpty()) {
             request.categories.forEach { category ->
-                val matchedCategory = categoryRepository.findByName(category.name)
-                val realCategory = matchedCategory ?: categoryRepository.save(category)
-                addCategory(category = realCategory)
+                val matchedCategory = categoryRepository.findByName(category.name) ?: categoryRepository.save(category)
+                val isAlreadyNotExists = todo.todoCategories.any { it.category?.name == category.name }.not()
+                if (isAlreadyNotExists) todo.addCategory(category = matchedCategory)
             }
         }
     }
