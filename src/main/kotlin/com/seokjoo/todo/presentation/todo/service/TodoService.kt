@@ -62,7 +62,7 @@ class TodoService(
             request.categories.forEach { category ->
                 val matchedCategory = categoryRepository.findByName(category.name)
                 val realCategory = matchedCategory ?: categoryRepository.save(category)
-                addCategory(category = realCategory, isNotExist = matchedCategory == null)
+                addCategory(category = realCategory)
             }
         }
     }
