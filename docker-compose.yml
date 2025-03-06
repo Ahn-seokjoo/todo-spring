@@ -13,7 +13,7 @@ services:
   postgres-primary-0:
     image: bitnami/postgresql-repmgr
     volumes:
-      - postgres_primary_data:/var/lib/postgresql/data
+      - postgres_primary_data:/bitnami/postgresql
     restart: always
     environment:
       <<: *common_environment
@@ -26,7 +26,7 @@ services:
   postgres-standby-1:
     image: bitnami/postgresql-repmgr
     volumes:
-      - postgres_standby_data:/var/lib/postgresql/data
+      - postgres_standby_data:/bitnami/postgresql
     restart: always
     environment:
       <<: *common_environment
