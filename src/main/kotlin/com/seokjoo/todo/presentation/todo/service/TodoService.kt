@@ -1,8 +1,8 @@
 package com.seokjoo.todo.presentation.todo.service
 
-import com.seokjoo.todo.domain.entity.Todo
-import com.seokjoo.todo.domain.repository.CategoryRepository
-import com.seokjoo.todo.domain.repository.TodoRepository
+import com.seokjoo.todo.domain.entity.todo.Todo
+import com.seokjoo.todo.domain.repository.category.CategoryRepository
+import com.seokjoo.todo.domain.repository.todo.TodoRepository
 import com.seokjoo.todo.presentation.todo.dto.request.TodoRequest
 import com.seokjoo.todo.presentation.todo.dto.response.TodoResponse
 import org.springframework.http.ResponseEntity

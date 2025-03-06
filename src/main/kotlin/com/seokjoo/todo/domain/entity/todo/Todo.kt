@@ -1,5 +1,8 @@
-package com.seokjoo.todo.domain.entity
+package com.seokjoo.todo.domain.entity.todo
 
+import com.seokjoo.todo.domain.entity.BaseEntity
+import com.seokjoo.todo.domain.entity.category.Category
+import com.seokjoo.todo.domain.entity.todocategory.TodoCategory
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity

@@ -1,6 +1,6 @@
 package com.seokjoo.todo.presentation.todo.dto.request
 
-import com.seokjoo.todo.domain.entity.Category
+import com.seokjoo.todo.domain.entity.category.Category
 import jakarta.validation.constraints.NotBlank
 
 data class TodoRequest(

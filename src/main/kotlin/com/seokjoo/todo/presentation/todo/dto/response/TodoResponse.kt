@@ -1,6 +1,6 @@
 package com.seokjoo.todo.presentation.todo.dto.response
 
-import com.seokjoo.todo.domain.entity.Todo
+import com.seokjoo.todo.domain.entity.todo.Todo
 
 data class TodoResponse(
     val id: Long?,
