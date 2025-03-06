@@ -4,9 +4,6 @@ import com.seokjoo.todo.presentation.todo.dto.request.TodoRequest
 import com.seokjoo.todo.presentation.todo.dto.response.TodoResponse
 import com.seokjoo.todo.presentation.todo.service.TodoService
 import io.swagger.v3.oas.annotations.Operation
-import io.swagger.v3.oas.annotations.media.Content
-import io.swagger.v3.oas.annotations.media.Schema
-import io.swagger.v3.oas.annotations.media.SchemaProperty
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.ResponseEntity
