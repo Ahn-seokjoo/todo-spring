@@ -1,10 +1,8 @@
-package com.seokjoo.todo.presentation.todo.service
+package com.seokjoo.todo.domain.service.todo
 
 import com.seokjoo.todo.domain.entity.todo.Todo
 import com.seokjoo.todo.domain.repository.category.CategoryRepository
 import com.seokjoo.todo.domain.repository.todo.TodoRepository
-import com.seokjoo.todo.presentation.todo.dto.request.TodoRequest
-import com.seokjoo.todo.presentation.todo.dto.response.TodoResponse
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import kotlin.jvm.optionals.getOrElse
@@ -15,18 +13,18 @@ class TodoService(
     private val todoRepository: TodoRepository,
     private val categoryRepository: CategoryRepository,
 ) {
-    fun getAllTodos(): List<TodoResponse> {
+    fun getAllTodos(): List<TodoServiceResponseDTO> {
         val todoList = todoRepository.findAll()
-        return todoList.map { todo -> TodoResponse.from(todo) }
+        return todoList.map { todo -> TodoServiceResponseDTO.from(todo) }
     }
 
-    fun getTodoById(id: Long): TodoResponse {
+    fun getTodoById(id: Long): TodoServiceResponseDTO {
         val result = todoRepository.findById(id).getOrElse { throw IllegalAccessError("bad") }
-        return TodoResponse.from(result)
+        return TodoServiceResponseDTO.from(result)
     }
 
     @Transactional
-    fun createTodo(request: TodoRequest) {
+    fun createTodo(request: TodoServiceRequestDTO) {
         // 1. 저장하여 영속화 먼저
         val todo = Todo(todo = request.todo, isDone = request.isDone)
         todoRepository.save(todo)
@@ -35,7 +33,7 @@ class TodoService(
     }
 
     @Transactional
-    fun updateTodo(id: Long, request: TodoRequest): TodoResponse {
+    fun updateTodo(id: Long, request: TodoServiceRequestDTO): TodoServiceResponseDTO {
         val todo = todoRepository.findById(id).getOrElse { throw IllegalArgumentException("id가 없음") }
 
         todo.apply {
@@ -46,7 +44,7 @@ class TodoService(
         todoRepository.save(todo)
 
         checkExistAndAddCategory(request, todo)
-        return TodoResponse.from(todo)
+        return TodoServiceResponseDTO.from(todo)
     }
 
     @Transactional
@@ -55,7 +53,7 @@ class TodoService(
     }
 
     private fun checkExistAndAddCategory(
-        request: TodoRequest,
+        request: TodoServiceRequestDTO,
         todo: Todo,
     ) {
         if (request.categories.isNotEmpty()) {

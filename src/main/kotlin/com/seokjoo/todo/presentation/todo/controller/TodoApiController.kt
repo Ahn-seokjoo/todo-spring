@@ -1,8 +1,10 @@
 package com.seokjoo.todo.presentation.todo.controller
 
+import com.seokjoo.todo.domain.service.todo.TodoService
 import com.seokjoo.todo.presentation.todo.dto.request.TodoRequest
+import com.seokjoo.todo.presentation.todo.dto.request.toTodoServiceRequest
 import com.seokjoo.todo.presentation.todo.dto.response.TodoResponse
-import com.seokjoo.todo.presentation.todo.service.TodoService
+import com.seokjoo.todo.presentation.todo.dto.response.toResponse
 import org.springframework.http.ResponseEntity
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -31,25 +33,25 @@ class TodoApiController(
 
     @GetMapping("/todos")
     fun getAllTodos(): ResponseEntity<List<TodoResponse>> {
-        val allTodos = todoService.getAllTodos()
+        val allTodos = todoService.getAllTodos().map { it.toResponse() }
         return ResponseEntity.ok(allTodos)
     }
 
     @GetMapping("/todos/{id}")
     fun getTodoById(@PathVariable id: Long): ResponseEntity<TodoResponse> {
-        val todo = todoService.getTodoById(id)
+        val todo = todoService.getTodoById(id).toResponse()
         return ResponseEntity.ok(todo)
     }
 
     @PostMapping("/todos")
     fun createTodo(@RequestBody @Validated request: TodoRequest): ResponseEntity<String> {
-        todoService.createTodo(request = request)
+        todoService.createTodo(request = request.toTodoServiceRequest())
         return ResponseEntity.ok("ok")
     }
 
     @PatchMapping("/todos/{id}")
     fun updateTodo(@PathVariable id: Long, @RequestBody @Validated request: TodoRequest): ResponseEntity<TodoResponse> {
-        val todo = todoService.updateTodo(id = id, request = request)
+        val todo = todoService.updateTodo(id = id, request = request.toTodoServiceRequest()).toResponse()
         return ResponseEntity.ok(todo)
     }
 

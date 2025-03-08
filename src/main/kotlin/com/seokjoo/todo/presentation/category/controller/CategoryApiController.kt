@@ -1,6 +1,6 @@
 package com.seokjoo.todo.presentation.category.controller
 
-import com.seokjoo.todo.presentation.category.service.CategoryService
+import com.seokjoo.todo.domain.service.category.CategoryService
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
