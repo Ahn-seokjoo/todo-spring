@@ -12,6 +12,8 @@ x-environment: &common_environment
 services:
   postgres-primary-0:
     image: bitnami/postgresql-repmgr
+    networks:
+      - default
     volumes:
       - postgres_primary_data:/bitnami/postgresql
     restart: always
@@ -27,15 +29,18 @@ services:
     image: bitnami/postgresql-repmgr
     volumes:
       - postgres_standby_data:/bitnami/postgresql
+    networks:
+      - default
     restart: always
     environment:
       <<: *common_environment
       REPMGR_NODE_NAME: postgres-standby-1
       REPMGR_NODE_NETWORK_NAME: postgres-standby-1
-    ## 추후에 백엔드 서버도 도커로 구성하면, expose 로 수정하여 외부접근 차단 해야함 - standby 는 5433으로 세팅
-    ports:
-      - "5433:5432"
 
 volumes:
   postgres_primary_data:
   postgres_standby_data:
+
+networks:
+  default:
+    driver: bridge

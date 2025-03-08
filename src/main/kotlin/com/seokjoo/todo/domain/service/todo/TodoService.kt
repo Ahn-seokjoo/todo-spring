@@ -4,6 +4,7 @@ import com.seokjoo.todo.common.exception.TodoException
 import com.seokjoo.todo.common.exception.TodoExceptionType
 import com.seokjoo.todo.domain.entity.todo.Todo
 import com.seokjoo.todo.domain.repository.category.CategoryRepository
+import com.seokjoo.todo.domain.repository.categorytodo.TodoCategoryRepository
 import com.seokjoo.todo.domain.repository.todo.TodoRepository
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
@@ -14,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional
 class TodoService(
     private val todoRepository: TodoRepository,
     private val categoryRepository: CategoryRepository,
+    private val todoCategoryRepository: TodoCategoryRepository,
 ) {
     fun getAllTodos(): List<TodoServiceResponseDTO> {
         val todoList = todoRepository.findAll()
@@ -51,7 +53,15 @@ class TodoService(
 
     @Transactional
     fun deleteTodo(id: Long) {
+        val todo = todoRepository.findByIdOrNull(id) ?: throw TodoException.of(TodoExceptionType.NOT_EXISTED_TODO)
+        val todoCategory = todo.todoCategories
         todoRepository.deleteById(id)
+
+        todoCategory.forEach { category ->
+            category.category?.let {
+                if (todoCategoryRepository.findByCategoryId(it.id).not()) categoryRepository.delete(it)
+            }
+        }
     }
 
     private fun checkExistAndAddCategory(
