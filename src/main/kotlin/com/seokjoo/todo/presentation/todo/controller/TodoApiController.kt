@@ -58,9 +58,9 @@ class TodoApiController(
         description = "todo 추가 성공",
         content = [Content(mediaType = "text/plain", schema = Schema(example = "ok"))]
     )
-    fun createTodo(@RequestBody @Validated request: TodoRequest): ResponseEntity<String> {
-        todoService.createTodo(request = request.toTodoServiceRequest())
-        return ResponseEntity.ok("ok")
+    fun createTodo(@RequestBody @Validated request: TodoRequest): ResponseEntity<TodoResponse> {
+        val todo = todoService.createTodo(request = request.toTodoServiceRequest()).toResponse()
+        return ResponseEntity.ok(todo)
     }
 
     @PatchMapping("/todos/{id}")
