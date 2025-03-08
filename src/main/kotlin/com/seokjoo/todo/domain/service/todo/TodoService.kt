@@ -8,7 +8,6 @@ import com.seokjoo.todo.domain.repository.todo.TodoRepository
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import kotlin.jvm.optionals.getOrElse
 
 @Service
 @Transactional(readOnly = true)

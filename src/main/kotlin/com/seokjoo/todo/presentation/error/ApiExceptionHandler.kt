@@ -13,7 +13,7 @@ class ApiExceptionHandler {
     @ExceptionHandler
     fun handlerTodoException(exception: TodoException): ResponseEntity<ApiErrorResponse> {
         logger.info(exception.message, exception)
-        
+
         return ResponseEntity
             .status(exception.httpStatusCode)
             .body(
