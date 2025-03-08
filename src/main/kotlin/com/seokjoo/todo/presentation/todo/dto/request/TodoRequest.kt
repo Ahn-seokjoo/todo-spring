@@ -2,6 +2,8 @@ package com.seokjoo.todo.presentation.todo.dto.request
 
 import com.seokjoo.todo.domain.entity.category.Category
 import com.seokjoo.todo.domain.service.todo.TodoServiceRequestDTO
+import com.seokjoo.todo.presentation.category.dto.CategoryDTO
+import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
 
 data class TodoRequest(
@@ -16,5 +18,5 @@ data class TodoRequest(
 fun TodoRequest.toTodoServiceRequest() = TodoServiceRequestDTO(
     todo = todo,
     isDone = isDone,
-    categories = categories,
+    categories = categories.map { Category(name = it.name) },
 )

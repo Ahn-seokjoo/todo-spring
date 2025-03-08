@@ -3,9 +3,6 @@ package com.seokjoo.todo.domain.service.todo
 import com.seokjoo.todo.domain.entity.todo.Todo
 import com.seokjoo.todo.domain.repository.category.CategoryRepository
 import com.seokjoo.todo.domain.repository.todo.TodoRepository
-import com.seokjoo.todo.presentation.category.dto.toEntity
-import com.seokjoo.todo.presentation.todo.dto.request.TodoRequest
-import com.seokjoo.todo.presentation.todo.dto.response.TodoResponse
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import kotlin.jvm.optionals.getOrElse
@@ -62,7 +59,7 @@ class TodoService(
         if (request.categories.isNotEmpty()) {
             request.categories.forEach { category ->
                 val matchedCategory =
-                    categoryRepository.findByName(category.name) ?: categoryRepository.save(category.toEntity())
+                    categoryRepository.findByName(category.name) ?: categoryRepository.save(category)
                 val isAlreadyNotExists = todo.todoCategories.any { it.category?.name == category.name }.not()
                 if (isAlreadyNotExists) todo.addCategory(category = matchedCategory)
             }

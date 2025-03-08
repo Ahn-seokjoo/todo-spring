@@ -1,6 +1,7 @@
 package com.seokjoo.todo.presentation.todo.dto.response
 
 import com.seokjoo.todo.domain.service.todo.TodoServiceResponseDTO
+import io.swagger.v3.oas.annotations.media.Schema
 
 data class TodoResponse(
     val id: Long?,

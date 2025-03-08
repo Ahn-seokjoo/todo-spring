@@ -4,11 +4,10 @@ import com.seokjoo.todo.domain.service.todo.TodoService
 import com.seokjoo.todo.presentation.todo.dto.request.TodoRequest
 import com.seokjoo.todo.presentation.todo.dto.request.toTodoServiceRequest
 import com.seokjoo.todo.presentation.todo.dto.response.TodoResponse
-import com.seokjoo.todo.presentation.todo.service.TodoService
+import com.seokjoo.todo.presentation.todo.dto.response.toResponse
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
-import com.seokjoo.todo.presentation.todo.dto.response.toResponse
 import org.springframework.http.ResponseEntity
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.DeleteMapping
