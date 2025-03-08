@@ -5,7 +5,6 @@ import com.seokjoo.todo.domain.repository.category.CategoryRepository
 import com.seokjoo.todo.domain.repository.todo.TodoRepository
 import com.seokjoo.todo.presentation.todo.dto.request.TodoRequest
 import com.seokjoo.todo.presentation.todo.dto.response.TodoResponse
-import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import kotlin.jvm.optionals.getOrElse
@@ -16,28 +15,27 @@ class TodoService(
     private val todoRepository: TodoRepository,
     private val categoryRepository: CategoryRepository,
 ) {
-    fun getAllTodos(): ResponseEntity<List<TodoResponse>> {
+    fun getAllTodos(): List<TodoResponse> {
         val todoList = todoRepository.findAll()
-        return ResponseEntity.ok(todoList.map { todo -> TodoResponse.from(todo) })
+        return todoList.map { todo -> TodoResponse.from(todo) }
     }
 
-    fun getTodoById(id: Long): ResponseEntity<TodoResponse> {
+    fun getTodoById(id: Long): TodoResponse {
         val result = todoRepository.findById(id).getOrElse { throw IllegalAccessError("bad") }
-        return ResponseEntity.ok(TodoResponse.from(result))
+        return TodoResponse.from(result)
     }
 
     @Transactional
-    fun createTodo(request: TodoRequest): ResponseEntity<String> {
+    fun createTodo(request: TodoRequest) {
         // 1. 저장하여 영속화 먼저
         val todo = Todo(todo = request.todo, isDone = request.isDone)
         todoRepository.save(todo)
 
         checkExistAndAddCategory(request, todo)
-        return ResponseEntity.ok("ok")
     }
 
     @Transactional
-    fun updateTodo(id: Long, request: TodoRequest): ResponseEntity<TodoResponse> {
+    fun updateTodo(id: Long, request: TodoRequest): TodoResponse {
         val todo = todoRepository.findById(id).getOrElse { throw IllegalArgumentException("id가 없음") }
 
         todo.apply {
@@ -48,14 +46,12 @@ class TodoService(
         todoRepository.save(todo)
 
         checkExistAndAddCategory(request, todo)
-        return ResponseEntity.ok(TodoResponse.from(todo))
+        return TodoResponse.from(todo)
     }
 
     @Transactional
-    fun deleteTodo(id: Long): ResponseEntity<String> {
+    fun deleteTodo(id: Long) {
         todoRepository.deleteById(id)
-
-        return ResponseEntity.ok("삭제 성공")
     }
 
     private fun checkExistAndAddCategory(

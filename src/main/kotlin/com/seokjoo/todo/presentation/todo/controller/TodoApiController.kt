@@ -31,26 +31,31 @@ class TodoApiController(
 
     @GetMapping("/todos")
     fun getAllTodos(): ResponseEntity<List<TodoResponse>> {
-        return todoService.getAllTodos()
+        val allTodos = todoService.getAllTodos()
+        return ResponseEntity.ok(allTodos)
     }
 
     @GetMapping("/todos/{id}")
     fun getTodoById(@PathVariable id: Long): ResponseEntity<TodoResponse> {
-        return todoService.getTodoById(id)
+        val todo = todoService.getTodoById(id)
+        return ResponseEntity.ok(todo)
     }
 
     @PostMapping("/todos")
     fun createTodo(@RequestBody @Validated request: TodoRequest): ResponseEntity<String> {
-        return todoService.createTodo(request = request)
+        todoService.createTodo(request = request)
+        return ResponseEntity.ok("ok")
     }
 
     @PatchMapping("/todos/{id}")
     fun updateTodo(@PathVariable id: Long, @RequestBody @Validated request: TodoRequest): ResponseEntity<TodoResponse> {
-        return todoService.updateTodo(id = id, request = request)
+        val todo = todoService.updateTodo(id = id, request = request)
+        return ResponseEntity.ok(todo)
     }
 
     @DeleteMapping("/todos/{id}")
     fun deleteTodo(@PathVariable id: Long): ResponseEntity<String> {
-        return todoService.deleteTodo(id)
+        todoService.deleteTodo(id)
+        return ResponseEntity.ok("ok")
     }
 }
