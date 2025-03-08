@@ -1,8 +1,11 @@
 package com.seokjoo.todo.domain.service.todo
 
+import com.seokjoo.todo.common.exception.TodoException
+import com.seokjoo.todo.common.exception.TodoExceptionType
 import com.seokjoo.todo.domain.entity.todo.Todo
 import com.seokjoo.todo.domain.repository.category.CategoryRepository
 import com.seokjoo.todo.domain.repository.todo.TodoRepository
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import kotlin.jvm.optionals.getOrElse
@@ -19,7 +22,7 @@ class TodoService(
     }
 
     fun getTodoById(id: Long): TodoServiceResponseDTO {
-        val result = todoRepository.findById(id).getOrElse { throw IllegalAccessError("bad") }
+        val result = todoRepository.findByIdOrNull(id) ?: throw TodoException.of(TodoExceptionType.NOT_EXISTED_TODO)
         return TodoServiceResponseDTO.from(result)
     }
 
@@ -34,7 +37,7 @@ class TodoService(
 
     @Transactional
     fun updateTodo(id: Long, request: TodoServiceRequestDTO): TodoServiceResponseDTO {
-        val todo = todoRepository.findById(id).getOrElse { throw IllegalArgumentException("id가 없음") }
+        val todo = todoRepository.findByIdOrNull(id) ?: throw TodoException.of(TodoExceptionType.NOT_EXISTED_TODO)
 
         todo.apply {
             this.todo = request.todo
