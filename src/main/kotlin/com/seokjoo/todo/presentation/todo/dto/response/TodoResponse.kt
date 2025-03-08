@@ -1,7 +1,6 @@
 package com.seokjoo.todo.presentation.todo.dto.response
 
-import com.seokjoo.todo.domain.entity.todo.Todo
-import io.swagger.v3.oas.annotations.media.Schema
+import com.seokjoo.todo.domain.service.todo.TodoServiceResponseDTO
 
 data class TodoResponse(
     val id: Long?,
@@ -11,13 +10,11 @@ data class TodoResponse(
     val isDone: Boolean,
     @Schema(description = "카테고리 목록", examples = ["horror", "comedy"])
     val categories: List<String>,
-) {
-    companion object {
-        fun from(todo: Todo) = TodoResponse(
-            id = todo.id,
-            todo = todo.todo,
-            isDone = todo.isDone,
-            categories = todo.todoCategories.map { it.category?.name.orEmpty() },
-        )
-    }
-}
+)
+
+fun TodoServiceResponseDTO.toResponse() = TodoResponse(
+    id = id,
+    todo = todo,
+    isDone = isDone,
+    categories = categories.map { it },
+)

@@ -1,4 +1,4 @@
-package com.seokjoo.todo.presentation.todo.service
+package com.seokjoo.todo.domain.service.todo
 
 import com.seokjoo.todo.domain.entity.todo.Todo
 import com.seokjoo.todo.domain.repository.category.CategoryRepository
@@ -6,40 +6,37 @@ import com.seokjoo.todo.domain.repository.todo.TodoRepository
 import com.seokjoo.todo.presentation.category.dto.toEntity
 import com.seokjoo.todo.presentation.todo.dto.request.TodoRequest
 import com.seokjoo.todo.presentation.todo.dto.response.TodoResponse
-import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import kotlin.jvm.optionals.getOrElse
 
 @Service
+@Transactional(readOnly = true)
 class TodoService(
     private val todoRepository: TodoRepository,
     private val categoryRepository: CategoryRepository,
 ) {
-    @Transactional(readOnly = true)
-    fun getAllTodos(): ResponseEntity<List<TodoResponse>> {
+    fun getAllTodos(): List<TodoServiceResponseDTO> {
         val todoList = todoRepository.findAll()
-        return ResponseEntity.ok(todoList.map { todo -> TodoResponse.from(todo) })
+        return todoList.map { todo -> TodoServiceResponseDTO.from(todo) }
     }
 
-    @Transactional(readOnly = true)
-    fun getTodoById(id: Long): ResponseEntity<TodoResponse> {
+    fun getTodoById(id: Long): TodoServiceResponseDTO {
         val result = todoRepository.findById(id).getOrElse { throw IllegalAccessError("bad") }
-        return ResponseEntity.ok(TodoResponse.from(result))
+        return TodoServiceResponseDTO.from(result)
     }
 
     @Transactional
-    fun createTodo(request: TodoRequest): ResponseEntity<String> {
+    fun createTodo(request: TodoServiceRequestDTO) {
         // 1. 저장하여 영속화 먼저
         val todo = Todo(todo = request.todo, isDone = request.isDone)
         todoRepository.save(todo)
 
         checkExistAndAddCategory(request, todo)
-        return ResponseEntity.ok("ok")
     }
 
     @Transactional
-    fun updateTodo(id: Long, request: TodoRequest): ResponseEntity<TodoResponse> {
+    fun updateTodo(id: Long, request: TodoServiceRequestDTO): TodoServiceResponseDTO {
         val todo = todoRepository.findById(id).getOrElse { throw IllegalArgumentException("id가 없음") }
 
         todo.apply {
@@ -50,18 +47,16 @@ class TodoService(
         todoRepository.save(todo)
 
         checkExistAndAddCategory(request, todo)
-        return ResponseEntity.ok(TodoResponse.from(todo))
+        return TodoServiceResponseDTO.from(todo)
     }
 
     @Transactional
-    fun deleteTodo(id: Long): ResponseEntity<String> {
+    fun deleteTodo(id: Long) {
         todoRepository.deleteById(id)
-
-        return ResponseEntity.ok("삭제 성공")
     }
 
     private fun checkExistAndAddCategory(
-        request: TodoRequest,
+        request: TodoServiceRequestDTO,
         todo: Todo,
     ) {
         if (request.categories.isNotEmpty()) {

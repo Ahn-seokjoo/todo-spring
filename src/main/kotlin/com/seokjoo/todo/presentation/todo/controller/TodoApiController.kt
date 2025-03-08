@@ -1,11 +1,14 @@
 package com.seokjoo.todo.presentation.todo.controller
 
+import com.seokjoo.todo.domain.service.todo.TodoService
 import com.seokjoo.todo.presentation.todo.dto.request.TodoRequest
+import com.seokjoo.todo.presentation.todo.dto.request.toTodoServiceRequest
 import com.seokjoo.todo.presentation.todo.dto.response.TodoResponse
 import com.seokjoo.todo.presentation.todo.service.TodoService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
+import com.seokjoo.todo.presentation.todo.dto.response.toResponse
 import org.springframework.http.ResponseEntity
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -36,31 +39,36 @@ class TodoApiController(
     @GetMapping("/todos")
     @Operation(summary = "사용자 모든 todo 조회", description = "사용자가 등록한 모든 todo 와 카테고리 정보를 가져옵니다.")
     fun getAllTodos(): ResponseEntity<List<TodoResponse>> {
-        return todoService.getAllTodos()
+        val allTodos = todoService.getAllTodos().map { it.toResponse() }
+        return ResponseEntity.ok(allTodos)
     }
 
     @GetMapping("/todos/{id}")
     @Operation(summary = "특정 id todo 조회", description = "id를 이용해 todo 한개를 조회합니다.")
     fun getTodoById(@PathVariable id: Long): ResponseEntity<TodoResponse> {
-        return todoService.getTodoById(id)
+        val todo = todoService.getTodoById(id).toResponse()
+        return ResponseEntity.ok(todo)
     }
 
     @PostMapping("/todos")
     @Operation(summary = "todo 추가", description = "todo 한개를 추가합니다.")
     fun createTodo(@RequestBody @Validated request: TodoRequest): ResponseEntity<String> {
-        return todoService.createTodo(request = request)
+        todoService.createTodo(request = request.toTodoServiceRequest())
+        return ResponseEntity.ok("ok")
     }
 
     @PatchMapping("/todos/{id}")
     @Operation(summary = "특정 id todo 업데이트", description = "id를 이용해 todo 한개를 업데이트 합니다.")
     fun updateTodo(@PathVariable id: Long, @RequestBody @Validated request: TodoRequest): ResponseEntity<TodoResponse> {
-        return todoService.updateTodo(id = id, request = request)
+        val todo = todoService.updateTodo(id = id, request = request.toTodoServiceRequest()).toResponse()
+        return ResponseEntity.ok(todo)
     }
 
     @DeleteMapping("/todos/{id}")
     @Operation(summary = "특정 id todo 삭제", description = "id를 이용해 todo 한개를 삭제합니다.")
     @ApiResponse(responseCode = "200", description = "삭제 성공")
     fun deleteTodo(@PathVariable id: Long): ResponseEntity<String> {
-        return todoService.deleteTodo(id)
+        todoService.deleteTodo(id)
+        return ResponseEntity.ok("ok")
     }
 }
