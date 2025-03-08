@@ -11,17 +11,16 @@ import org.springframework.transaction.annotation.Transactional
 import kotlin.jvm.optionals.getOrElse
 
 @Service
+@Transactional(readOnly = true)
 class TodoService(
     private val todoRepository: TodoRepository,
     private val categoryRepository: CategoryRepository,
 ) {
-    @Transactional(readOnly = true)
     fun getAllTodos(): ResponseEntity<List<TodoResponse>> {
         val todoList = todoRepository.findAll()
         return ResponseEntity.ok(todoList.map { todo -> TodoResponse.from(todo) })
     }
 
-    @Transactional(readOnly = true)
     fun getTodoById(id: Long): ResponseEntity<TodoResponse> {
         val result = todoRepository.findById(id).getOrElse { throw IllegalAccessError("bad") }
         return ResponseEntity.ok(TodoResponse.from(result))
