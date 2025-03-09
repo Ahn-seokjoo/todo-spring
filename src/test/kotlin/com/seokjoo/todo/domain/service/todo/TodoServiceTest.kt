@@ -13,12 +13,8 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.mockk.every
 import io.mockk.mockk
-import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.data.repository.findByIdOrNull
-import org.springframework.transaction.annotation.Transactional
 
-@SpringBootTest
-@Transactional
 class TodoServiceTest : BehaviorSpec({
     val todoRepository: TodoRepository = mockk()
     val categoryRepository: CategoryRepository = mockk()
