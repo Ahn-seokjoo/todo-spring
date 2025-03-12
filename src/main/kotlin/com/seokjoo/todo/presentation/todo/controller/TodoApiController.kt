@@ -58,6 +58,6 @@ class TodoApiController(
     @DeleteMapping("/todos/{id}")
     fun deleteTodo(@PathVariable id: Long): ResponseEntity<String> {
         todoService.deleteTodo(id)
-        return ResponseEntity.ok("ok")
+        return ResponseEntity.noContent().build()
     }
 }
