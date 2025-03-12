@@ -3,7 +3,7 @@ package com.seokjoo.todo.domain.service.todo
 import com.seokjoo.todo.domain.entity.todo.Todo
 
 data class TodoServiceResponseDTO(
-    val id: Long?,
+    val id: Long,
     val todo: String,
     val isDone: Boolean,
     val categories: List<String>,

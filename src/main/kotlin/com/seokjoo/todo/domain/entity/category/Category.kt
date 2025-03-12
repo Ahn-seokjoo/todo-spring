@@ -24,7 +24,7 @@ class Category(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "category_id")
-    val id: Long? = null,
+    val id: Long = 0L,
 ) : BaseEntity() {
     fun addTodo(todo: Todo) {
         val todoCategory = TodoCategory(todo = todo, category = this)

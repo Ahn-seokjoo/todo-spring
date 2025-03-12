@@ -29,5 +29,5 @@ class TodoCategory(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "todo_category_id")
-    val id: Long? = null,
+    val id: Long = 0L,
 ) : BaseEntity()
