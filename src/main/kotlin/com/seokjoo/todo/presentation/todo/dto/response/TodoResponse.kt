@@ -4,8 +4,8 @@ import com.seokjoo.todo.domain.service.todo.TodoServiceResponseDTO
 import io.swagger.v3.oas.annotations.media.Schema
 
 data class TodoResponse(
-    val id: Long?,
     @Schema(description = "todo", example = "백엔드 공부하기", required = true)
+    val id: Long,
     val todo: String,
     @Schema(required = true)
     val isDone: Boolean,

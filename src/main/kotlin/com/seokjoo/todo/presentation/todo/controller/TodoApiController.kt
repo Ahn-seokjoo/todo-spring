@@ -79,6 +79,6 @@ class TodoApiController(
     )
     fun deleteTodo(@PathVariable id: Long): ResponseEntity<String> {
         todoService.deleteTodo(id)
-        return ResponseEntity.ok("ok")
+        return ResponseEntity.noContent().build()
     }
 }
