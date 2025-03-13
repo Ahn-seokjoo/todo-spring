@@ -1,5 +1,8 @@
-package com.seokjoo.todo.domain.entity
+package com.seokjoo.todo.domain.entity.category
 
+import com.seokjoo.todo.domain.entity.BaseEntity
+import com.seokjoo.todo.domain.entity.todocategory.TodoCategory
+import com.seokjoo.todo.domain.entity.todo.Todo
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
@@ -10,7 +13,7 @@ import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
 
 @Entity
-@Table(name = "categories")
+@Table(name = "category")
 class Category(
     @Column(unique = true)
     val name: String,
@@ -21,7 +24,7 @@ class Category(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "category_id")
-    val id: Long? = null,
+    val id: Long = 0L,
 ) : BaseEntity() {
     fun addTodo(todo: Todo) {
         val todoCategory = TodoCategory(todo = todo, category = this)

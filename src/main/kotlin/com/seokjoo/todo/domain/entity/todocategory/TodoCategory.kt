@@ -1,5 +1,8 @@
-package com.seokjoo.todo.domain.entity
+package com.seokjoo.todo.domain.entity.todocategory
 
+import com.seokjoo.todo.domain.entity.BaseEntity
+import com.seokjoo.todo.domain.entity.category.Category
+import com.seokjoo.todo.domain.entity.todo.Todo
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
@@ -26,5 +29,5 @@ class TodoCategory(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "todo_category_id")
-    val id: Long? = null,
+    val id: Long = 0L,
 ) : BaseEntity()

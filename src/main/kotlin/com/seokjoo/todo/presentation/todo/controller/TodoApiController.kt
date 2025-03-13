@@ -1,8 +1,10 @@
 package com.seokjoo.todo.presentation.todo.controller
 
+import com.seokjoo.todo.domain.service.todo.TodoService
 import com.seokjoo.todo.presentation.todo.dto.request.TodoRequest
+import com.seokjoo.todo.presentation.todo.dto.request.toTodoServiceRequest
 import com.seokjoo.todo.presentation.todo.dto.response.TodoResponse
-import com.seokjoo.todo.presentation.todo.service.TodoService
+import com.seokjoo.todo.presentation.todo.dto.response.toResponse
 import org.springframework.http.ResponseEntity
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -31,26 +33,31 @@ class TodoApiController(
 
     @GetMapping("/todos")
     fun getAllTodos(): ResponseEntity<List<TodoResponse>> {
-        return todoService.getAllTodos()
+        val allTodos = todoService.getAllTodos().map { it.toResponse() }
+        return ResponseEntity.ok(allTodos)
     }
 
     @GetMapping("/todos/{id}")
     fun getTodoById(@PathVariable id: Long): ResponseEntity<TodoResponse> {
-        return todoService.getTodoById(id)
+        val todo = todoService.getTodoById(id).toResponse()
+        return ResponseEntity.ok(todo)
     }
 
     @PostMapping("/todos")
     fun createTodo(@RequestBody @Validated request: TodoRequest): ResponseEntity<String> {
-        return todoService.createTodo(request = request)
+        todoService.createTodo(request = request.toTodoServiceRequest())
+        return ResponseEntity.ok("ok")
     }
 
     @PatchMapping("/todos/{id}")
     fun updateTodo(@PathVariable id: Long, @RequestBody @Validated request: TodoRequest): ResponseEntity<TodoResponse> {
-        return todoService.updateTodo(id = id, request = request)
+        val todo = todoService.updateTodo(id = id, request = request.toTodoServiceRequest()).toResponse()
+        return ResponseEntity.ok(todo)
     }
 
     @DeleteMapping("/todos/{id}")
     fun deleteTodo(@PathVariable id: Long): ResponseEntity<String> {
-        return todoService.deleteTodo(id)
+        todoService.deleteTodo(id)
+        return ResponseEntity.noContent().build()
     }
 }
