@@ -13,7 +13,7 @@ import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
 
 @Entity
-@Table(name = "todos")
+@Table(name = "todo")
 class Todo(
     var todo: String,
     var isDone: Boolean = false,

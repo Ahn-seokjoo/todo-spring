@@ -13,7 +13,7 @@ import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
 
 @Entity
-@Table(name = "categories")
+@Table(name = "category")
 class Category(
     @Column(unique = true)
     val name: String,
