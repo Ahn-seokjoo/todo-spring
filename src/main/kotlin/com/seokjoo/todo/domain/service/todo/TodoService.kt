@@ -3,6 +3,7 @@ package com.seokjoo.todo.domain.service.todo
 import com.seokjoo.todo.common.exception.TodoException
 import com.seokjoo.todo.common.exception.TodoExceptionType
 import com.seokjoo.todo.domain.entity.todo.Todo
+import com.seokjoo.todo.domain.entity.todocategory.TodoCategory
 import com.seokjoo.todo.domain.repository.category.CategoryRepository
 import com.seokjoo.todo.domain.repository.categorytodo.TodoCategoryRepository
 import com.seokjoo.todo.domain.repository.todo.TodoRepository
@@ -57,12 +58,14 @@ class TodoService(
         val todoCategory = todo.todoCategories
         todoRepository.deleteById(id)
 
-        todoCategory.forEach { category ->
-            category.category?.let {
-                if (todoCategoryRepository.findByCategoryId(it.id).not()) categoryRepository.delete(it)
-            }
-        }
+        todoCategory
+            .filter { it.category != null && isCategoryLinked(it) }
+            .mapNotNull { it.category }
+            .forEach { categoryRepository.delete(it) }
     }
+
+    private fun isCategoryLinked(it: TodoCategory) =
+        todoCategoryRepository.countByCategoryId(it.id) > 0
 
     private fun checkExistAndAddCategory(
         request: TodoServiceRequestDTO,
