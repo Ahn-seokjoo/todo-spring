@@ -32,14 +32,18 @@ class ApiExceptionHandler {
     fun handleException(exception: MethodArgumentNotValidException): ResponseEntity<ApiErrorResponse> {
         logger.info(exception.message, exception)
 
-        val message = exception.bindingResult.fieldErrors.getOrNull(0)?.defaultMessage
+        val error = when (exception.bindingResult.fieldErrors.firstOrNull()?.field) {
+            "todo" -> TodoExceptionType.ID_VALIDATION_BAD_REQUEST
+            "name" -> TodoExceptionType.CATEGORY_VALIDATION_BAD_REQUEST
+            else -> TodoExceptionType.COMMON_VALIDATION_BAD_REQUEST
+        }
 
         return ResponseEntity
-            .status(TodoExceptionType.ID_VALIDATION_BAD_REQUEST.httpStatusCode)
+            .status(error.httpStatusCode)
             .body(
                 ApiErrorResponse(
-                    errorCode = TodoExceptionType.ID_VALIDATION_BAD_REQUEST.errorCode,
-                    message = TodoExceptionType.ID_VALIDATION_BAD_REQUEST.message,
+                    errorCode = error.errorCode,
+                    message = error.message,
                 )
             )
     }
