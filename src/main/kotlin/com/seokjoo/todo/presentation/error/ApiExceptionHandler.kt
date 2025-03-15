@@ -50,20 +50,18 @@ class ApiExceptionHandler {
         exception: MethodArgumentTypeMismatchException,
     ): ResponseEntity<ApiErrorResponse> {
         logger.info(exception.message, exception)
-
-        if (request.requestURI.contains("/api/v1/todo")) {
-            TodoExceptionType.ID_BAD_REQUEST
-        } else {
-            TodoExceptionType.COMMON_BAD_REQUEST
-        }.also {
-            return ResponseEntity
-                .status(it.httpStatusCode)
-                .body(
-                    ApiErrorResponse(
-                        errorCode = it.errorCode,
-                        message = it.message,
-                    )
-                )
+        val error = when (exception.parameter.parameterName) {
+            "id" -> TodoExceptionType.ID_BAD_REQUEST
+            else -> TodoExceptionType.COMMON_BAD_REQUEST
         }
+
+        return ResponseEntity
+            .status(error.httpStatusCode)
+            .body(
+                ApiErrorResponse(
+                    errorCode = error.errorCode,
+                    message = error.message,
+                )
+            )
     }
 }
