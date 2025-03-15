@@ -150,7 +150,7 @@ class TodoServiceTest : BehaviorSpec({
             )
             every { todoRepository.findByIdOrNull(1L) } returns newPreviousTodo
             every { todoRepository.save(any()) } returns newNextTodo
-            every { categoryRepository.findByName(any()) } returnsMany listOf(
+            every { categoryRepository.findCategoryByName(any()) } returnsMany listOf(
                 Category(name = "horror"),
                 Category(name = "comedy")
             )
