@@ -88,12 +88,12 @@ class TodoApiControllerTest {
                 content {
                     json(
                         """
-                    {
-                        "id": 1,
-                        "todo": "create todo",
-                        "isDone": false
-                    }
-                """.trimIndent()
+                        {
+                            "id": 1,
+                            "todo": "create todo",
+                            "isDone": false
+                        }
+                        """.trimIndent()
                     )
                 }
             }
