@@ -12,6 +12,10 @@ import org.springframework.transaction.annotation.Transactional
 class CategoryService(
     private val categoryRepository: CategoryRepository,
 ) {
+    @Transactional(readOnly = true)
+    fun getAllCategories(): List<CategoryServiceResponseDTO> {
+        return categoryRepository.findAll().map { CategoryServiceResponseDTO.from(category = it) }
+    }
 
     @Transactional(readOnly = true)
     fun getCategory(name: String): CategoryServiceResponseDTO {

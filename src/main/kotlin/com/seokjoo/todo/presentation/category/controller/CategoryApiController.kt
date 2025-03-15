@@ -23,6 +23,13 @@ import java.net.URI
 class CategoryApiController(
     private val categoryService: CategoryService,
 ) {
+    @GetMapping("/category/all")
+    @Operation(summary = "전체 카테고리 가져온다", description = "name을 이용해 카테고리가 이미 존재하는지 확인")
+    fun getAllCategories(): ResponseEntity<List<CategoryResponse>> {
+        val categories = categoryService.getAllCategories().map { it.toResponse() }
+        return ResponseEntity.ok(categories)
+    }
+
     @GetMapping("/category")
     @Operation(summary = "카테고리 존재 여부 확인", description = "name을 이용해 카테고리가 이미 존재하는지 확인")
     fun getCategory(@Parameter name: String): ResponseEntity<CategoryResponse> {
