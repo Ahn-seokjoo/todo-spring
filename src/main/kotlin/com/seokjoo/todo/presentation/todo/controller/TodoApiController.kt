@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import java.net.URI
 
 /**
  * 요구사항 다시 정해보기
@@ -37,21 +38,21 @@ class TodoApiController(
     private val todoService: TodoService,
 ) {
 
-    @GetMapping("/todos")
+    @GetMapping("/todo")
     @Operation(summary = "사용자 모든 todo 조회", description = "사용자가 등록한 모든 todo 와 카테고리 정보를 가져옵니다.")
     fun getAllTodos(): ResponseEntity<List<TodoResponse>> {
         val allTodos = todoService.getAllTodos().map { it.toResponse() }
         return ResponseEntity.ok(allTodos)
     }
 
-    @GetMapping("/todos/{id}")
+    @GetMapping("/todo/{id}")
     @Operation(summary = "특정 id todo 조회", description = "id를 이용해 todo 한개를 조회합니다.")
     fun getTodoById(@PathVariable id: Long): ResponseEntity<TodoResponse> {
         val todo = todoService.getTodoById(id).toResponse()
         return ResponseEntity.ok(todo)
     }
 
-    @PostMapping("/todos")
+    @PostMapping("/todo")
     @Operation(summary = "todo 추가", description = "todo 한개를 추가합니다.")
     @ApiResponse(
         responseCode = "200",
@@ -60,17 +61,17 @@ class TodoApiController(
     )
     fun createTodo(@RequestBody @Validated request: TodoRequest): ResponseEntity<TodoResponse> {
         val todo = todoService.createTodo(request = request.toTodoServiceRequest()).toResponse()
-        return ResponseEntity.ok(todo)
+        return ResponseEntity.created(URI.create("/todos/${todo.id}")).body(todo)
     }
 
-    @PatchMapping("/todos/{id}")
+    @PatchMapping("/todo/{id}")
     @Operation(summary = "특정 id todo 업데이트", description = "id를 이용해 todo 한개를 업데이트 합니다.")
     fun updateTodo(@PathVariable id: Long, @RequestBody @Validated request: TodoRequest): ResponseEntity<TodoResponse> {
         val todo = todoService.updateTodo(id = id, request = request.toTodoServiceRequest()).toResponse()
         return ResponseEntity.ok(todo)
     }
 
-    @DeleteMapping("/todos/{id}")
+    @DeleteMapping("/todo/{id}")
     @Operation(summary = "특정 id todo 삭제", description = "id를 이용해 todo 한개를 삭제합니다.")
     @ApiResponse(
         responseCode = "200",

@@ -51,7 +51,7 @@ class ApiExceptionHandler {
     ): ResponseEntity<ApiErrorResponse> {
         logger.info(exception.message, exception)
 
-        if (request.requestURI.contains("/api/v1/todos")) {
+        if (request.requestURI.contains("/api/v1/todo")) {
             TodoExceptionType.ID_BAD_REQUEST
         } else {
             TodoExceptionType.COMMON_BAD_REQUEST
