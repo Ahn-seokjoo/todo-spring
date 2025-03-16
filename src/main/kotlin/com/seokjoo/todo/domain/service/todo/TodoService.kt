@@ -75,7 +75,7 @@ class TodoService(
         if (request.categories.isNotEmpty()) {
             request.categories.forEach { category ->
                 val matchedCategory =
-                    categoryRepository.findByName(category.name) ?: categoryRepository.save(category)
+                    categoryRepository.findCategoryByName(category.name) ?: categoryRepository.save(category)
                 val isAlreadyNotExists = todo.todoCategories.any { it.category?.name == category.name }.not()
                 if (isAlreadyNotExists) todo.addCategory(category = matchedCategory)
             }

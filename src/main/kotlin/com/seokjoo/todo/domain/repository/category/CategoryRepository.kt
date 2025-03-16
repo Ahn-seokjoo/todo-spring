@@ -11,5 +11,5 @@ interface CategoryRepository : JpaRepository<Category, Long> {
     @Query("select count(tc) from TodoCategory tc where tc.category.id = :categoryId")
     fun countByCategoryId(categoryId: Long): Long
 
-    fun findByName(name: String): Category?
+    fun findCategoryByName(name: String): Category?
 }
