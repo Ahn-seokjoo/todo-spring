@@ -30,7 +30,7 @@ class TodoApiControllerTest {
 
     @Test
     fun `getAllTodo 함수를 호출하면 200 이 나온다`() {
-        mockMvc.get("/api/v1/todo")
+        mockMvc.get("/api/v1/todos")
             .andDo { print() }
             .andExpect {
                 status { isOk() }
@@ -39,7 +39,7 @@ class TodoApiControllerTest {
 
     @Test
     fun `getTodoById로 id가 숫자가 아닌 값이 들어올 때 bad reqeust`() {
-        mockMvc.get("/api/v1/todo/hi")
+        mockMvc.get("/api/v1/todos/hi")
             .andDo { print() }
             .andExpect {
                 status { isBadRequest() }
@@ -54,7 +54,7 @@ class TodoApiControllerTest {
         val request = TodoRequest(
             todo = "",
         )
-        mockMvc.post("/api/v1/todo") {
+        mockMvc.post("/api/v1/todos") {
             content = objectMapper.writeValueAsString(request)
             contentType = MediaType.APPLICATION_JSON
         }
@@ -78,7 +78,7 @@ class TodoApiControllerTest {
         )
         given(service.createTodo(any())).willReturn(mockResponse)
 
-        mockMvc.post("/api/v1/todo") {
+        mockMvc.post("/api/v1/todos") {
             content = objectMapper.writeValueAsString(request)
             contentType = MediaType.APPLICATION_JSON
         }
