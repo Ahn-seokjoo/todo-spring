@@ -31,7 +31,7 @@ class TodoServiceTest : BehaviorSpec({
             isDone = false,
         )
         val requestTodo = Todo(id = 1L, todo = request.todo, isDone = request.isDone)
-        When("when") {
+        When("정상 케이스에서") {
             every { todoRepository.save(any()) } returns requestTodo
             val todo = todoService.createTodo(request)
             Then("create Todo 시에, todo 한개가 잘 생성된다") {
@@ -44,7 +44,7 @@ class TodoServiceTest : BehaviorSpec({
     Given("getTodos") {
         val id = 1L
         every { todoRepository.findByIdOrNull(id) } returns Todo(id = 1L, todo = "abcde")
-        When("when") {
+        When("정상 케이스에서") {
             val todo = todoService.getTodoById(id)
             Then("getTodos 를 수행했을 때, todo 한개가 잘 나온다") {
                 todo.isDone shouldBe false
@@ -70,7 +70,7 @@ class TodoServiceTest : BehaviorSpec({
             Todo(todo = "abcde", isDone = true),
             Todo(todo = "abcdef", isDone = false),
         )
-        When("when") {
+        When("정상 케이스에서") {
             val allTodos = todoService.getAllTodos()
             Then("getAll 시에 추가한 만큼 잘 들어가있다.") {
                 allTodos.count() shouldBe 2
