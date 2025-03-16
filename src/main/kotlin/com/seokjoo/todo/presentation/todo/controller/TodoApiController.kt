@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import java.net.URI
 
 /**
  * 요구사항 다시 정해보기
@@ -58,9 +59,9 @@ class TodoApiController(
         description = "todo 추가 성공",
         content = [Content(mediaType = "text/plain", schema = Schema(example = "ok"))]
     )
-    fun createTodo(@RequestBody @Validated request: TodoRequest): ResponseEntity<String> {
-        todoService.createTodo(request = request.toTodoServiceRequest())
-        return ResponseEntity.ok("ok")
+    fun createTodo(@RequestBody @Validated request: TodoRequest): ResponseEntity<TodoResponse> {
+        val todo = todoService.createTodo(request = request.toTodoServiceRequest()).toResponse()
+        return ResponseEntity.created(URI.create("/todos/${todo.id}")).body(todo)
     }
 
     @PatchMapping("/todos/{id}")
