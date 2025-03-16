@@ -31,4 +31,16 @@ class Todo(
         todoCategories.add(todoCategory)
         category.todoCategories.add(todoCategory)
     }
+
+    fun copy(
+        todo: String? = null,
+        isDone: Boolean? = null,
+        todoCategories: MutableList<TodoCategory>? = null,
+        id: Long? = null,
+    ) = Todo(
+        todo = todo ?: this.todo,
+        isDone = isDone ?: this.isDone,
+        todoCategories = todoCategories ?: this.todoCategories,
+        id = id ?: this.id,
+    )
 }

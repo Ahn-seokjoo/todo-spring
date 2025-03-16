@@ -29,12 +29,13 @@ class TodoService(
     }
 
     @Transactional
-    fun createTodo(request: TodoServiceRequestDTO) {
+    fun createTodo(request: TodoServiceRequestDTO): TodoServiceResponseDTO {
         // 1. 저장하여 영속화 먼저
         val todo = Todo(todo = request.todo, isDone = request.isDone)
         todoRepository.save(todo)
 
         checkExistAndAddCategory(request, todo)
+        return TodoServiceResponseDTO.from(todo)
     }
 
     @Transactional
