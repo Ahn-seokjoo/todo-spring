@@ -8,6 +8,6 @@ import org.springframework.stereotype.Repository
 @Repository
 interface TodoRepository : JpaRepository<Todo, Long> {
 
-    @Query("select t from Todo t left join fetch t.todoCategories")
+    @Query("select t from Todo t left join fetch t.todoCategories tc left join fetch tc.category")
     fun findAllWithCategories(): List<Todo>
 }
