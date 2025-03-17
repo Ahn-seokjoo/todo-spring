@@ -18,7 +18,7 @@ import jakarta.persistence.Table
 @Table(name = "todo_category")
 class TodoCategory(
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
     @JoinColumn(name = "todo_id")
     val todo: Todo,
 
