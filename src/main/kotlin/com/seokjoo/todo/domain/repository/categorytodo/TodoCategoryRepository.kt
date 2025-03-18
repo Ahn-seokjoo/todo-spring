@@ -7,5 +7,5 @@ import org.springframework.stereotype.Repository
 
 @Repository
 interface TodoCategoryRepository : JpaRepository<TodoCategory, Long> {
-    fun countByCategoryId(id: Long?): Int
+    fun countByCategoryId(categoryId: Long): Int
 }
