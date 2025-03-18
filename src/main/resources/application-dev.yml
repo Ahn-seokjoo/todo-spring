@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: todo
+  config:
+    activate:
+      on-profile: dev
+  datasource:
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:mem:test?serverTimezone=Asia/Seoul # 인메모리 모드를 통해 빠르게 데이터 로드 가능
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    database: h2
+    database-platform: org.hibernate.dialect.H2Dialect
