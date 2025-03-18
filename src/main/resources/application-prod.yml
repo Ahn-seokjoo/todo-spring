@@ -1,8 +1,6 @@
 spring:
   config:
     import: optional:file:.env[.properties]
-    activate:
-      on-profile: prod
   application:
     name: todo
   datasource:

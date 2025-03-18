@@ -1,9 +1,6 @@
 spring:
   application:
     name: todo
-  config:
-    activate:
-      on-profile: dev
   datasource:
     driver-class-name: org.h2.Driver
     url: jdbc:h2:mem:test?serverTimezone=Asia/Seoul # 인메모리 모드를 통해 빠르게 데이터 로드 가능
