@@ -19,7 +19,7 @@ class TodoService(
     private val todoCategoryRepository: TodoCategoryRepository,
 ) {
     fun getAllTodos(): List<TodoServiceResponseDTO> {
-        val todoList = todoRepository.findAll()
+        val todoList = todoRepository.findAllWithCategories()
         return todoList.map { todo -> TodoServiceResponseDTO.from(todo) }
     }
 
