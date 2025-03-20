@@ -2,14 +2,12 @@ package com.seokjoo.todo.domain.service.todo
 
 import com.seokjoo.todo.domain.repository.category.CategoryRepository
 import com.seokjoo.todo.domain.repository.categorytodo.TodoCategoryRepository
-import com.seokjoo.todo.domain.repository.todo.TodoRepository
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.data.repository.findByIdOrNull
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
 
@@ -18,7 +16,6 @@ import org.springframework.transaction.annotation.Transactional
 @ActiveProfiles("test")
 class TodoServiceSpringBootTest @Autowired constructor(
     private val service: TodoService,
-    private val todoRepository: TodoRepository,
     private val categoryRepository: CategoryRepository,
     private val todoCategoryRepository: TodoCategoryRepository,
 ) {
@@ -121,9 +118,6 @@ class TodoServiceSpringBootTest @Autowired constructor(
             )
     }
 
-    /**
-     * getAll 같은 함수들은 영속성 컨텍스트에 남아있어서 제대로 테스트가 안됨 ,,
-     */
     @Test
     fun `delete 테스트 - 제거 이후 Todo DB 조회`() {
         // given
@@ -131,10 +125,10 @@ class TodoServiceSpringBootTest @Autowired constructor(
         service.deleteTodo(deleteId)
 
         // when
-        val deletedEntity = todoRepository.findByIdOrNull(deleteId)
+        val removedList = service.getAllTodos()
 
         // then
-        assert(deletedEntity == null)
+        assert(removedList.isEmpty())
     }
 
     @Test
