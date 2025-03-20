@@ -55,7 +55,7 @@ class TodoApiController(
     @PostMapping("/todos")
     @Operation(summary = "todo 추가", description = "todo 한개를 추가합니다.")
     @ApiResponse(
-        responseCode = "200",
+        responseCode = "201",
         description = "todo 추가 성공",
         content = [Content(mediaType = "text/plain", schema = Schema(example = "ok"))]
     )
