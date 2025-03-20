@@ -12,7 +12,7 @@ import org.springframework.transaction.annotation.Transactional
 
 @SpringBootTest
 @Transactional
-@ActiveProfiles("prod")
+@ActiveProfiles("test")
 class TodoServiceSpringBootTest @Autowired constructor(
     private val service: TodoService,
     private val repository: TodoRepository,
@@ -22,7 +22,7 @@ class TodoServiceSpringBootTest @Autowired constructor(
 
     // 통합 테스트
     @Test
-    fun getAllTodos() {
+    fun `createTodo 테스트`() {
         // given
         val request = TodoServiceRequestDTO("spring")
         // when
