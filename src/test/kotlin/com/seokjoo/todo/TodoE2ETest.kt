@@ -16,10 +16,10 @@ import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
 import org.springframework.http.ResponseEntity
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.web.client.RestTemplate
 import org.springframework.web.client.exchange
-import org.springframework.web.client.patchForObject
 import org.springframework.web.client.postForEntity
 import java.net.URI
 
@@ -119,14 +119,16 @@ class TodoE2ETest {
 
     @Test
     fun `PATCH Todo update e2e 테스트`() {
+        // after code를 지우고, update 만 수행하면 잘된다.. 다른것 다같이 all 수행 시에는 실패 ..왜그럴까
+        val restTemplate = RestTemplate().apply {
+            requestFactory = HttpComponentsClientHttpRequestFactory()
+        }
         val url = "http://localhost:$port/api/v1/todos/2"
         val expected = TodoResponse(id = 2L, todo = "node", isDone = true, categories = listOf("drama"))
         val request = TodoRequest(todo = "node", isDone = true, categories = listOf(CategoryDTO("drama")))
 
-        val response: String =
-            restTemplate.patchForObject<String>(url = url, request = request, String::class)
-
-        val responseEntity = ResponseEntity.ok(response)
+        val responseEntity: ResponseEntity<String> =
+            restTemplate.exchange(url, HttpMethod.PATCH, HttpEntity(request), String::class)
         assertThat(responseEntity.statusCode.value()).isEqualTo(200)
 
         val result = objectMapper.readValue<TodoResponse>(responseEntity.body.orEmpty())
