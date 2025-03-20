@@ -2,6 +2,7 @@ package com.seokjoo.todo.domain.service.todo
 
 import com.seokjoo.todo.common.exception.TodoException
 import com.seokjoo.todo.common.exception.TodoExceptionType
+import com.seokjoo.todo.domain.entity.category.Category
 import com.seokjoo.todo.domain.entity.todo.Todo
 import com.seokjoo.todo.domain.entity.todocategory.TodoCategory
 import com.seokjoo.todo.domain.repository.category.CategoryRepository
@@ -82,12 +83,14 @@ class TodoService(
         request: TodoServiceRequestDTO,
         todo: Todo,
     ) {
-        if (request.categories.isNotEmpty()) {
-            request.categories.forEach { category ->
-                val matchedCategory =
-                    categoryRepository.findCategoryByName(category.name) ?: categoryRepository.save(category)
-                val isAlreadyNotExists = todo.todoCategories.any { it.category?.name == category.name }.not()
-                if (isAlreadyNotExists) todo.addCategory(category = matchedCategory)
+        if (request.categoryNames.isNotEmpty()) {
+            request.categoryNames.forEach { categoryName ->
+                if (todo.hasCategory(categoryName).not()) {
+                    val matchedCategory =
+                        categoryRepository.findCategoryByName(categoryName)
+                            ?: categoryRepository.save(Category(name = categoryName))
+                    todo.addCategory(category = matchedCategory)
+                }
             }
         }
     }

@@ -26,6 +26,10 @@ class Todo(
     @Column(name = "todo_id")
     val id: Long = 0L,
 ) : BaseEntity() {
+    fun hasCategory(categoryName: String): Boolean {
+        return todoCategories.any { it.category?.name == categoryName }
+    }
+
     fun addCategory(category: Category) {
         val todoCategory = TodoCategory(todo = this, category = category)
         todoCategories.add(todoCategory)

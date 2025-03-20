@@ -15,7 +15,7 @@ import io.mockk.every
 import io.mockk.mockk
 import org.springframework.data.repository.findByIdOrNull
 
-class TodoServiceTest : BehaviorSpec({
+class TodoServiceMockTest : BehaviorSpec({
     val todoRepository: TodoRepository = mockk()
     val categoryRepository: CategoryRepository = mockk()
 
@@ -83,7 +83,7 @@ class TodoServiceTest : BehaviorSpec({
         val request = TodoServiceRequestDTO(
             todo = "abcdef",
             isDone = false,
-            categories = listOf()
+            categoryNames = listOf()
         )
         val previousTodo = Todo(
             id = 1L,
@@ -136,9 +136,9 @@ class TodoServiceTest : BehaviorSpec({
 
         When("category를 바꿔서 주는 경우") {
             val newRequest = request.copy(
-                categories = listOf(
-                    Category(name = "horror"),
-                    Category(name = "comedy"),
+                categoryNames = listOf(
+                    "horror",
+                    "comedy",
                 )
             )
             val newPreviousTodo = previousTodo.copy(todo = "abcde")

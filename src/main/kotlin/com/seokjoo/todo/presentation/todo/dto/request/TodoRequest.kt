@@ -18,5 +18,5 @@ data class TodoRequest(
 fun TodoRequest.toTodoServiceRequest() = TodoServiceRequestDTO(
     todo = todo,
     isDone = isDone,
-    categories = categories.map { Category(name = it.name) },
+    categoryNames = categories.map { it.name },
 )
