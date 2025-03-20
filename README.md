@@ -29,5 +29,4 @@ To-Do List 서비스는 Kubernetes(K8s) 기반으로 배포할 예정이다.\
 자동 확장(Auto Scaling) 및 로드 밸런싱을 지원\
 다중 인스턴스를 활용한 고가용성(HA) 아키텍처 구축 가능
 
-
 ![image](https://github.com/user-attachments/assets/0d34999b-d65f-4482-ae3f-f05c03251bb9)
