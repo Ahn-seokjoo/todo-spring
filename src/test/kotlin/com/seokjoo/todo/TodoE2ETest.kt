@@ -2,6 +2,7 @@ package com.seokjoo.todo
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.seokjoo.todo.domain.repository.category.CategoryRepository
 import com.seokjoo.todo.presentation.category.dto.CategoryDTO
 import com.seokjoo.todo.presentation.todo.dto.request.TodoRequest
 import com.seokjoo.todo.presentation.todo.dto.response.TodoResponse
@@ -47,6 +48,7 @@ class TodoE2ETest {
 
     @AfterEach
     fun afterEach() {
+        jdbcTemplate.execute("DELETE FROM todo_category WHERE todo_id = 2")
         jdbcTemplate.execute("DELETE FROM todo WHERE todo_id = 2")
     }
 
