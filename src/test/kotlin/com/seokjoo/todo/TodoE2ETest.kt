@@ -2,7 +2,6 @@ package com.seokjoo.todo
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
-import com.seokjoo.todo.domain.repository.category.CategoryRepository
 import com.seokjoo.todo.presentation.category.dto.CategoryDTO
 import com.seokjoo.todo.presentation.todo.dto.request.TodoRequest
 import com.seokjoo.todo.presentation.todo.dto.response.TodoResponse
@@ -121,7 +120,6 @@ class TodoE2ETest {
 
     @Test
     fun `PATCH Todo update e2e 테스트`() {
-        // after code를 지우고, update 만 수행하면 잘된다.. 다른것 다같이 all 수행 시에는 실패 ..왜그럴까
         val restTemplate = RestTemplate().apply {
             requestFactory = HttpComponentsClientHttpRequestFactory()
         }
