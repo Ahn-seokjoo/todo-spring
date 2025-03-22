@@ -23,6 +23,7 @@ class TodoServiceMockTest : BehaviorSpec({
         todoRepository = todoRepository,
         categoryRepository = categoryRepository,
         todoCategoryRepository = mockk(),
+        todoDeleteService = mockk(),
     )
 
     Given("create todo") {
