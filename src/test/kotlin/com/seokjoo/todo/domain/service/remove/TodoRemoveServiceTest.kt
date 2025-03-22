@@ -1,5 +1,6 @@
 package com.seokjoo.todo.domain.service.remove
 
+import com.seokjoo.todo.IntegrationTest
 import com.seokjoo.todo.common.exception.TodoException
 import com.seokjoo.todo.common.exception.TodoExceptionType
 import com.seokjoo.todo.domain.repository.category.CategoryRepository
@@ -10,12 +11,9 @@ import com.seokjoo.todo.domain.service.todo.TodoServiceResponseDTO
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.data.repository.findByIdOrNull
-import org.springframework.transaction.annotation.Transactional
 
-@SpringBootTest
-@Transactional
+@IntegrationTest
 class TodoRemoveServiceTest @Autowired constructor(
     private val todoService: TodoService,
     private val todoDeleteService: TodoDeleteService,
