@@ -4,10 +4,9 @@ import com.seokjoo.todo.common.exception.TodoException
 import com.seokjoo.todo.common.exception.TodoExceptionType
 import com.seokjoo.todo.domain.entity.category.Category
 import com.seokjoo.todo.domain.entity.todo.Todo
-import com.seokjoo.todo.domain.entity.todocategory.TodoCategory
 import com.seokjoo.todo.domain.repository.category.CategoryRepository
-import com.seokjoo.todo.domain.repository.categorytodo.TodoCategoryRepository
 import com.seokjoo.todo.domain.repository.todo.TodoRepository
+import com.seokjoo.todo.domain.service.remove.TodoDeleteService
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -17,7 +16,7 @@ import org.springframework.transaction.annotation.Transactional
 class TodoService(
     private val todoRepository: TodoRepository,
     private val categoryRepository: CategoryRepository,
-    private val todoCategoryRepository: TodoCategoryRepository,
+    private val todoDeleteService: TodoDeleteService,
 ) {
     fun getAllTodos(): List<TodoServiceResponseDTO> {
         val todoList = todoRepository.findAllWithCategories()
@@ -57,26 +56,8 @@ class TodoService(
     @Transactional
     fun deleteTodo(id: Long) {
         val todo = todoRepository.findByIdOrNull(id) ?: throw TodoException.of(TodoExceptionType.NOT_EXISTED_TODO)
-        val todoCategory = todo.todoCategories
-        todoRepository.deleteById(id)
 
-        /**
-        1. 아래 로직은, 더이상 참조되지 않은 Category를 지워주기 위함
-        2. 삭제한 투두에서 사용중이던 카테고리 목록들을 돌면서,
-        3. null 아니고,
-        4. 더이상 링킹 되지않은걸 지운다.
-         */
-
-        todoCategory
-            .filter { it.category != null && isCategoryNotUsed(it) }
-            .mapNotNull { it.category }
-            .forEach { categoryRepository.delete(it) }
-    }
-
-    private fun isCategoryNotUsed(it: TodoCategory): Boolean {
-        return it.category?.let { category ->
-            todoCategoryRepository.countByCategoryId(categoryId = category.id) == 0
-        } ?: false
+        todoDeleteService.deleteTodo(todo)
     }
 
     private fun checkExistAndAddCategory(
