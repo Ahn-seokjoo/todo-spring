@@ -41,6 +41,7 @@ dependencies {
     testImplementation("io.kotest:kotest-assertions-core:5.4.2")
     testImplementation("io.kotest.extensions:kotest-extensions-spring:1.1.2")
     testImplementation("org.assertj:assertj-core:3.24.2")
+    testImplementation("org.apache.httpcomponents.client5:httpclient5:5.4.2")
 }
 
 kotlin {
