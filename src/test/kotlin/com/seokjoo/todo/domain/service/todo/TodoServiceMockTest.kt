@@ -7,12 +7,16 @@ import com.seokjoo.todo.domain.entity.todo.Todo
 import com.seokjoo.todo.domain.entity.todocategory.TodoCategory
 import com.seokjoo.todo.domain.repository.category.CategoryRepository
 import com.seokjoo.todo.domain.repository.todo.TodoRepository
+import com.seokjoo.todo.presentation.todo.dto.request.TodoPageRequest
+import com.seokjoo.todo.presentation.todo.dto.request.toPageServiceDTO
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.mockk.every
 import io.mockk.mockk
+import org.springframework.data.domain.PageImpl
+import org.springframework.data.domain.PageRequest
 import org.springframework.data.repository.findByIdOrNull
 
 class TodoServiceMockTest : BehaviorSpec({
@@ -66,14 +70,18 @@ class TodoServiceMockTest : BehaviorSpec({
     }
 
     Given("getAll todo") {
-        every { todoRepository.findAllWithCategories() } returns listOf(
+        val result = listOf(
             Todo(todo = "abcde", isDone = true),
             Todo(todo = "abcdef", isDone = false),
         )
+        val pageRequest = PageRequest.of(0, 10)
+        every { todoRepository.findAllByOrderByCreatedAtAsc(any()) } returns PageImpl(result, pageRequest, 10)
+
         When("정상 케이스에서") {
+            val todoPageRequest = TodoPageRequest()
             val allTodos = todoService.getPagedTodos(todoPageRequest.toPageServiceDTO())
             Then("getAll 시에 추가한 만큼 잘 들어가있다.") {
-                allTodos.count() shouldBe 2
+                allTodos.responseList.count() shouldBe 2
             }
         }
     }

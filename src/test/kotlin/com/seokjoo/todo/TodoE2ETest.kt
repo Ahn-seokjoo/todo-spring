@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.seokjoo.todo.presentation.category.dto.CategoryDTO
 import com.seokjoo.todo.presentation.todo.dto.request.TodoRequest
+import com.seokjoo.todo.presentation.todo.dto.response.TodoPageResponse
 import com.seokjoo.todo.presentation.todo.dto.response.TodoResponse
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
@@ -22,6 +23,8 @@ import org.springframework.web.client.RestTemplate
 import org.springframework.web.client.exchange
 import org.springframework.web.client.postForEntity
 import java.net.URI
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class TodoE2ETest {
@@ -42,7 +45,10 @@ class TodoE2ETest {
      */
     @BeforeEach
     fun beforeEach() {
-        jdbcTemplate.execute("INSERT INTO todo (todo_id, is_done, todo) VALUES (2, false, 'spring')")
+        val currentTime = LocalDateTime.now()
+        val formattedTime = currentTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+        val sql = "INSERT INTO todo (todo_id, is_done, todo, created_at, updated_at) VALUES (2, false, 'spring', ?, ?)"
+        jdbcTemplate.update(sql, formattedTime, formattedTime)
     }
 
     @AfterEach
@@ -54,13 +60,18 @@ class TodoE2ETest {
     @Test
     fun `GET All todo e2e 테스트`() {
         val url = "http://localhost:$port/api/v1/todos"
-        val expected = listOf(TodoResponse(id = 2L, todo = "spring", isDone = false, categories = emptyList()))
+        val expected = TodoPageResponse(
+            isLast = true,
+            todoList = listOf(
+                TodoResponse(id = 2L, todo = "spring", isDone = false, categories = emptyList())
+            )
+        )
 
         val response: ResponseEntity<String> = restTemplate.getForEntity(url, String::class.java)
 
         assertThat(response.statusCode.value()).isEqualTo(200)
 
-        val result = objectMapper.readValue<List<TodoResponse>>(response.body.orEmpty())
+        val result = objectMapper.readValue<TodoPageResponse>(response.body.orEmpty())
 
         assertThat(result)
             .usingRecursiveComparison()

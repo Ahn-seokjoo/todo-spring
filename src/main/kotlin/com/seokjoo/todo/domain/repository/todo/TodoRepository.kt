@@ -2,7 +2,6 @@ package com.seokjoo.todo.domain.repository.todo
 
 import com.seokjoo.todo.domain.entity.todo.Todo
 import org.springframework.data.domain.Page
-import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
