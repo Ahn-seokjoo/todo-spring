@@ -30,7 +30,7 @@ class TodoApiControllerTest {
 
     @Test
     fun `getAllTodo 함수를 호출하면 200 이 나온다`() {
-        mockMvc.get("/api/v1/todos")
+        mockMvc.get("/api/v1/tods")
             .andDo { print() }
             .andExpect {
                 status { isOk() }
