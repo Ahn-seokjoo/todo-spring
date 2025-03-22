@@ -18,7 +18,7 @@ class TodoService(
     private val categoryRepository: CategoryRepository,
     private val todoDeleteService: TodoDeleteService,
 ) {
-    fun getAllTodos(): List<TodoServiceResponseDTO> {
+    fun getPagedTodos(): List<TodoServiceResponseDTO> {
         val todoList = todoRepository.findAllWithCategories()
         return todoList.map { todo -> TodoServiceResponseDTO.from(todo) }
     }

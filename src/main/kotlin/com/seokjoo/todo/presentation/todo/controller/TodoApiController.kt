@@ -39,9 +39,9 @@ class TodoApiController(
 ) {
 
     @GetMapping("/todos")
-    @Operation(summary = "사용자 모든 todo 조회", description = "사용자가 등록한 모든 todo 와 카테고리 정보를 가져옵니다.")
-    fun getAllTodos(): ResponseEntity<List<TodoResponse>> {
-        val allTodos = todoService.getAllTodos().map { it.toResponse() }
+    @Operation(summary = "사용자 todo를 페이지네이션을 통해 리턴", description = "사용자가 등록한 todo 와 카테고리 정보를 n개씩 가져옵니다. (default = 20)")
+    fun getPagedTodos(): ResponseEntity<List<TodoResponse>> {
+        val allTodos = todoService.getPagedTodos().map { it.toResponse() }
         return ResponseEntity.ok(allTodos)
     }
 

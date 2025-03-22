@@ -74,7 +74,7 @@ class TodoServiceSpringBootTest @Autowired constructor(
         service.createTodo(request)
 
         // when
-        val todoList = service.getAllTodos()
+        val todoList = service.getPagedTodos()
         // then
         assert(todoList.size == 2)
         Assertions.assertThat(todoList)
@@ -116,7 +116,7 @@ class TodoServiceSpringBootTest @Autowired constructor(
         service.deleteTodo(deleteId)
 
         // when
-        val removedList = service.getAllTodos()
+        val removedList = service.getPagedTodos()
 
         // then
         assert(removedList.isEmpty())
