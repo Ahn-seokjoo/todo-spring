@@ -21,10 +21,11 @@ class TodoService(
 ) {
     fun getPagedTodos(pageServiceDTO: TodoPageServiceDTO): TodoPageServiceResponseDTO {
         val pageRequest = PageRequest.of(pageServiceDTO.pageNumber, pageServiceDTO.pageSize)
-        val pageResult = todoRepository.findAllByOrderByCreatedAtAsc(pageRequest)
-        val todoPagedList = pageResult.content.map { todo -> TodoServiceResponseDTO.from(todo) }
+        val todoPage = todoRepository.findAllByOrderByCreatedAtAsc(pageRequest)
+        val pageResult = todoRepository.getFetchJoinedTodoList(todos = todoPage.content)
+        val todoPagedList = pageResult.map { todo -> TodoServiceResponseDTO.from(todo) }
 
-        return TodoPageServiceResponseDTO(isLast = pageResult.isLast, responseList = todoPagedList)
+        return TodoPageServiceResponseDTO(isLast = todoPage.isLast, responseList = todoPagedList)
     }
 
     fun getTodoById(id: Long): TodoServiceResponseDTO {

@@ -76,6 +76,7 @@ class TodoServiceMockTest : BehaviorSpec({
         )
         val pageRequest = PageRequest.of(0, 10)
         every { todoRepository.findAllByOrderByCreatedAtAsc(any()) } returns PageImpl(result, pageRequest, 10)
+        every { todoRepository.getFetchJoinedTodoList(any()) } returns result
 
         When("정상 케이스에서") {
             val todoPageRequest = TodoPageRequest()
