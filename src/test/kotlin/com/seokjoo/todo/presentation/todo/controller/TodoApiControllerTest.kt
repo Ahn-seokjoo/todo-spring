@@ -2,6 +2,7 @@ package com.seokjoo.todo.presentation.todo.controller
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.seokjoo.todo.common.exception.TodoExceptionType
+import com.seokjoo.todo.domain.service.todo.TodoPageServiceResponseDTO
 import com.seokjoo.todo.domain.service.todo.TodoService
 import com.seokjoo.todo.domain.service.todo.TodoServiceResponseDTO
 import com.seokjoo.todo.presentation.todo.dto.request.TodoRequest
@@ -30,6 +31,19 @@ class TodoApiControllerTest {
 
     @Test
     fun `getAllTodo 함수를 호출하면 200 이 나온다`() {
+        val mockResponse = TodoServiceResponseDTO(
+            id = 1L,
+            todo = "create todo",
+            isDone = false,
+            categories = listOf()
+        )
+        given(service.getPagedTodos(any())).willReturn(
+            TodoPageServiceResponseDTO(
+                isLast = true, responseList = listOf(
+                    mockResponse
+                )
+            )
+        )
         mockMvc.get("/api/v1/todos")
             .andDo { print() }
             .andExpect {

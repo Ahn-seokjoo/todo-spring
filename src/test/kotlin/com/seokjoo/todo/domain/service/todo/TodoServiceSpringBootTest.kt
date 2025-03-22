@@ -4,6 +4,8 @@ import com.seokjoo.todo.IntegrationTest
 import com.seokjoo.todo.common.exception.TodoException
 import com.seokjoo.todo.domain.repository.category.CategoryRepository
 import com.seokjoo.todo.domain.repository.categorytodo.TodoCategoryRepository
+import com.seokjoo.todo.presentation.todo.dto.request.TodoPageRequest
+import com.seokjoo.todo.presentation.todo.dto.request.toPageServiceDTO
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -74,7 +76,8 @@ class TodoServiceSpringBootTest @Autowired constructor(
         service.createTodo(request)
 
         // when
-        val todoList = service.getAllTodos()
+        val todoPageRequest = TodoPageRequest()
+        val todoList = service.getPagedTodos(todoPageRequest.toPageServiceDTO()).responseList
         // then
         assert(todoList.size == 2)
         Assertions.assertThat(todoList)
@@ -116,10 +119,11 @@ class TodoServiceSpringBootTest @Autowired constructor(
         service.deleteTodo(deleteId)
 
         // when
-        val removedList = service.getAllTodos()
+        val todoPageRequest = TodoPageRequest()
+        val removedList = service.getPagedTodos(todoPageRequest.toPageServiceDTO())
 
         // then
-        assert(removedList.isEmpty())
+        assert(removedList.responseList.isEmpty())
     }
 
     @Test
