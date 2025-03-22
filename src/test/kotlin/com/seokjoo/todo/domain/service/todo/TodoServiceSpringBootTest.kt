@@ -1,5 +1,6 @@
 package com.seokjoo.todo.domain.service.todo
 
+import com.seokjoo.todo.IntegrationTest
 import com.seokjoo.todo.common.exception.TodoException
 import com.seokjoo.todo.domain.repository.category.CategoryRepository
 import com.seokjoo.todo.domain.repository.categorytodo.TodoCategoryRepository
@@ -7,13 +8,8 @@ import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.test.context.ActiveProfiles
-import org.springframework.transaction.annotation.Transactional
 
-@SpringBootTest
-@Transactional
-@ActiveProfiles("test")
+@IntegrationTest
 class TodoServiceSpringBootTest @Autowired constructor(
     private val service: TodoService,
     private val categoryRepository: CategoryRepository,
