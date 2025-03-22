@@ -7,6 +7,7 @@ import com.seokjoo.todo.domain.entity.todo.Todo
 import com.seokjoo.todo.domain.repository.category.CategoryRepository
 import com.seokjoo.todo.domain.repository.todo.TodoRepository
 import com.seokjoo.todo.domain.service.remove.TodoDeleteService
+import org.springframework.data.domain.PageRequest
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -18,9 +19,12 @@ class TodoService(
     private val categoryRepository: CategoryRepository,
     private val todoDeleteService: TodoDeleteService,
 ) {
-    fun getPagedTodos(): List<TodoServiceResponseDTO> {
-        val todoList = todoRepository.findAllWithCategories()
-        return todoList.map { todo -> TodoServiceResponseDTO.from(todo) }
+    fun getPagedTodos(pageServiceDTO: TodoPageServiceDTO): TodoPageServiceResponseDTO {
+        val pageRequest = PageRequest.of(pageServiceDTO.pageNumber, pageServiceDTO.pageSize)
+        val pageResult = todoRepository.findAllByOrderByCreatedAtAsc(pageRequest)
+        val todoPagedList = pageResult.content.map { todo -> TodoServiceResponseDTO.from(todo) }
+
+        return TodoPageServiceResponseDTO(isLast = pageResult.isLast, responseList = todoPagedList)
     }
 
     fun getTodoById(id: Long): TodoServiceResponseDTO {

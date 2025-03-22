@@ -71,7 +71,7 @@ class TodoServiceMockTest : BehaviorSpec({
             Todo(todo = "abcdef", isDone = false),
         )
         When("정상 케이스에서") {
-            val allTodos = todoService.getPagedTodos()
+            val allTodos = todoService.getPagedTodos(todoPageRequest.toPageServiceDTO())
             Then("getAll 시에 추가한 만큼 잘 들어가있다.") {
                 allTodos.count() shouldBe 2
             }
