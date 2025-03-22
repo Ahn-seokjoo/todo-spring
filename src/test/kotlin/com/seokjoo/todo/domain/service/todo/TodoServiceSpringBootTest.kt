@@ -1,5 +1,6 @@
 package com.seokjoo.todo.domain.service.todo
 
+import com.seokjoo.todo.common.exception.TodoException
 import com.seokjoo.todo.domain.repository.category.CategoryRepository
 import com.seokjoo.todo.domain.repository.categorytodo.TodoCategoryRepository
 import org.assertj.core.api.Assertions
@@ -156,5 +157,47 @@ class TodoServiceSpringBootTest @Autowired constructor(
         // then
         assert(todoCategoryBeforeCountByRemove == 1)
         assert(todoCategoryAfterCountByRemove == 0)
+    }
+
+    @Test
+    fun `getByTodo 시에 없는 아이디를 조회했을 때 NOT_EXISTED_TODO 을 잘 던져주는지`() {
+        val exception = kotlin.runCatching {
+            service.getTodoById(200L)
+        }.exceptionOrNull()
+
+        assert(exception is TodoException)
+        with(exception as TodoException) {
+            assert(message == "존재하지 않는 Todo 입니다")
+            assert(errorCode == "T000_TODO_ERROR")
+            assert(httpStatusCode == 404)
+        }
+    }
+
+    @Test
+    fun `updateByTodo 시에 없는 아이디를 조회했을 때 NOT_EXISTED_TODO 을 잘 던져주는지`() {
+        val exception = kotlin.runCatching {
+            service.updateTodo(200L, TodoServiceRequestDTO(todo = ""))
+        }.exceptionOrNull()
+
+        assert(exception is TodoException)
+        with(exception as TodoException) {
+            assert(message == "존재하지 않는 Todo 입니다")
+            assert(errorCode == "T000_TODO_ERROR")
+            assert(httpStatusCode == 404)
+        }
+    }
+
+    @Test
+    fun `deleteTodo 시에 없는 아이디를 조회했을 때 NOT_EXISTED_TODO 을 잘 던져주는지`() {
+        val exception = kotlin.runCatching {
+            service.deleteTodo(200L)
+        }.exceptionOrNull()
+
+        assert(exception is TodoException)
+        with(exception as TodoException) {
+            assert(message == "존재하지 않는 Todo 입니다")
+            assert(errorCode == "T000_TODO_ERROR")
+            assert(httpStatusCode == 404)
+        }
     }
 }
