@@ -22,7 +22,6 @@ class TodoServiceMockTest : BehaviorSpec({
     val todoService = TodoService(
         todoRepository = todoRepository,
         categoryRepository = categoryRepository,
-        todoCategoryRepository = mockk(),
         todoDeleteService = mockk(),
     )
 
@@ -67,7 +66,7 @@ class TodoServiceMockTest : BehaviorSpec({
     }
 
     Given("getAll todo") {
-        every { todoRepository.findAll() } returns listOf(
+        every { todoRepository.findAllWithCategories() } returns listOf(
             Todo(todo = "abcde", isDone = true),
             Todo(todo = "abcdef", isDone = false),
         )

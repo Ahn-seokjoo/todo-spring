@@ -5,7 +5,6 @@ import com.seokjoo.todo.common.exception.TodoExceptionType
 import com.seokjoo.todo.domain.entity.category.Category
 import com.seokjoo.todo.domain.entity.todo.Todo
 import com.seokjoo.todo.domain.repository.category.CategoryRepository
-import com.seokjoo.todo.domain.repository.categorytodo.TodoCategoryRepository
 import com.seokjoo.todo.domain.repository.todo.TodoRepository
 import com.seokjoo.todo.domain.service.remove.TodoDeleteService
 import org.springframework.data.repository.findByIdOrNull
@@ -17,7 +16,6 @@ import org.springframework.transaction.annotation.Transactional
 class TodoService(
     private val todoRepository: TodoRepository,
     private val categoryRepository: CategoryRepository,
-    private val todoCategoryRepository: TodoCategoryRepository,
     private val todoDeleteService: TodoDeleteService,
 ) {
     fun getAllTodos(): List<TodoServiceResponseDTO> {
