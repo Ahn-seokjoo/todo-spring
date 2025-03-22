@@ -3,7 +3,6 @@ package com.seokjoo.todo.domain.service.todo
 import com.seokjoo.todo.domain.repository.category.CategoryRepository
 import com.seokjoo.todo.domain.repository.categorytodo.TodoCategoryRepository
 import org.assertj.core.api.Assertions
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -19,18 +18,13 @@ class TodoServiceSpringBootTest @Autowired constructor(
     private val categoryRepository: CategoryRepository,
     private val todoCategoryRepository: TodoCategoryRepository,
 ) {
-    var result: TodoServiceResponseDTO? = null
+    lateinit var result: TodoServiceResponseDTO
 
     @BeforeEach
     fun beforeEach() {
         val request = TodoServiceRequestDTO(todo = "android", isDone = true, categoryNames = listOf("drama"))
         // when
         result = service.createTodo(request)
-    }
-
-    @AfterEach
-    fun afterEach() {
-        result = null
     }
 
     // 통합 테스트
@@ -57,7 +51,7 @@ class TodoServiceSpringBootTest @Autowired constructor(
 
     @Test
     fun `getTodoById 테스트`() {
-        val id = result?.id ?: return
+        val id = result.id
 
         val todo = service.getTodoById(id)
 
@@ -100,7 +94,7 @@ class TodoServiceSpringBootTest @Autowired constructor(
     @Test
     fun `updateTodo 테스트`() {
         // given
-        val updateId = result?.id ?: return
+        val updateId = result.id
         val request = TodoServiceRequestDTO(todo = "iOS", isDone = false, categoryNames = listOf("horror"))
 
         // when
@@ -121,7 +115,7 @@ class TodoServiceSpringBootTest @Autowired constructor(
     @Test
     fun `delete 테스트 - 제거 이후 Todo DB 조회`() {
         // given
-        val deleteId = result?.id ?: throw IllegalStateException("non-null is null")
+        val deleteId = result.id
         service.deleteTodo(deleteId)
 
         // when
@@ -136,7 +130,7 @@ class TodoServiceSpringBootTest @Autowired constructor(
         // given
         val beforeEntity = categoryRepository.findCategoryByName("drama")
 
-        val deleteId = result?.id ?: throw IllegalStateException("non-null is null")
+        val deleteId = result.id
         service.deleteTodo(deleteId)
 
         // when
@@ -151,9 +145,9 @@ class TodoServiceSpringBootTest @Autowired constructor(
     fun `delete 테스트 - 제거 이후 TodoCategory DB 조회, Cascade로 같이 잘 제거가 됐는지`() {
         // given
         val categoryId =
-            categoryRepository.findCategoryByName("drama")?.id ?: throw IllegalStateException("non-null is null")
+            categoryRepository.findCategoryByName("drama")?.id ?: 0L
         val todoCategoryBeforeCountByRemove = todoCategoryRepository.countByCategoryId(categoryId)
-        val deleteId = result?.id ?: throw IllegalStateException("non-null is null")
+        val deleteId = result.id
         service.deleteTodo(deleteId)
 
         // when
