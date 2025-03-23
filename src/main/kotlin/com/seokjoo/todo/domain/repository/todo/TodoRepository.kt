@@ -11,7 +11,7 @@ import org.springframework.stereotype.Repository
 @Repository
 interface TodoRepository : JpaRepository<Todo, Long> {
     @Query("select t from Todo t ORDER BY t.createdAt ASC")
-    fun findAllSlicedTodo(pageable: Pageable): Slice<Todo>
+    fun findAllSlicedTodoOrderByUpdatedAt(pageable: Pageable): Slice<Todo>
 
     @Query("select distinct t from Todo t left join fetch t.todoCategories tc left join fetch tc.category where t in :todos")
     fun getFetchJoinedTodoList(@Param("todos") todos: List<Todo>): List<Todo>

@@ -23,7 +23,7 @@ class TodoService(
     fun getPagedTodos(pageServiceDTO: TodoPageServiceDTO): TodoPageServiceResponseDTO {
         val pageRequest =
             PageRequest.of(pageServiceDTO.pageNumber, pageServiceDTO.pageSize, Sort.by("updatedAt").ascending())
-        val todoPage = todoRepository.findAllSlicedTodo(pageRequest)
+        val todoPage = todoRepository.findAllSlicedTodoOrderByUpdatedAt(pageRequest)
         val pageResult = todoRepository.getFetchJoinedTodoList(todos = todoPage.content)
         val todoPagedList = pageResult.map { todo -> TodoServiceResponseDTO.from(todo) }
 

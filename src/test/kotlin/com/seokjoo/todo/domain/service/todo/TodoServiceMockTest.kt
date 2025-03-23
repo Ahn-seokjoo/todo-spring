@@ -75,7 +75,7 @@ class TodoServiceMockTest : BehaviorSpec({
             Todo(todo = "abcdef", isDone = false),
         )
         val pageRequest = PageRequest.of(0, 10)
-        every { todoRepository.findAllSlicedTodo(any()) } returns SliceImpl(result, pageRequest, true)
+        every { todoRepository.findAllSlicedTodoOrderByUpdatedAt(any()) } returns SliceImpl(result, pageRequest, true)
         every { todoRepository.getFetchJoinedTodoList(any()) } returns result
 
         When("정상 케이스에서") {
