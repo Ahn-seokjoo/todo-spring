@@ -8,6 +8,7 @@ import com.seokjoo.todo.domain.repository.category.CategoryRepository
 import com.seokjoo.todo.domain.repository.todo.TodoRepository
 import com.seokjoo.todo.domain.service.remove.TodoDeleteService
 import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Sort
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -20,11 +21,13 @@ class TodoService(
     private val todoDeleteService: TodoDeleteService,
 ) {
     fun getPagedTodos(pageServiceDTO: TodoPageServiceDTO): TodoPageServiceResponseDTO {
-        val pageRequest = PageRequest.of(pageServiceDTO.pageNumber, pageServiceDTO.pageSize)
-        val pageResult = todoRepository.findAllByOrderByCreatedAtAsc(pageRequest)
-        val todoPagedList = pageResult.content.map { todo -> TodoServiceResponseDTO.from(todo) }
+        val pageRequest =
+            PageRequest.of(pageServiceDTO.pageNumber, pageServiceDTO.pageSize, Sort.by("updatedAt").ascending())
+        val todoPage = todoRepository.findAllSlicedTodoOrderByUpdatedAt(pageRequest)
+        val pageResult = todoRepository.getFetchJoinedTodoList(todos = todoPage.content)
+        val todoPagedList = pageResult.map { todo -> TodoServiceResponseDTO.from(todo) }
 
-        return TodoPageServiceResponseDTO(isLast = pageResult.isLast, responseList = todoPagedList)
+        return TodoPageServiceResponseDTO(isLast = todoPage.isLast, responseList = todoPagedList)
     }
 
     fun getTodoById(id: Long): TodoServiceResponseDTO {

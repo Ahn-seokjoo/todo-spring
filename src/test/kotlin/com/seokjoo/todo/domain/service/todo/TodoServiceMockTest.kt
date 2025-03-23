@@ -15,8 +15,8 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.mockk.every
 import io.mockk.mockk
-import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.SliceImpl
 import org.springframework.data.repository.findByIdOrNull
 
 class TodoServiceMockTest : BehaviorSpec({
@@ -75,7 +75,8 @@ class TodoServiceMockTest : BehaviorSpec({
             Todo(todo = "abcdef", isDone = false),
         )
         val pageRequest = PageRequest.of(0, 10)
-        every { todoRepository.findAllByOrderByCreatedAtAsc(any()) } returns PageImpl(result, pageRequest, 10)
+        every { todoRepository.findAllSlicedTodoOrderByUpdatedAt(any()) } returns SliceImpl(result, pageRequest, true)
+        every { todoRepository.getFetchJoinedTodoList(any()) } returns result
 
         When("정상 케이스에서") {
             val todoPageRequest = TodoPageRequest()
