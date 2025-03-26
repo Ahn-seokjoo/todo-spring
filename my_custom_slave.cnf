@@ -1,0 +1,6 @@
+[mysqld]
+server-id=2
+relay-log=mysql-relay-bin
+log-bin=mysql-bin
+read-only=1
+replicate-do-db=your_database_name
