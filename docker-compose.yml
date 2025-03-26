@@ -10,8 +10,8 @@ services:
     networks:
       - default
     volumes:
-      - mysql_primary_data:/bitnami/mysql/data
       - ./my_custom_master.cnf:/opt/bitnami/mysql/conf/my_custom.cnf:ro
+      - mysql_primary_data:/bitnami/mysql/data
     restart: always
     environment:
       <<: *common_environment
@@ -22,18 +22,18 @@ services:
 
     ## 추후에 백엔드 서버도 도커로 구성하면, expose 로 수정하여 외부접근 차단 해야함
     ports:
-      - "3306:3306"
+      - '3306:3306'
 
   mysql-slave:
     image: bitnami/mysql
     volumes:
-      - mysql_standby_data:/bitnami/mysql/data
       - ./my_custom_slave.cnf:/opt/bitnami/mysql/conf/my_custom.cnf:ro
+      - mysql_standby_data:/bitnami/mysql/data
     networks:
       - default
     restart: always
     ports:
-      - '3306'
+      - '3307:3306'
     depends_on:
       - mysql-master
     environment:
