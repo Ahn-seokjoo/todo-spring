@@ -9,9 +9,9 @@ import java.util.Date
 
 @Component
 class JwtProvider(
-    @Value("\${jwt.secret:jwt-secret}") private val secret: String = "",
-    @Value("\${jwt.accessTokenExpiration:1000}") private val accessTokenExpirationMs: Long = 1000L,
-    @Value("\${jwt.refreshTokenExpiration:10000}") private val refreshTokenExpirationMs: Long = 1000L,
+    @Value("\${jwt.secret:jwt-secret}") private val secret: String,
+    @Value("\${jwt.accessTokenExpiration:1000}") private val accessTokenExpirationMs: Long,
+    @Value("\${jwt.refreshTokenExpiration:10000}") private val refreshTokenExpirationMs: Long,
 ) {
 
     private val secretKey by lazy {
