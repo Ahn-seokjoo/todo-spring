@@ -2,11 +2,13 @@ package com.seokjoo.todo.domain.entity.todouser
 
 import com.seokjoo.todo.domain.entity.BaseEntity
 import jakarta.persistence.Column
+import jakarta.persistence.Entity
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 
-data class TodoUser(
+@Entity
+class TodoUser(
     val userId: String,
     val password: String,
 

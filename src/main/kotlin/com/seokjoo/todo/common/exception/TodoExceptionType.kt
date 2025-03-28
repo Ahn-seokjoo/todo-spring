@@ -28,5 +28,9 @@ enum class TodoExceptionType(
         message = "잘못된 요청입니다. 필수 값(혹은 빈값)을 확인하세요",
         errorCode = "C001_VALIDATION_BAD_REQUEST",
         httpStatusCode = 400
-    );
+    ),
+
+    // AUTH
+    AUTH_USER_NOT_EXIST(message = "회원이 아닙니다", errorCode = "A000_NOT_EXIST", httpStatusCode = 400),
+    AUTH_NOT_MATCHED_PASSWORD(message = "비밀번호가 틀립니다", errorCode = "A001_NOT_MATCHED_PASSWORD", httpStatusCode = 400)
 }

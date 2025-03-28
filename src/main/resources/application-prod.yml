@@ -16,7 +16,8 @@ spring:
       hibernate.format_sql: true
     database: mysql
     database-platform: org.hibernate.dialect.MySQLDialect
-  jwt:
-    secret: ${JWT_SECRETS}
-    accessTokenExpiration: ${JWT_ACCESS_TOKEN_EXPIRED_TIME}
-    refreshTokenExpiration: ${JWT_REFRESH_TOKEN_EXPIRED_TIME}
+
+jwt:
+  secret: ${JWT_SECRETS}
+  accessTokenExpiration: ${JWT_ACCESS_TOKEN_EXPIRED_TIME}
+  refreshTokenExpiration: ${JWT_REFRESH_TOKEN_EXPIRED_TIME}

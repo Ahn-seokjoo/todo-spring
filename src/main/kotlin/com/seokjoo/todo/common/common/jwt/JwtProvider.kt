@@ -15,7 +15,7 @@ class JwtProvider(
 ) {
 
     private val secretKey by lazy {
-        val decodeKey = Base64.getDecoder().decode(secret)
+        val decodeKey = Base64.getUrlDecoder().decode(secret)
         Keys.hmacShaKeyFor(decodeKey)
     }
 
