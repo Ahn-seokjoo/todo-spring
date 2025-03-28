@@ -20,9 +20,9 @@ jobs:
     permissions:
       contents: read
     env:
-      jwt.secret: "jwt-secret-value"
-      jwt.accessTokenExpiration: "1000"
-      jwt.refreshTokenExpiration: "10000"
+      jwt.secret: jwt-secret-value
+      jwt.accessTokenExpiration: 1000
+      jwt.refreshTokenExpiration: 10000
 
     steps:
       - uses: actions/checkout@v4
