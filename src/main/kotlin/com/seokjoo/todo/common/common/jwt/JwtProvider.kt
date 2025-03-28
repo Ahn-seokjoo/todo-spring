@@ -19,7 +19,7 @@ class JwtProvider(
         Keys.hmacShaKeyFor(decodeKey)
     }
 
-    fun generateToken(id: String, tokenType: JwtTokenType): String {
+    fun generateToken(userId: String, tokenType: JwtTokenType): String {
         val now = Date()
         val expiredTime = if (tokenType == JwtTokenType.ACCESS) {
             Date(now.time + accessTokenExpirationMs)
@@ -28,7 +28,7 @@ class JwtProvider(
         }
 
         return Jwts.builder()
-            .subject(id) // 목적? 인데,,, 보통 id를 쓰나
+            .subject(userId) // 목적? 인데,,, 보통 id를 쓰나
             .issuer("pita")
             .issuedAt(now)
             .notBefore(now)

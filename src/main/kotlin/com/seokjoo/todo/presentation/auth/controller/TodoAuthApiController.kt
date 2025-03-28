@@ -18,7 +18,7 @@ class TodoAuthApiController(
 
     @PostMapping("/login")
     fun login(@RequestBody @Validated request: TodoAuthLoginRequest): ResponseEntity<TodoAuthLoginResponse> {
-        val result = authService.login(request.id, request.password)
+        val result = authService.login(request.userId, request.password)
         return ResponseEntity.ok(
             TodoAuthLoginResponse(
                 accessToken = result.accessToken,

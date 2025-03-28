@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotBlank
 
 data class TodoAuthLoginRequest(
     @field:NotBlank(message = "id는 필수 값입니다.")
-    val id: String,
+    val userId: String,
     @field:NotBlank(message = "password는 필수 값입니다.")
     val password: String,
 )
