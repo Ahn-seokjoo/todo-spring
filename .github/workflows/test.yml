@@ -19,6 +19,10 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    env:
+      JWT_SECRET: "jwt-secret-value"
+      JWT_ACCESS_TOKEN_EXPIRATION: "1000"
+      JWT_REFRESH_TOKEN_EXPIRATION: "10000"
 
     steps:
       - uses: actions/checkout@v4
