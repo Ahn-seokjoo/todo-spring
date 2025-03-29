@@ -47,7 +47,7 @@ class TodoAuthService(
     }
 
     fun checkTokenSignature(userId: String, accessToken: String) {
-        val isNotValidSignature = jwtProvider.checkSignature(userId, accessToken).not()
+        val isNotValidSignature = jwtProvider.checkValidSignature(userId, accessToken).not()
         if (isNotValidSignature) throw TodoException.of(TodoExceptionType.AUTH_REFRESH_TOKEN_NOT_VALID)
     }
 

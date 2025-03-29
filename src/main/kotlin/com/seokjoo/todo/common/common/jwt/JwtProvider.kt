@@ -55,7 +55,7 @@ class JwtProvider(
         }.getOrDefault(false)
     }
 
-    fun checkSignature(userId: String, accessToken: String): Boolean {
+    fun checkValidSignature(userId: String, accessToken: String): Boolean {
         val subject = runCatching {
             Jwts.parser()
                 .verifyWith(secretKey)
