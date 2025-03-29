@@ -15,10 +15,13 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    env:
+      JWT_SECRETS: jwt-secret-value
+      JWT_ACCESS_TOKEN_EXPIRED_TIME: 1000
+      JWT_REFRESH_TOKEN_EXPIRED_TIME: 10000
 
     steps:
       - uses: actions/checkout@v4
@@ -38,7 +41,6 @@ jobs:
 
   ## 처음보는데, 의존성 그래프를 만들어서 보안 취약점에 대한 경고를 준다네요
   dependency-submission:
-
     runs-on: ubuntu-latest
     permissions:
       contents: write

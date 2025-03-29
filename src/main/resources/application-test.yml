@@ -1,4 +1,6 @@
 spring:
+  config:
+    import: optional:file:.env[.properties]
   application:
     name: todo
   datasource:
@@ -12,3 +14,8 @@ spring:
     show-sql: true
     database: h2
     database-platform: org.hibernate.dialect.H2Dialect
+
+jwt:
+  secret: ${JWT_SECRETS}
+  accessTokenExpiration: ${JWT_ACCESS_TOKEN_EXPIRED_TIME}
+  refreshTokenExpiration: ${JWT_REFRESH_TOKEN_EXPIRED_TIME}
