@@ -37,5 +37,7 @@ class TodoAuthService(
         }
     }
 
-    fun refreshToken() {}
+    fun refreshToken(userId: String): String {
+        return jwtProvider.generateToken(userId, JwtTokenType.REFRESH)
+    }
 }
