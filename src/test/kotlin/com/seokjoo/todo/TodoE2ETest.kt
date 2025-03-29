@@ -2,6 +2,7 @@ package com.seokjoo.todo
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.seokjoo.todo.domain.service.auth.TodoAuthService
 import com.seokjoo.todo.presentation.category.dto.CategoryDTO
 import com.seokjoo.todo.presentation.todo.dto.request.TodoRequest
 import com.seokjoo.todo.presentation.todo.dto.response.TodoPageResponse
@@ -16,17 +17,19 @@ import org.springframework.boot.test.web.server.LocalServerPort
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory
 import org.springframework.jdbc.core.JdbcTemplate
+import org.springframework.test.context.ActiveProfiles
 import org.springframework.web.client.RestTemplate
 import org.springframework.web.client.exchange
-import org.springframework.web.client.postForEntity
 import java.net.URI
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@ActiveProfiles("test")
 class TodoE2ETest {
 
     @LocalServerPort
@@ -40,21 +43,40 @@ class TodoE2ETest {
     @Autowired
     private lateinit var jdbcTemplate: JdbcTemplate
 
+    @Autowired
+    private lateinit var loginService: TodoAuthService
+    private lateinit var header: HttpHeaders
+
     /**
      * post로 생성시에 1부터 생성해서 2로 세팅함
      */
     @BeforeEach
     fun beforeEach() {
+        insertInitialData()
+        addHeader()
+    }
+
+    private fun insertInitialData() {
         val currentTime = LocalDateTime.now()
         val formattedTime = currentTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
         val sql = "INSERT INTO todo (todo_id, is_done, todo, created_at, updated_at) VALUES (2, false, 'spring', ?, ?)"
         jdbcTemplate.update(sql, formattedTime, formattedTime)
     }
 
+    private fun addHeader() {
+        loginService.signUp("pita", "pita")
+        val result = loginService.login("pita", "pita")
+        header = HttpHeaders().apply {
+            set("Authorization", "Bearer ${result.refreshToken}")
+            contentType = MediaType.APPLICATION_JSON
+        }
+    }
+
     @AfterEach
     fun afterEach() {
         jdbcTemplate.execute("DELETE FROM todo_category WHERE todo_id = 2")
         jdbcTemplate.execute("DELETE FROM todo WHERE todo_id = 2")
+        loginService.delete("pita", "pita")
     }
 
     @Test
@@ -67,7 +89,12 @@ class TodoE2ETest {
             )
         )
 
-        val response: ResponseEntity<String> = restTemplate.getForEntity(url, String::class.java)
+        val response: ResponseEntity<String> = restTemplate.exchange(
+            url,
+            HttpMethod.GET,
+            HttpEntity<String>(header),
+            String::class.java
+        )
 
         assertThat(response.statusCode.value()).isEqualTo(200)
 
@@ -84,7 +111,12 @@ class TodoE2ETest {
         val url = "http://localhost:$port/api/v1/todos/2"
         val expected = TodoResponse(id = 10L, todo = "spring", isDone = false, categories = emptyList())
 
-        val response: ResponseEntity<String> = restTemplate.getForEntity(url, String::class.java)
+        val response: ResponseEntity<String> = restTemplate.exchange(
+            url,
+            HttpMethod.GET,
+            HttpEntity<String>(header),
+            String::class.java
+        )
 
         assertThat(response.statusCode.value()).isEqualTo(200)
 
@@ -102,7 +134,12 @@ class TodoE2ETest {
         val expected = TodoResponse(id = 1L, todo = "Android", isDone = true, categories = listOf("drama"))
         val request = TodoRequest(todo = "Android", isDone = true, categories = listOf(CategoryDTO("drama")))
 
-        val response: ResponseEntity<String> = restTemplate.postForEntity<String>(url = url, request = request)
+        val response: ResponseEntity<String> = restTemplate.exchange(
+            url,
+            HttpMethod.POST,
+            HttpEntity(request, header),
+            String::class.java
+        )
 
         assertThat(response.statusCode.value()).isEqualTo(201)
         assertThat(response.headers.location).isEqualTo(URI.create("/todos/1"))
@@ -122,7 +159,7 @@ class TodoE2ETest {
         val response: ResponseEntity<String> = restTemplate.exchange(
             url = url,
             method = HttpMethod.DELETE,
-            requestEntity = HttpEntity<String>(HttpHeaders()),
+            requestEntity = HttpEntity<String>(header),
             String::class
         )
 
@@ -139,7 +176,7 @@ class TodoE2ETest {
         val request = TodoRequest(todo = "node", isDone = true, categories = listOf(CategoryDTO("drama")))
 
         val responseEntity: ResponseEntity<String> =
-            restTemplate.exchange(url, HttpMethod.PATCH, HttpEntity(request), String::class)
+            restTemplate.exchange(url, HttpMethod.PATCH, HttpEntity(request, header), String::class)
         assertThat(responseEntity.statusCode.value()).isEqualTo(200)
 
         val result = objectMapper.readValue<TodoResponse>(responseEntity.body.orEmpty())
