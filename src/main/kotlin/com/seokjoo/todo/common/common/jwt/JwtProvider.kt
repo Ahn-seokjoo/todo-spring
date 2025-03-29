@@ -1,9 +1,13 @@
 package com.seokjoo.todo.common.common.jwt
 
+import io.jsonwebtoken.ExpiredJwtException
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.security.Keys
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
+import java.time.Duration
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import java.util.Base64
 import java.util.Date
 
@@ -19,19 +23,25 @@ class JwtProvider(
         Keys.hmacShaKeyFor(decodeKey)
     }
 
+    /**
+     * time 수정 예정
+     */
     fun generateToken(userId: String, tokenType: JwtTokenType): String {
-        val now = Date()
+        val zoneId = ZoneId.of("Asia/Seoul")
+        val now = ZonedDateTime.now(zoneId) // 서울 시간 기준 현재 시간
+        val nowDate = Date.from(now.toInstant())
+
         val expiredTime = if (tokenType == JwtTokenType.ACCESS) {
-            Date(now.time + accessTokenExpirationMs)
+            Date.from(now.plus(Duration.ofMillis(accessTokenExpirationMs)).toInstant())
         } else {
-            Date(now.time + refreshTokenExpirationMs)
+            Date.from(now.plus(Duration.ofMillis(refreshTokenExpirationMs)).toInstant())
         }
 
         return Jwts.builder()
-            .subject(userId) // 목적? 인데,,, 보통 id를 쓰나
+            .subject(userId)
             .issuer("pita")
-            .issuedAt(now)
-            .notBefore(now)
+            .issuedAt(nowDate)
+            .notBefore(nowDate)
             .expiration(expiredTime)
             .signWith(secretKey)
             .compact()
@@ -45,6 +55,25 @@ class JwtProvider(
                 .parseSignedClaims(token)
                 .payload
             true
-        }.getOrDefault(false)
+        }.getOrElse {
+            it
+            false
+        }
+    }
+
+    fun checkSignature(userId: String, accessToken: String): Boolean {
+        val subject = runCatching {
+            Jwts.parser()
+                .verifyWith(secretKey)
+                .build()
+                .parseSignedClaims(accessToken)
+                .payload
+                .subject
+        }.getOrElse {
+            if (it is ExpiredJwtException) it.claims.subject
+            else ""
+        }
+
+        return subject == userId
     }
 }
