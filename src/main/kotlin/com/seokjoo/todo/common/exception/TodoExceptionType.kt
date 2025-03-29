@@ -39,4 +39,5 @@ enum class TodoExceptionType(
         httpStatusCode = 400
     ),
     AUTH_REFRESH_TOKEN_NOT_VALID(message = "유효하지 않은 토큰입니다.", errorCode = "A003_TOKEN_NOT_VALID", httpStatusCode = 401),
+    AUTH_SIGN_UP_ERROR(message = "이미 존재하는 ID 입니다", errorCode = "A004_USER_ALREADY_EXIST", httpStatusCode = 400),
 }
