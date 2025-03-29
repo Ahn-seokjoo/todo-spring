@@ -5,7 +5,7 @@ import com.seokjoo.todo.common.common.jwt.JwtProvider
 import com.seokjoo.todo.common.common.jwt.JwtTokenType
 import com.seokjoo.todo.common.exception.TodoException
 import com.seokjoo.todo.common.exception.TodoExceptionType
-import com.seokjoo.todo.domain.entity.todouser.TodoUser
+import com.seokjoo.todo.domain.entity.todouser.User
 import com.seokjoo.todo.domain.repository.todouser.TodoAuthRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -19,7 +19,7 @@ class TodoAuthService(
     @Transactional
     fun signUp(userId: String, password: String) {
         val encodedPassword = encryptor.encrypt(password)
-        val user = TodoUser(userId = userId, password = encodedPassword)
+        val user = User(userId = userId, password = encodedPassword)
         todoAuthRepository.save(user)
     }
 

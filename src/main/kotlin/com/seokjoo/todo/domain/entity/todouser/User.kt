@@ -7,8 +7,8 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 
-@Entity
-class TodoUser(
+@Entity(name = "todo_user")
+class User(
     val userId: String,
     val password: String,
 
