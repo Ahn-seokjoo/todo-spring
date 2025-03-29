@@ -17,7 +17,8 @@ class JwtAuthFilter(
      * "/api/v1/auth/refresh" 는 controller 쪽에서 검증을 따로 하기 때문에 filter 해주지 않았습니다
      */
     override fun shouldNotFilter(request: HttpServletRequest): Boolean {
-        val excludePatterns = listOf("/api/v1/auth/login", "/api/v1/auth/signup", "/api/v1/auth/refresh")
+        val excludePatterns =
+            listOf("/api/v1/auth/login", "/api/v1/auth/signup", "/api/v1/auth/refresh", "/api/v1/auth/delete")
         return excludePatterns.any { request.requestURI.startsWith(it) }
     }
 
