@@ -23,9 +23,6 @@ class JwtProvider(
         Keys.hmacShaKeyFor(decodeKey)
     }
 
-    /**
-     * time 수정 예정
-     */
     fun generateToken(userId: String, tokenType: JwtTokenType): String {
         val zoneId = ZoneId.of("Asia/Seoul")
         val now = ZonedDateTime.now(zoneId) // 서울 시간 기준 현재 시간
@@ -55,10 +52,7 @@ class JwtProvider(
                 .parseSignedClaims(token)
                 .payload
             true
-        }.getOrElse {
-            it
-            false
-        }
+        }.getOrDefault(false)
     }
 
     fun checkSignature(userId: String, accessToken: String): Boolean {
