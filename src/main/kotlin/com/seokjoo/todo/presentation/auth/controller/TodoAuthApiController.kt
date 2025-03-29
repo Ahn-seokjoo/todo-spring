@@ -3,8 +3,11 @@ package com.seokjoo.todo.presentation.auth.controller
 import com.seokjoo.todo.domain.service.auth.TodoAuthService
 import com.seokjoo.todo.presentation.auth.dto.TodoAuthLoginRequest
 import com.seokjoo.todo.presentation.auth.dto.TodoAuthLoginResponse
+import com.seokjoo.todo.presentation.auth.dto.TodoAuthRefreshTokenRequest
+import com.seokjoo.todo.presentation.auth.dto.TodoAuthRefreshTokenResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
+import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.PostMapping
@@ -41,7 +44,12 @@ class TodoAuthApiController(
     }
 
     @PostMapping("/refresh")
-    fun refreshToken() {
-        authService.refreshToken()
+    fun refreshToken(@RequestBody @Valid request: TodoAuthRefreshTokenRequest): ResponseEntity<TodoAuthRefreshTokenResponse> {
+        val newRefreshToken = authService.refreshToken(request.userId)
+        return ResponseEntity.ok(
+            TodoAuthRefreshTokenResponse(
+                refreshToken = newRefreshToken,
+            )
+        )
     }
 }
