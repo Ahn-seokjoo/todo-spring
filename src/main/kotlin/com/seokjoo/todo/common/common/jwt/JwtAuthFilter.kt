@@ -31,7 +31,7 @@ class JwtAuthFilter(
             val token = request.getBearerToken()
 
             val isNotValid = jwtProvider.validateToken(token).not()
-            if (isNotValid) throw throw TodoException.of(TodoExceptionType.AUTH_REFRESH_TOKEN_NOT_VALID)
+            if (isNotValid) throw TodoException.of(TodoExceptionType.AUTH_REFRESH_TOKEN_NOT_VALID)
 
             filterChain.doFilter(request, response)
         } catch (e: TodoException) {
