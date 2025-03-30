@@ -18,9 +18,13 @@ class TodoAuthService(
 ) {
     @Transactional
     fun signUp(userId: String, password: String) {
-        val encodedPassword = encryptor.encrypt(password)
-        val user = User(userId = userId, password = encodedPassword)
-        todoAuthRepository.save(user)
+        todoAuthRepository.findUserByUserId(userId) ?: run {
+            val encodedPassword = encryptor.encrypt(password)
+            val user = User(userId = userId, password = encodedPassword)
+            todoAuthRepository.save(user)
+            return
+        }
+        throw TodoException.of(TodoExceptionType.AUTH_SIGN_UP_ERROR)
     }
 
     @Transactional(readOnly = true)
@@ -35,6 +39,20 @@ class TodoAuthService(
         } else {
             throw TodoException.of(TodoExceptionType.AUTH_NOT_MATCHED_PASSWORD)
         }
+    }
+
+    @Transactional
+    fun delete(userId: String, password: String) {
+        val user =
+            todoAuthRepository.findUserByUserId(userId) ?: throw TodoException.of(TodoExceptionType.AUTH_USER_NOT_EXIST)
+        val validate = encryptor.validatePassword(password = password, encodedPassword = user.password)
+        if (validate) todoAuthRepository.delete(user)
+        else throw TodoException.of(TodoExceptionType.AUTH_NOT_MATCHED_PASSWORD)
+    }
+
+    fun checkTokenSignature(userId: String, accessToken: String) {
+        val isNotValidSignature = jwtProvider.checkValidSignature(userId, accessToken).not()
+        if (isNotValidSignature) throw TodoException.of(TodoExceptionType.AUTH_REFRESH_TOKEN_NOT_VALID)
     }
 
     fun refreshToken(userId: String): String {

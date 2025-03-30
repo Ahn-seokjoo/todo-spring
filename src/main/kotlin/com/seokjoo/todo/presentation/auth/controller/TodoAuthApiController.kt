@@ -1,15 +1,19 @@
 package com.seokjoo.todo.presentation.auth.controller
 
+import com.seokjoo.todo.common.common.jwt.getBearerToken
 import com.seokjoo.todo.domain.service.auth.TodoAuthService
+import com.seokjoo.todo.presentation.auth.dto.TodoAuthDeleteRequest
 import com.seokjoo.todo.presentation.auth.dto.TodoAuthLoginRequest
 import com.seokjoo.todo.presentation.auth.dto.TodoAuthLoginResponse
 import com.seokjoo.todo.presentation.auth.dto.TodoAuthRefreshTokenRequest
 import com.seokjoo.todo.presentation.auth.dto.TodoAuthRefreshTokenResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
+import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
 import org.springframework.validation.annotation.Validated
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -21,7 +25,6 @@ import org.springframework.web.bind.annotation.RestController
 class TodoAuthApiController(
     private val authService: TodoAuthService,
 ) {
-
     @PostMapping("/signup")
     @ApiResponse(
         responseCode = "200",
@@ -44,12 +47,27 @@ class TodoAuthApiController(
     }
 
     @PostMapping("/refresh")
-    fun refreshToken(@RequestBody @Valid request: TodoAuthRefreshTokenRequest): ResponseEntity<TodoAuthRefreshTokenResponse> {
-        val newRefreshToken = authService.refreshToken(request.userId)
+    fun refreshToken(
+        httpRequest: HttpServletRequest,
+        @RequestBody @Valid tokenRequest: TodoAuthRefreshTokenRequest,
+    ): ResponseEntity<TodoAuthRefreshTokenResponse> {
+        val token = httpRequest.getBearerToken()
+
+        authService.checkTokenSignature(tokenRequest.userId, token)
+
+        val newRefreshToken = authService.refreshToken(tokenRequest.userId)
         return ResponseEntity.ok(
             TodoAuthRefreshTokenResponse(
                 refreshToken = newRefreshToken,
             )
         )
+    }
+
+    @DeleteMapping("/delete")
+    fun deleteUser(
+        @RequestBody @Validated request: TodoAuthDeleteRequest,
+    ): ResponseEntity<String> {
+        authService.delete(request.userId, request.password)
+        return ResponseEntity.ok("삭제 성공")
     }
 }

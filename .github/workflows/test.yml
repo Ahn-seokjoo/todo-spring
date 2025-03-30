@@ -19,9 +19,10 @@ jobs:
     permissions:
       contents: read
     env:
-      JWT_SECRETS: jwt-secret-value
-      JWT_ACCESS_TOKEN_EXPIRED_TIME: 1000
-      JWT_REFRESH_TOKEN_EXPIRED_TIME: 10000
+      # 테스트용 임의로 생성한 값입니다 (실제 값 아님!)
+      JWT_SECRETS: zKiWKx6Cv9wDMeVE63GgbWPRDIpLEhpJb67_DRPqeAE
+      JWT_ACCESS_TOKEN_EXPIRED_TIME: 1000000
+      JWT_REFRESH_TOKEN_EXPIRED_TIME: 10000000
 
     steps:
       - uses: actions/checkout@v4

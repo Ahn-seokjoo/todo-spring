@@ -32,5 +32,12 @@ enum class TodoExceptionType(
 
     // AUTH
     AUTH_USER_NOT_EXIST(message = "회원이 아닙니다", errorCode = "A000_NOT_EXIST", httpStatusCode = 400),
-    AUTH_NOT_MATCHED_PASSWORD(message = "비밀번호가 틀립니다", errorCode = "A001_NOT_MATCHED_PASSWORD", httpStatusCode = 400)
+    AUTH_NOT_MATCHED_PASSWORD(message = "비밀번호가 틀립니다", errorCode = "A001_NOT_MATCHED_PASSWORD", httpStatusCode = 400),
+    AUTH_REFRESH_TOKEN_BAD_REQUEST(
+        message = "토큰이 존재하지 않거나 형식이 잘못됐습니다",
+        errorCode = "A002_TOKEN_BAD_REQUEST",
+        httpStatusCode = 400
+    ),
+    AUTH_REFRESH_TOKEN_NOT_VALID(message = "유효하지 않은 토큰입니다.", errorCode = "A003_TOKEN_NOT_VALID", httpStatusCode = 401),
+    AUTH_SIGN_UP_ERROR(message = "이미 존재하는 ID 입니다", errorCode = "A004_USER_ALREADY_EXIST", httpStatusCode = 400),
 }
