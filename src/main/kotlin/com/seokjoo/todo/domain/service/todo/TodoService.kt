@@ -7,6 +7,8 @@ import com.seokjoo.todo.domain.entity.todo.Todo
 import com.seokjoo.todo.domain.repository.category.CategoryRepository
 import com.seokjoo.todo.domain.repository.todo.TodoRepository
 import com.seokjoo.todo.domain.service.remove.TodoDeleteService
+import org.springframework.cache.annotation.CacheEvict
+import org.springframework.cache.annotation.Cacheable
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.data.repository.findByIdOrNull
@@ -20,6 +22,7 @@ class TodoService(
     private val categoryRepository: CategoryRepository,
     private val todoDeleteService: TodoDeleteService,
 ) {
+    @Cacheable(cacheNames = ["todos"], key = "'todos'")
     fun getPagedTodos(pageServiceDTO: TodoPageServiceDTO): TodoPageServiceResponseDTO {
         val pageRequest =
             PageRequest.of(pageServiceDTO.pageNumber, pageServiceDTO.pageSize, Sort.by("updatedAt").ascending())
@@ -30,12 +33,14 @@ class TodoService(
         return TodoPageServiceResponseDTO(isLast = todoPage.isLast, responseList = todoPagedList)
     }
 
+    @Cacheable(cacheNames = ["todos"], key = "todos")
     fun getTodoById(id: Long): TodoServiceResponseDTO {
         val result = todoRepository.findByIdOrNull(id) ?: throw TodoException.of(TodoExceptionType.NOT_EXISTED_TODO)
         return TodoServiceResponseDTO.from(result)
     }
 
     @Transactional
+    @CacheEvict(value = ["todos"])
     fun createTodo(request: TodoServiceRequestDTO): TodoServiceResponseDTO {
         // 1. 저장하여 영속화 먼저
         val todo = Todo(todo = request.todo, isDone = request.isDone)
@@ -46,6 +51,7 @@ class TodoService(
     }
 
     @Transactional
+    @CacheEvict(value = ["todos"])
     fun updateTodo(id: Long, request: TodoServiceRequestDTO): TodoServiceResponseDTO {
         val todo = todoRepository.findByIdOrNull(id) ?: throw TodoException.of(TodoExceptionType.NOT_EXISTED_TODO)
 
@@ -61,6 +67,7 @@ class TodoService(
     }
 
     @Transactional
+    @CacheEvict(value = ["todos"])
     fun deleteTodo(id: Long) {
         val todo = todoRepository.findByIdOrNull(id) ?: throw TodoException.of(TodoExceptionType.NOT_EXISTED_TODO)
 
