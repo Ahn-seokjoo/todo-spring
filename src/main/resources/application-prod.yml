@@ -16,6 +16,11 @@ spring:
       hibernate.format_sql: true
     database: mysql
     database-platform: org.hibernate.dialect.MySQLDialect
+  data:
+    redis:
+      host: localhost:6379
+      password: ${REDIS_PASSWORD}
+      port: 6379
 
 jwt:
   secret: ${JWT_SECRETS}
