@@ -18,7 +18,7 @@ spring:
     database-platform: org.hibernate.dialect.MySQLDialect
   data:
     redis:
-      host: localhost:6379
+      host: localhost
       password: ${REDIS_PASSWORD}
       port: 6379
   cache:
