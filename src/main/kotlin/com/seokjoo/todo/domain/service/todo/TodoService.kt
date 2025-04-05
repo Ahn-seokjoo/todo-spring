@@ -8,7 +8,9 @@ import com.seokjoo.todo.domain.repository.category.CategoryRepository
 import com.seokjoo.todo.domain.repository.todo.TodoRepository
 import com.seokjoo.todo.domain.service.remove.TodoDeleteService
 import org.springframework.cache.annotation.CacheEvict
+import org.springframework.cache.annotation.CachePut
 import org.springframework.cache.annotation.Cacheable
+import org.springframework.cache.annotation.Caching
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.data.repository.findByIdOrNull
@@ -52,6 +54,7 @@ class TodoService(
 
     @Transactional
     @CacheEvict(value = ["todos"])
+    @CachePut(cacheNames = ["todo"], key = "#id")
     fun updateTodo(id: Long, request: TodoServiceRequestDTO): TodoServiceResponseDTO {
         val todo = todoRepository.findByIdOrNull(id) ?: throw TodoException.of(TodoExceptionType.NOT_EXISTED_TODO)
 
@@ -67,7 +70,12 @@ class TodoService(
     }
 
     @Transactional
-    @CacheEvict(value = ["todos"])
+    @Caching(
+        evict = [
+            CacheEvict(value = ["todos"]),
+            CacheEvict(value = ["todo"], key = "#id"),
+        ]
+    )
     fun deleteTodo(id: Long) {
         val todo = todoRepository.findByIdOrNull(id) ?: throw TodoException.of(TodoExceptionType.NOT_EXISTED_TODO)
 
