@@ -14,8 +14,17 @@ on:
     branches: [ "develop" ]
 
 jobs:
+  redis-container:
+    runs-on: ubuntu-latest
+    container: redis
+    env:
+      # 테스트용 임의로 생성한 값입니다 (실제 값 아님!)
+      REDIS_HOST: localhost
+      REDIS_PORT: 6380
+
   build:
     runs-on: ubuntu-latest
+    needs: redis-container
     permissions:
       contents: read
     env:
@@ -23,7 +32,6 @@ jobs:
       JWT_SECRETS: zKiWKx6Cv9wDMeVE63GgbWPRDIpLEhpJb67_DRPqeAE
       JWT_ACCESS_TOKEN_EXPIRED_TIME: 1000000
       JWT_REFRESH_TOKEN_EXPIRED_TIME: 10000000
-      REDIS_PASSWORD: 1234
 
     steps:
       - uses: actions/checkout@v4
