@@ -101,11 +101,9 @@ class TodoE2ETest @Autowired constructor(
             HttpEntity<String>(header),
             String::class.java
         )
-
-        assertThat(response.statusCode.value()).isEqualTo(200)
-
         val result = objectMapper.readValue<TodoPageResponse>(response.body.orEmpty())
 
+        assertThat(response.statusCode.value()).isEqualTo(200)
         assertThat(result)
             .usingRecursiveComparison()
             .ignoringFields("id")
@@ -123,11 +121,9 @@ class TodoE2ETest @Autowired constructor(
             HttpEntity<String>(header),
             String::class.java
         )
-
-        assertThat(response.statusCode.value()).isEqualTo(200)
-
         val result = objectMapper.readValue<TodoResponse>(response.body.orEmpty())
 
+        assertThat(response.statusCode.value()).isEqualTo(200)
         assertThat(result)
             .usingRecursiveComparison()
             .ignoringFields("id")
@@ -146,12 +142,10 @@ class TodoE2ETest @Autowired constructor(
             HttpEntity(request, header),
             String::class.java
         )
+        val result = objectMapper.readValue<TodoResponse>(response.body.orEmpty())
 
         assertThat(response.statusCode.value()).isEqualTo(201)
         assertThat(response.headers.location).isEqualTo(URI.create("/todos/1"))
-
-        val result = objectMapper.readValue<TodoResponse>(response.body.orEmpty())
-
         assertThat(result)
             .usingRecursiveComparison()
             .ignoringFields("id")
@@ -183,10 +177,9 @@ class TodoE2ETest @Autowired constructor(
 
         val responseEntity: ResponseEntity<String> =
             restTemplate.exchange(url, HttpMethod.PATCH, HttpEntity(request, header), String::class)
-        assertThat(responseEntity.statusCode.value()).isEqualTo(200)
-
         val result = objectMapper.readValue<TodoResponse>(responseEntity.body.orEmpty())
 
+        assertThat(responseEntity.statusCode.value()).isEqualTo(200)
         assertThat(result)
             .usingRecursiveComparison()
             .ignoringFields("id")
