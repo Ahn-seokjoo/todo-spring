@@ -32,7 +32,10 @@ import java.time.format.DateTimeFormatter
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 class TodoE2ETest @Autowired constructor(
-    private val redisTemplate: RedisTemplate<String, Any>
+    private val redisTemplate: RedisTemplate<String, Any>,
+    private val objectMapper: ObjectMapper,
+    private val jdbcTemplate: JdbcTemplate,
+    private val loginService: TodoAuthService,
 ) {
 
     @LocalServerPort
@@ -40,14 +43,6 @@ class TodoE2ETest @Autowired constructor(
 
     private val restTemplate: RestTemplate = RestTemplate()
 
-    @Autowired
-    private lateinit var objectMapper: ObjectMapper
-
-    @Autowired
-    private lateinit var jdbcTemplate: JdbcTemplate
-
-    @Autowired
-    private lateinit var loginService: TodoAuthService
     private lateinit var header: HttpHeaders
 
     /**
