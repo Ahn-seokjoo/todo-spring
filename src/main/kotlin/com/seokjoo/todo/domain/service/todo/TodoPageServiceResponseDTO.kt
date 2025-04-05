@@ -1,6 +1,6 @@
 package com.seokjoo.todo.domain.service.todo
 
 data class TodoPageServiceResponseDTO(
-    val isLast: Boolean = true,
-    val responseList: List<TodoServiceResponseDTO> = emptyList(),
+    val isLast: Boolean,
+    val responseList: List<TodoServiceResponseDTO>,
 )
