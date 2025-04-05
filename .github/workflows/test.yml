@@ -8,8 +8,6 @@
 name: Java CI with Gradle
 
 on:
-  push:
-    branches: [ "develop", "feature**", "refactoring**" ]
   pull_request:
     branches: [ "develop", "feature**", "refactoring**" ]
 
