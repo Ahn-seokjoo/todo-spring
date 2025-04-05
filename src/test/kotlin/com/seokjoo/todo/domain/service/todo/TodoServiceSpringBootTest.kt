@@ -7,15 +7,22 @@ import com.seokjoo.todo.domain.repository.categorytodo.TodoCategoryRepository
 import com.seokjoo.todo.presentation.todo.dto.request.TodoPageRequest
 import com.seokjoo.todo.presentation.todo.dto.request.toPageServiceDTO
 import org.assertj.core.api.Assertions
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.data.redis.connection.RedisConnectionFactory
+import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory
+import org.springframework.data.redis.core.RedisTemplate
+import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer
+import org.springframework.data.redis.serializer.StringRedisSerializer
 
 @IntegrationTest
 class TodoServiceSpringBootTest @Autowired constructor(
     private val service: TodoService,
     private val categoryRepository: CategoryRepository,
     private val todoCategoryRepository: TodoCategoryRepository,
+    private val redisTemplate: RedisTemplate<String, Any>,
 ) {
     lateinit var result: TodoServiceResponseDTO
 
@@ -24,6 +31,12 @@ class TodoServiceSpringBootTest @Autowired constructor(
         val request = TodoServiceRequestDTO(todo = "android", isDone = true, categoryNames = listOf("drama"))
         // when
         result = service.createTodo(request)
+    }
+
+    @AfterEach
+    fun cleanupRedis() {
+        val keys = redisTemplate.keys("todos:*")
+        redisTemplate.delete(keys)
     }
 
     // 통합 테스트

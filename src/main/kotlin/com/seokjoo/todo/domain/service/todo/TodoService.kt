@@ -33,7 +33,7 @@ class TodoService(
         return TodoPageServiceResponseDTO(isLast = todoPage.isLast, responseList = todoPagedList)
     }
 
-    @Cacheable(cacheNames = ["todos"], key = "todos")
+    @Cacheable(cacheNames = ["todo"], key = "#id")
     fun getTodoById(id: Long): TodoServiceResponseDTO {
         val result = todoRepository.findByIdOrNull(id) ?: throw TodoException.of(TodoExceptionType.NOT_EXISTED_TODO)
         return TodoServiceResponseDTO.from(result)

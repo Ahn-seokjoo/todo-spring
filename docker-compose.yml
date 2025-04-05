@@ -10,6 +10,11 @@ services:
     container_name: redis
     ports:
       - '6379:6379'
+  test-redis:
+    image: redis
+    container_name: test-redis
+    ports:
+      - '6380:6379'
 
   mysql-master:
     image: bitnami/mysql
