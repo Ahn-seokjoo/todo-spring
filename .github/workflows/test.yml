@@ -23,6 +23,7 @@ jobs:
       JWT_SECRETS: zKiWKx6Cv9wDMeVE63GgbWPRDIpLEhpJb67_DRPqeAE
       JWT_ACCESS_TOKEN_EXPIRED_TIME: 1000000
       JWT_REFRESH_TOKEN_EXPIRED_TIME: 10000000
+      REDIS_PASSWORD: 1234
 
     steps:
       - uses: actions/checkout@v4
