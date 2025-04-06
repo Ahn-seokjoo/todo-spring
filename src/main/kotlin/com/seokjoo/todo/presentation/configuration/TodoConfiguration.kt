@@ -16,6 +16,7 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.data.redis.cache.RedisCacheConfiguration
 import org.springframework.data.redis.cache.RedisCacheManager
 import org.springframework.data.redis.connection.RedisConnectionFactory
+import org.springframework.data.redis.connection.RedisStandaloneConfiguration
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer
@@ -44,7 +45,7 @@ class TodoConfiguration(
     }
 
     @Bean
-    fun redisCacheManager(connectionFactory: RedisConnectionFactory): CacheManager {
+    fun todoCacheManager(connectionFactory: RedisConnectionFactory): CacheManager {
         val objectMapper = jacksonObjectMapper()
             .registerModule(JavaTimeModule())
             .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
@@ -55,8 +56,8 @@ class TodoConfiguration(
                     JsonTypeInfo.As.PROPERTY
                 )
             }
-
-        val defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
+        val defaultConfig = RedisCacheConfiguration
+            .defaultCacheConfig()
             .disableCachingNullValues()
             .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(StringRedisSerializer()))
             .serializeValuesWith(
@@ -66,15 +67,19 @@ class TodoConfiguration(
             )
             .entryTtl(Duration.ofMinutes(1))
 
-        return RedisCacheManager.builder(connectionFactory)
+        return RedisCacheManager
+            .RedisCacheManagerBuilder
+            .fromConnectionFactory(connectionFactory)
             .cacheDefaults(defaultConfig)
             .build()
     }
 
     @Bean
-    fun redisConnectionFactory(@Value("\${spring.data.redis.port:6379}") port: Int): RedisConnectionFactory {
-        val redisHost = "localhost"
-        return LettuceConnectionFactory(redisHost, port)
+    fun redisConnectionFactory(
+        @Value("\${spring.data.redis.port:6379}") port: Int,
+        @Value("\${spring.data.redis.host:localhost}") redisHost: String,
+    ): RedisConnectionFactory {
+        return LettuceConnectionFactory(RedisStandaloneConfiguration(redisHost, port))
     }
 
     @Bean

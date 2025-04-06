@@ -24,7 +24,12 @@ class TodoService(
     private val categoryRepository: CategoryRepository,
     private val todoDeleteService: TodoDeleteService,
 ) {
-    @Cacheable(cacheNames = ["todos"], key = "'todos'")
+    // 현재 캐시매니저가 1개라서 안써도 되지만 공부용으로 명시함
+    @Cacheable(
+        cacheNames = ["todos"],
+        key = "'todos:page:' + #pageServiceDTO.pageNumber + ':size:' + #pageServiceDTO.pageSize",
+        cacheManager = "todoCacheManager"
+    )
     fun getPagedTodos(pageServiceDTO: TodoPageServiceDTO): TodoPageServiceResponseDTO {
         val pageRequest =
             PageRequest.of(pageServiceDTO.pageNumber, pageServiceDTO.pageSize, Sort.by("updatedAt").ascending())

@@ -24,6 +24,10 @@ spring:
   cache:
     type: redis
 
+logging:
+  level:
+    org.springframework.cache: trace
+
 jwt:
   secret: ${JWT_SECRETS}
   accessTokenExpiration: ${JWT_ACCESS_TOKEN_EXPIRED_TIME}
