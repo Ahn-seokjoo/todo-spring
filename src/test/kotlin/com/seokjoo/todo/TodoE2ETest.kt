@@ -78,7 +78,7 @@ class TodoE2ETest @Autowired constructor(
     @Test
     fun `GET Todo by id e2e 테스트`() {
         val url = "http://localhost:$port/api/v1/todos/${todoResponse.id}"
-        val expected = TodoResponse(id = 10L, todo = "spring", isDone = false, categories = emptyList())
+        val expected = TodoResponse(id = todoResponse.id, todo = "spring", isDone = false, categories = emptyList())
 
         val response: ResponseEntity<String> = restTemplate.exchange(
             url,
@@ -91,7 +91,6 @@ class TodoE2ETest @Autowired constructor(
         assertThat(response.statusCode.value()).isEqualTo(200)
         assertThat(result)
             .usingRecursiveComparison()
-            .ignoringFields("id")
             .isEqualTo(expected)
     }
 
@@ -137,7 +136,7 @@ class TodoE2ETest @Autowired constructor(
             requestFactory = HttpComponentsClientHttpRequestFactory()
         }
         val url = "http://localhost:$port/api/v1/todos/${todoResponse.id}"
-        val expected = TodoResponse(id = 2L, todo = "node", isDone = true, categories = listOf("drama"))
+        val expected = TodoResponse(id = todoResponse.id, todo = "node", isDone = true, categories = listOf("drama"))
         val request = TodoRequest(todo = "node", isDone = true, categories = listOf(CategoryDTO("drama")))
 
         val responseEntity: ResponseEntity<String> =
