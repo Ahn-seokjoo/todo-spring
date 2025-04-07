@@ -5,6 +5,17 @@ x-environment: &common_environment
   - MYSQL_REPLICATION_PASSWORD: $MYSQL_REPLICATION_PASSWORD
 
 services:
+  redis:
+    image: redis
+    container_name: redis
+    ports:
+      - '6379:6379'
+  test-redis:
+    image: redis
+    container_name: test-redis
+    ports:
+      - '6380:6379'
+
   mysql-master:
     image: bitnami/mysql
     networks:

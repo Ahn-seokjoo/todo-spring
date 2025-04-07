@@ -7,6 +7,10 @@ import com.seokjoo.todo.domain.entity.todo.Todo
 import com.seokjoo.todo.domain.repository.category.CategoryRepository
 import com.seokjoo.todo.domain.repository.todo.TodoRepository
 import com.seokjoo.todo.domain.service.remove.TodoDeleteService
+import org.springframework.cache.annotation.CacheEvict
+import org.springframework.cache.annotation.CachePut
+import org.springframework.cache.annotation.Cacheable
+import org.springframework.cache.annotation.Caching
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.data.repository.findByIdOrNull
@@ -20,6 +24,13 @@ class TodoService(
     private val categoryRepository: CategoryRepository,
     private val todoDeleteService: TodoDeleteService,
 ) {
+    // 현재 캐시매니저가 1개라서 안써도 되지만 공부용으로 명시함
+    @Cacheable(
+        cacheNames = ["todos"],
+        unless = "#result.responseList.isEmpty()",
+        key = "'todos:page:' + #pageServiceDTO.pageNumber + ':size:' + #pageServiceDTO.pageSize",
+        cacheManager = "todoCacheManager"
+    )
     fun getPagedTodos(pageServiceDTO: TodoPageServiceDTO): TodoPageServiceResponseDTO {
         val pageRequest =
             PageRequest.of(pageServiceDTO.pageNumber, pageServiceDTO.pageSize, Sort.by("updatedAt").ascending())
@@ -30,12 +41,14 @@ class TodoService(
         return TodoPageServiceResponseDTO(isLast = todoPage.isLast, responseList = todoPagedList)
     }
 
+    @Cacheable(cacheNames = ["todo"], key = "#id")
     fun getTodoById(id: Long): TodoServiceResponseDTO {
         val result = todoRepository.findByIdOrNull(id) ?: throw TodoException.of(TodoExceptionType.NOT_EXISTED_TODO)
         return TodoServiceResponseDTO.from(result)
     }
 
     @Transactional
+    @CacheEvict(value = ["todos"])
     fun createTodo(request: TodoServiceRequestDTO): TodoServiceResponseDTO {
         // 1. 저장하여 영속화 먼저
         val todo = Todo(todo = request.todo, isDone = request.isDone)
@@ -46,6 +59,8 @@ class TodoService(
     }
 
     @Transactional
+    @CacheEvict(value = ["todos"])
+    @CachePut(cacheNames = ["todo"], key = "#id")
     fun updateTodo(id: Long, request: TodoServiceRequestDTO): TodoServiceResponseDTO {
         val todo = todoRepository.findByIdOrNull(id) ?: throw TodoException.of(TodoExceptionType.NOT_EXISTED_TODO)
 
@@ -61,6 +76,12 @@ class TodoService(
     }
 
     @Transactional
+    @Caching(
+        evict = [
+            CacheEvict(value = ["todos"]),
+            CacheEvict(value = ["todo"], key = "#id"),
+        ]
+    )
     fun deleteTodo(id: Long) {
         val todo = todoRepository.findByIdOrNull(id) ?: throw TodoException.of(TodoExceptionType.NOT_EXISTED_TODO)
 

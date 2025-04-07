@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.server.LocalServerPort
+import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
@@ -30,21 +31,18 @@ import java.time.format.DateTimeFormatter
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
-class TodoE2ETest {
+class TodoE2ETest @Autowired constructor(
+    private val redisTemplate: RedisTemplate<String, Any>,
+    private val objectMapper: ObjectMapper,
+    private val jdbcTemplate: JdbcTemplate,
+    private val loginService: TodoAuthService,
+) {
 
     @LocalServerPort
     private val port: Int = 8080
 
     private val restTemplate: RestTemplate = RestTemplate()
 
-    @Autowired
-    private lateinit var objectMapper: ObjectMapper
-
-    @Autowired
-    private lateinit var jdbcTemplate: JdbcTemplate
-
-    @Autowired
-    private lateinit var loginService: TodoAuthService
     private lateinit var header: HttpHeaders
 
     /**
@@ -54,6 +52,14 @@ class TodoE2ETest {
     fun beforeEach() {
         insertInitialData()
         addHeader()
+    }
+
+    @AfterEach
+    fun cleanupRedis() {
+        val todos = redisTemplate.keys("todos:*")
+        val todo = redisTemplate.keys("todo:*")
+        redisTemplate.delete(todos)
+        redisTemplate.delete(todo)
     }
 
     private fun insertInitialData() {
