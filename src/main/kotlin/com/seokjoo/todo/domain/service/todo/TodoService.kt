@@ -11,10 +11,12 @@ import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.CachePut
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.cache.annotation.Caching
+import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 
 @Service
@@ -96,7 +98,7 @@ class TodoService(
             request.categoryNames.forEach { categoryName ->
                 if (todo.hasCategory(categoryName).not()) {
                     val matchedCategory =
-                        categoryRepository.findCategoryByName(categoryName)
+                        categoryRepository.findCategoryByNameWithLock(categoryName)
                             ?: categoryRepository.save(Category(name = categoryName))
                     todo.addCategory(category = matchedCategory)
                 }
