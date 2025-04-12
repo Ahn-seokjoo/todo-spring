@@ -5,21 +5,45 @@ x-environment: &common_environment
   - MYSQL_REPLICATION_PASSWORD: $MYSQL_REPLICATION_PASSWORD
 
 services:
+  server:
+    build:
+      context: .
+    environment:
+      DB_HOST: mysql-master
+      REDIS_HOST: redis
+      TEST_DB_HOST: ${TEST_DB_HOST}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USERNAME: ${MYSQL_USERNAME}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_REPLICATION_USER: ${MYSQL_REPLICATION_USER}
+      MYSQL_REPLICATION_PASSWORD: ${MYSQL_REPLICATION_PASSWORD}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      JWT_SECRETS: ${JWT_SECRETS}
+      JWT_ACCESS_TOKEN_EXPIRED_TIME: ${JWT_ACCESS_TOKEN_EXPIRED_TIME}
+      JWT_REFRESH_TOKEN_EXPIRED_TIME: ${JWT_REFRESH_TOKEN_EXPIRED_TIME}
+    image: seokzoo/todo
+    depends_on:
+      - redis-test
+      - redis
+      - mysql-master
+    restart: on-failure
+    ports:
+      - '8081:8080'
+
   redis:
     image: redis
     container_name: redis
-    ports:
-      - '6379:6379'
-  test-redis:
+
+  redis-test:
     image: redis
-    container_name: test-redis
+    container_name: redis-test
     ports:
       - '6380:6379'
 
   mysql-master:
     image: bitnami/mysql
-    networks:
-      - default
+    container_name: mysql-master
     volumes:
       - ./my_custom_master.cnf:/opt/bitnami/mysql/conf/my_custom.cnf:ro
       - mysql_primary_data:/bitnami/mysql/data
@@ -31,20 +55,15 @@ services:
       MYSQL_PASSWORD: $MYSQL_PASSWORD
       MYSQL_DATABASE: $MYSQL_DATABASE
 
-    ## 추후에 백엔드 서버도 도커로 구성하면, expose 로 수정하여 외부접근 차단 해야함
-    ports:
-      - '3306:3306'
-
   mysql-slave:
     image: bitnami/mysql
+    container_name: mysql-slave
     volumes:
       - ./my_custom_slave.cnf:/opt/bitnami/mysql/conf/my_custom.cnf:ro
       - mysql_standby_data:/bitnami/mysql/data
-    networks:
-      - default
     restart: always
-    ports:
-      - '3307:3306'
+    expose:
+      - '3306'
     depends_on:
       - mysql-master
     environment:
@@ -56,7 +75,3 @@ services:
 volumes:
   mysql_primary_data:
   mysql_standby_data:
-
-networks:
-  default:
-    driver: bridge

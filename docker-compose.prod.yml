@@ -1,0 +1,7 @@
+services:
+  mysql-master:
+    expose:
+      - '3306'
+  redis:
+    expose:
+      - '6379'

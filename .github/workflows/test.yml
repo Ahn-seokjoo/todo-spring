@@ -18,7 +18,7 @@ jobs:
       contents: read
     env:
       # 테스트용 임의로 생성한 값입니다 (실제 값 아님!)
-      JWT_SECRETS: zKiWKx6Cv9wDMeVE63GgbWPRDIpLEhpJb67_DRPqeAE
+      JWT_SECRETS: zKiWKx6Cv9wDMeVE63GgbWPRDIpLEhpJb67_DRPqeA9
       JWT_ACCESS_TOKEN_EXPIRED_TIME: 1000000
       JWT_REFRESH_TOKEN_EXPIRED_TIME: 10000000
     services:
