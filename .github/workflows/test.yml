@@ -38,6 +38,10 @@ jobs:
         image: bitnami/mysql
         ports:
           - '3306:3306'
+        env:
+          MYSQL_USER: ${{ secrets.MYSQL_USERNAME }}
+          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+          MYSQL_ROOT_PASSWORD: $$ { secrets.MYSQL_ROOT_PASSWORD }}
 
     steps:
       - uses: actions/checkout@v4
