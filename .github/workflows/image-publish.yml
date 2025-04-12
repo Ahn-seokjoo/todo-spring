@@ -3,6 +3,10 @@ name: server build and push
 on:
   push:
 
+concurrency:
+  group: build-and-push-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-and-push:
     runs-on: ubuntu-latest

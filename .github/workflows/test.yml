@@ -11,6 +11,10 @@ on:
   pull_request:
     branches: [ "develop", "feature**", "refactoring**" ]
 
+concurrency:
+  group: build-and-push-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
