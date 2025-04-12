@@ -44,7 +44,7 @@ jobs:
         run: ./gradlew build
         env:
           REDIS_HOST: localhost
-          REDIS_PORT: 6380
+          REDIS_PORT: 6379
 
   ## 처음보는데, 의존성 그래프를 만들어서 보안 취약점에 대한 경고를 준다네요
   dependency-submission:
