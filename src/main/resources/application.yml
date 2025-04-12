@@ -21,7 +21,6 @@ spring:
   data:
     redis:
       host: localhost
-      password: ${REDIS_PASSWORD}
       port: 6379
   cache:
     type: redis
