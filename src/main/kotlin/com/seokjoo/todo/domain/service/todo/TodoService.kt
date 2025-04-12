@@ -2,9 +2,7 @@ package com.seokjoo.todo.domain.service.todo
 
 import com.seokjoo.todo.common.exception.TodoException
 import com.seokjoo.todo.common.exception.TodoExceptionType
-import com.seokjoo.todo.domain.entity.category.Category
 import com.seokjoo.todo.domain.entity.todo.Todo
-import com.seokjoo.todo.domain.repository.category.CategoryRepository
 import com.seokjoo.todo.domain.repository.todo.TodoRepository
 import com.seokjoo.todo.domain.service.category.CategoryService
 import com.seokjoo.todo.domain.service.remove.TodoDeleteService
