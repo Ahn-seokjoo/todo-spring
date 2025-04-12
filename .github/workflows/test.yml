@@ -36,10 +36,10 @@ jobs:
         ports:
           - '3306:3306'
         env:
-          MYSQL_USER: sa
-          MYSQL_PASSWORD: sa
+          MYSQL_USER: ${{ secrets.MYSQL_USERNAME }}
+          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
           MYSQL_DATABASE: todo
-          MYSQL_ROOT_PASSWORD: sa
+          MYSQL_ROOT_PASSWORD: $$ { secrets.MYSQL_ROOT_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
       - name: Set up JDK 17
