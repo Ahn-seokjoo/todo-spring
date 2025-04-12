@@ -2,6 +2,7 @@ package com.seokjoo.todo
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.seokjoo.todo.domain.repository.todo.TodoRepository
 import com.seokjoo.todo.domain.service.auth.TodoAuthService
 import com.seokjoo.todo.domain.service.todo.TodoService
 import com.seokjoo.todo.domain.service.todo.TodoServiceRequestDTO
@@ -41,6 +42,7 @@ class TodoE2ETest @Autowired constructor(
     private val objectMapper: ObjectMapper,
     private val loginService: TodoAuthService,
     private val todoService: TodoService,
+    private val todoRepository: TodoRepository,
 ) {
 
     @LocalServerPort
@@ -185,5 +187,6 @@ class TodoE2ETest @Autowired constructor(
     @AfterAll
     fun afterAll() {
         loginService.delete("pita", "pita")
+        todoRepository.deleteAll()
     }
 }

@@ -6,25 +6,24 @@ import com.seokjoo.todo.domain.entity.category.Category
 import com.seokjoo.todo.domain.entity.todo.Todo
 import com.seokjoo.todo.domain.repository.category.CategoryRepository
 import com.seokjoo.todo.domain.repository.todo.TodoRepository
+import com.seokjoo.todo.domain.service.category.CategoryService
 import com.seokjoo.todo.domain.service.remove.TodoDeleteService
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.CachePut
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.cache.annotation.Caching
-import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 
 @Service
 @Transactional(readOnly = true)
 class TodoService(
     private val todoRepository: TodoRepository,
-    private val categoryRepository: CategoryRepository,
     private val todoDeleteService: TodoDeleteService,
+    private val categoryService: CategoryService,
 ) {
     // 현재 캐시매니저가 1개라서 안써도 되지만 공부용으로 명시함
     @Cacheable(
@@ -97,9 +96,7 @@ class TodoService(
         if (request.categoryNames.isNotEmpty()) {
             request.categoryNames.forEach { categoryName ->
                 if (todo.hasCategory(categoryName).not()) {
-                    val matchedCategory =
-                        categoryRepository.findCategoryByNameWithLock(categoryName)
-                            ?: categoryRepository.save(Category(name = categoryName))
+                    val matchedCategory = categoryService.getOrCreateCategory(categoryName)
                     todo.addCategory(category = matchedCategory)
                 }
             }

@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional
 @Transactional
 class CategoryService(
     private val categoryRepository: CategoryRepository,
+    private val categorySaveHelper: CategorySaveHelper,
 ) {
     @Transactional(readOnly = true)
     fun getAllCategories(): List<CategoryServiceResponseDTO> {
@@ -36,5 +37,19 @@ class CategoryService(
         if (count == 0L) {
             categoryRepository.deleteById(categoryId)
         }
+    }
+
+    @Transactional
+    fun getOrCreateCategory(name: String): Category {
+        // 조회
+        categoryRepository.findCategoryByName(name)?.let { return it }
+
+        // 삽입 (REQUIRES_NEW로 분리)
+        runCatching {
+            categorySaveHelper.insert(name)
+        }
+
+        // 다시 조회해서 영속성 컨텍스트에 붙은 애 리턴
+        return categoryRepository.findCategoryByName(name)!!
     }
 }

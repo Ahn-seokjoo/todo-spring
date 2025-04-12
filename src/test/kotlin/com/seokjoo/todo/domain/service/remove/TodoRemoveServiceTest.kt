@@ -8,6 +8,7 @@ import com.seokjoo.todo.domain.repository.todo.TodoRepository
 import com.seokjoo.todo.domain.service.todo.TodoService
 import com.seokjoo.todo.domain.service.todo.TodoServiceRequestDTO
 import com.seokjoo.todo.domain.service.todo.TodoServiceResponseDTO
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -26,6 +27,11 @@ class TodoRemoveServiceTest @Autowired constructor(
     fun before() {
         val request = TodoServiceRequestDTO(todo = "spring", categoryNames = listOf("drama", "action"))
         todo = todoService.createTodo(request)
+    }
+
+    @AfterEach
+    fun afterEach() {
+        categoryRepository.deleteAll()
     }
 
     @Test
