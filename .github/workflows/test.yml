@@ -26,6 +26,9 @@ jobs:
       JWT_ACCESS_TOKEN_EXPIRED_TIME: 1000000
       JWT_REFRESH_TOKEN_EXPIRED_TIME: 10000000
       MYSQL_DATABASE: todo
+      MYSQL_USER: ${{ secrets.MYSQL_USERNAME }}
+      MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+      MYSQL_ROOT_PASSWORD: $$ { secrets.MYSQL_ROOT_PASSWORD }}
     services:
       redis:
         image: redis
@@ -35,11 +38,7 @@ jobs:
         image: bitnami/mysql
         ports:
           - '3306:3306'
-        env:
-          MYSQL_USER: ${{ secrets.MYSQL_USERNAME }}
-          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
-          MYSQL_DATABASE: todo
-          MYSQL_ROOT_PASSWORD: $$ { secrets.MYSQL_ROOT_PASSWORD }}
+
     steps:
       - uses: actions/checkout@v4
       - name: Set up JDK 17
