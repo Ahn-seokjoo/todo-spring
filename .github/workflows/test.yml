@@ -26,7 +26,15 @@ jobs:
         image: redis
         ports:
           - '6379:6379'
-
+      mysql:
+        image: bitnami/mysql
+        ports:
+          - '3306:3306'
+        env:
+          MYSQL_USER: sa
+          MYSQL_PASSWORD: sa
+          MYSQL_DATABASE: todo
+          MYSQL_ROOT_PASSWORD: sa
     steps:
       - uses: actions/checkout@v4
       - name: Set up JDK 17
