@@ -5,8 +5,8 @@ import com.seokjoo.todo.common.exception.TodoExceptionType
 import com.seokjoo.todo.domain.entity.category.Category
 import com.seokjoo.todo.domain.entity.todo.Todo
 import com.seokjoo.todo.domain.entity.todocategory.TodoCategory
-import com.seokjoo.todo.domain.repository.category.CategoryRepository
 import com.seokjoo.todo.domain.repository.todo.TodoRepository
+import com.seokjoo.todo.domain.service.category.CategoryService
 import com.seokjoo.todo.presentation.todo.dto.request.TodoPageRequest
 import com.seokjoo.todo.presentation.todo.dto.request.toPageServiceDTO
 import io.kotest.assertions.throwables.shouldThrow
@@ -21,12 +21,12 @@ import org.springframework.data.repository.findByIdOrNull
 
 class TodoServiceMockTest : BehaviorSpec({
     val todoRepository: TodoRepository = mockk()
-    val categoryRepository: CategoryRepository = mockk()
+    val categoryService: CategoryService = mockk()
 
     val todoService = TodoService(
         todoRepository = todoRepository,
-        categoryRepository = categoryRepository,
         todoDeleteService = mockk(),
+        categoryService = categoryService,
     )
 
     Given("create todo") {
@@ -159,7 +159,7 @@ class TodoServiceMockTest : BehaviorSpec({
             )
             every { todoRepository.findByIdOrNull(1L) } returns newPreviousTodo
             every { todoRepository.save(any()) } returns newNextTodo
-            every { categoryRepository.findCategoryByName(any()) } returnsMany listOf(
+            every { categoryService.getOrCreateCategory(any()) } returnsMany listOf(
                 Category(name = "horror"),
                 Category(name = "comedy")
             )
