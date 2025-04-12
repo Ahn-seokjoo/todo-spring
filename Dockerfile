@@ -18,7 +18,9 @@ RUN gradle clean build --no-daemon -x test
 RUN ls -al /app/build/libs
 
 # 런타임 이미지는 슬림한 JDK 17 이미지 사용
-FROM openjdk:17-jdk-slim
+# 가장 취약점 없어보이는 걸로 선택
+# https://hub.docker.com/_/openjdk/tags?name=17-jdk-slim
+FROM openjdk:21-ea-17-jdk-slim-buster
 
 WORKDIR /app
 
