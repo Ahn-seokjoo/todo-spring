@@ -25,6 +25,7 @@ jobs:
       JWT_SECRETS: zKiWKx6Cv9wDMeVE63GgbWPRDIpLEhpJb67_DRPqeA9
       JWT_ACCESS_TOKEN_EXPIRED_TIME: 1000000
       JWT_REFRESH_TOKEN_EXPIRED_TIME: 10000000
+      MYSQL_DATABASE: todo
     services:
       redis:
         image: redis
