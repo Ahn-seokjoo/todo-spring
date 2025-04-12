@@ -1,8 +1,6 @@
 spring:
   profiles:
     default: local
-  config:
-    import: optional:file:.env[.properties]
   application:
     name: todo
   datasource:
