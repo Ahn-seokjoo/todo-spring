@@ -1,0 +1,13 @@
+# local 용 포트 개방
+services:
+  mysql-master:
+    ports:
+      - '3306:3306'
+  redis:
+    ports:
+      - '6379:6379'
+  redis-test:
+    image: redis
+    container_name: redis-test
+    ports:
+      - '6380:6379'
