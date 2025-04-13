@@ -24,7 +24,6 @@ services:
       JWT_REFRESH_TOKEN_EXPIRED_TIME: ${JWT_REFRESH_TOKEN_EXPIRED_TIME}
     image: seokzoo/todo
     depends_on:
-      - redis-test
       - redis
       - mysql-master
     restart: on-failure

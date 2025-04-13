@@ -9,12 +9,6 @@ services:
     image: redis
     container_name: redis
 
-  redis-test:
-    image: redis
-    container_name: redis-test
-    ports:
-      - '6380:6379'
-
   mysql-master:
     image: bitnami/mysql
     container_name: mysql-master

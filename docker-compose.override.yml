@@ -6,3 +6,8 @@ services:
   redis:
     ports:
       - '6379:6379'
+  redis-test:
+    image: redis
+    container_name: redis-test
+    ports:
+      - '6380:6379'
