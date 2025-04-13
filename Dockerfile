@@ -4,7 +4,7 @@ FROM gradle:8.12.1-jdk17 AS build
 WORKDIR /app
 
 # 필요한 설정 파일 먼저 복사
-COPY build.gradle.kts settings.gradle.kts gradle.properties ./
+COPY build.gradle.kts settings.gradle.kts ./
 COPY gradle /app/gradle
 
 # 전체 소스 복사
