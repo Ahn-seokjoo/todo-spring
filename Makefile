@@ -8,6 +8,7 @@ local-down:
 	docker compose -f docker-compose.yml -f docker-compose.override.yml down
 
 prod-up:
+	docker compose -f docker-compose.yml -f docker-compose.prod.yml pull server
 	docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 
 prod-down:

@@ -5,8 +5,7 @@ WORKDIR /app
 
 # 필요한 설정 파일 먼저 복사
 COPY build.gradle.kts settings.gradle.kts ./
-
-RUN gradle dependencies --no-daemon
+COPY gradle /app/gradle
 
 # 전체 소스 복사
 COPY . /app

@@ -22,7 +22,7 @@ services:
       JWT_SECRETS: ${JWT_SECRETS}
       JWT_ACCESS_TOKEN_EXPIRED_TIME: ${JWT_ACCESS_TOKEN_EXPIRED_TIME}
       JWT_REFRESH_TOKEN_EXPIRED_TIME: ${JWT_REFRESH_TOKEN_EXPIRED_TIME}
-    image: seokzoo/todo
+    image: seokzoo/todo:latest
     depends_on:
       - redis
       - mysql-master
