@@ -5,3 +5,28 @@ services:
   redis:
     expose:
       - '6379'
+  server:
+    build:
+      context: .
+    environment:
+      DB_HOST: mysql-master
+      REDIS_HOST: redis
+      TEST_DB_HOST: ${TEST_DB_HOST}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USERNAME: ${MYSQL_USERNAME}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_REPLICATION_USER: ${MYSQL_REPLICATION_USER}
+      MYSQL_REPLICATION_PASSWORD: ${MYSQL_REPLICATION_PASSWORD}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      JWT_SECRETS: ${JWT_SECRETS}
+      JWT_ACCESS_TOKEN_EXPIRED_TIME: ${JWT_ACCESS_TOKEN_EXPIRED_TIME}
+      JWT_REFRESH_TOKEN_EXPIRED_TIME: ${JWT_REFRESH_TOKEN_EXPIRED_TIME}
+    image: seokzoo/todo
+    depends_on:
+      - redis-test
+      - redis
+      - mysql-master
+    restart: on-failure
+    ports:
+      - '8081:8080'
