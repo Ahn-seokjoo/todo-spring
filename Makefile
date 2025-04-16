@@ -1,4 +1,4 @@
-.PHONY: local-up local-down prod-up prod-down restart-local restart-prod
+.PHONY: local-up local-down prod-up prod-down restart-local restart-prod stack-up stack-down stack-ps
 
 # 공통 명령어
 local-up:
@@ -16,3 +16,13 @@ prod-down:
 
 restart-local: local-down local-up
 restart-prod: prod-down prod-up
+
+stack-up:
+	docker swarm init || true
+	@set -a; . .env; set +a; docker stack deploy -c docker-compose.yml -c docker-compose.prod.yml todo-stack
+
+stack-down:
+	docker swarm leave --force
+
+stack-ps:
+	docker stack ps todo-stack
