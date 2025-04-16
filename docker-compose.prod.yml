@@ -23,9 +23,16 @@ services:
       JWT_ACCESS_TOKEN_EXPIRED_TIME: ${JWT_ACCESS_TOKEN_EXPIRED_TIME}
       JWT_REFRESH_TOKEN_EXPIRED_TIME: ${JWT_REFRESH_TOKEN_EXPIRED_TIME}
     image: seokzoo/todo:latest
+    # 공식문서 : https://docs.docker.com/reference/compose-file/deploy/
+    deploy:
+      replicas: 3
+      mode: replicated # default value = replicated 임 근데, 그냥 공부 목적으로 씀
+      endpoint_mode: vip
+      restart_policy:
+        condition: on-failure # 서버는 any 나 on-failure 쓰는걸 권장함
+        delay: 5s
     depends_on:
       - redis
       - mysql-master
-    restart: on-failure
     ports:
       - '8081:8080'
