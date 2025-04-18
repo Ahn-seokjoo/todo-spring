@@ -25,7 +25,7 @@ services:
     image: seokzoo/todo:latest
     # 공식문서 : https://docs.docker.com/reference/compose-file/deploy/
     deploy:
-      replicas: 8
+      replicas: 2
       mode: replicated # default value = replicated 임 근데, 그냥 공부 목적으로 씀
       endpoint_mode: vip
       restart_policy:
