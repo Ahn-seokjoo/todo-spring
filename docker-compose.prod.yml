@@ -43,16 +43,16 @@ services:
     environment:
       - INFLUXDB_DB=k6
       - INFLUXDB_ADMIN_ENABLED=true
-      - INFLUXDB_ADMIN_USER=user
-      - INFLUXDB_ADMIN_PASSWORD=admin123
+      - INFLUXDB_ADMIN_USER=${K6_USER}
+      - INFLUXDB_ADMIN_PASSWORD=${K6_PASSWORD}
       - INFLUXDB_USER=k6
-      - INFLUXDB_USER_PASSWORD=k6pass
+      - INFLUXDB_USER_PASSWORD=${K6_PASSWORD}
   grafana:
     image: grafana/grafana
     ports:
       - '3000:3000'
     environment:
-      - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
     depends_on:
       - influxdb
