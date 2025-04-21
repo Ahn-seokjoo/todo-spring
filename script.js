@@ -6,6 +6,14 @@ const BASE_URL = 'http://localhost:8081';
 const USER_ID = __ENV.USER_ID;
 const PASSWORD = __ENV.PASSWORD;
 
+export const options = {
+    stages: [
+        { duration: '1m', target: 50 },
+        { duration: '2m', target: 50 },
+        { duration: '1m', target: 0 }
+    ]
+}
+
 export function setup() {
   const payload = JSON.stringify({
     userId: USER_ID,
