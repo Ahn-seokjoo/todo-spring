@@ -3,12 +3,15 @@ package com.seokjoo.todo.domain.entity.todo
 import com.seokjoo.todo.domain.entity.BaseEntity
 import com.seokjoo.todo.domain.entity.category.Category
 import com.seokjoo.todo.domain.entity.todocategory.TodoCategory
+import com.seokjoo.todo.domain.entity.todouser.User
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
+import jakarta.persistence.FetchType
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
+import jakarta.persistence.ManyToOne
 import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
 
@@ -28,6 +31,9 @@ class Todo(
 
     @Column(nullable = false)
     var price: Long = 0L,
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    var owner: User,
 ) : BaseEntity() {
     fun hasCategory(categoryName: String): Boolean {
         return todoCategories.any { it.category?.name == categoryName }
@@ -44,10 +50,12 @@ class Todo(
         isDone: Boolean? = null,
         todoCategories: MutableList<TodoCategory>? = null,
         id: Long? = null,
+        owner: User? = null,
     ) = Todo(
         todo = todo ?: this.todo,
         isDone = isDone ?: this.isDone,
         todoCategories = todoCategories ?: this.todoCategories,
         id = id ?: this.id,
+        owner = owner ?: this.owner
     )
 }
