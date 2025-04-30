@@ -1,5 +1,6 @@
 package com.seokjoo.todo.presentation.todo.dto.response
 
+import com.seokjoo.todo.domain.entity.todouser.User
 import com.seokjoo.todo.domain.service.todo.TodoServiceResponseDTO
 import io.swagger.v3.oas.annotations.media.Schema
 
@@ -11,6 +12,7 @@ data class TodoResponse(
     val isDone: Boolean,
     @Schema(description = "카테고리 목록", examples = ["horror", "comedy"])
     val categories: List<String>,
+    val owner: String
 )
 
 fun TodoServiceResponseDTO.toResponse() = TodoResponse(
@@ -18,4 +20,5 @@ fun TodoServiceResponseDTO.toResponse() = TodoResponse(
     todo = todo,
     isDone = isDone,
     categories = categories.map { it },
+    owner = owner,
 )

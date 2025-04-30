@@ -3,6 +3,7 @@ package com.seokjoo.todo.domain.service.todo
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.seokjoo.todo.domain.entity.todo.Todo
+import com.seokjoo.todo.domain.entity.todouser.User
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "@class")
 data class TodoServiceResponseDTO(
@@ -11,6 +12,7 @@ data class TodoServiceResponseDTO(
     @JsonProperty("isDone") // is가 붙으면 is를 빼버리고 내부에 저장해버림;;
     val isDone: Boolean = false,
     val categories: List<String> = emptyList(),
+    val owner: String,
 ) {
     companion object {
         fun from(todo: Todo) = TodoServiceResponseDTO(
@@ -18,6 +20,7 @@ data class TodoServiceResponseDTO(
             todo = todo.todo,
             isDone = todo.isDone,
             categories = todo.todoCategories.map { it.category?.name.orEmpty() },
+            owner = todo.owner.userId,
         )
     }
 }
