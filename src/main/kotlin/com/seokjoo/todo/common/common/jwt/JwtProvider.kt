@@ -56,7 +56,12 @@ class JwtProvider(
     }
 
     fun checkValidSignature(userId: String, accessToken: String): Boolean {
-        val subject = runCatching {
+        val subject = getSubject(accessToken)
+        return subject == userId
+    }
+
+    fun getSubject(accessToken: String): String {
+        return runCatching {
             Jwts.parser()
                 .verifyWith(secretKey)
                 .build()
@@ -67,7 +72,5 @@ class JwtProvider(
             if (it is ExpiredJwtException) it.claims.subject
             else ""
         }
-
-        return subject == userId
     }
 }
