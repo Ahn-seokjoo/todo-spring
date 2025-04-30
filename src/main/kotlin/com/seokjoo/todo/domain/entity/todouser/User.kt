@@ -21,5 +21,6 @@ class User(
     @Column(name = "todo_user_id")
     val id: Long = 0L,
 
+    @Column(nullable = false)
     var balance: Long = 0L,
 ) : BaseEntity()
