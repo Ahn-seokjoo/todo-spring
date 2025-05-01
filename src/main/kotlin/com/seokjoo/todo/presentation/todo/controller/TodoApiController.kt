@@ -1,5 +1,7 @@
 package com.seokjoo.todo.presentation.todo.controller
 
+import com.seokjoo.todo.common.common.jwt.getBearerToken
+import com.seokjoo.todo.domain.service.auth.TodoAuthService
 import com.seokjoo.todo.domain.service.todo.TodoService
 import com.seokjoo.todo.presentation.todo.dto.request.TodoPageRequest
 import com.seokjoo.todo.presentation.todo.dto.request.TodoRequest
@@ -13,6 +15,7 @@ import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
+import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.ResponseEntity
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -39,6 +42,7 @@ import java.net.URI
 @RequestMapping("/api/v1")
 class TodoApiController(
     private val todoService: TodoService,
+    private val authService: TodoAuthService,
 ) {
 
     @GetMapping("/todos")
@@ -68,8 +72,12 @@ class TodoApiController(
         description = "todo 추가 성공",
         content = [Content(mediaType = "text/plain", schema = Schema(example = "ok"))]
     )
-    fun createTodo(@RequestBody @Validated request: TodoRequest): ResponseEntity<TodoResponse> {
-        val todo = todoService.createTodo(request = request.toTodoServiceRequest()).toResponse()
+    fun createTodo(
+        @RequestBody @Validated request: TodoRequest,
+        servletRequest: HttpServletRequest,
+    ): ResponseEntity<TodoResponse> {
+        val user = authService.findUser(servletRequest.getBearerToken())
+        val todo = todoService.createTodo(request = request.toTodoServiceRequest(), user).toResponse()
         return ResponseEntity.created(URI.create("/todos/${todo.id}")).body(todo)
     }
 

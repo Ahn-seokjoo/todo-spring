@@ -3,6 +3,7 @@ package com.seokjoo.todo.domain.service.todo
 import com.seokjoo.todo.common.exception.TodoException
 import com.seokjoo.todo.common.exception.TodoExceptionType
 import com.seokjoo.todo.domain.entity.todo.Todo
+import com.seokjoo.todo.domain.entity.todouser.User
 import com.seokjoo.todo.domain.repository.todo.TodoRepository
 import com.seokjoo.todo.domain.service.category.CategoryService
 import com.seokjoo.todo.domain.service.remove.TodoDeleteService
@@ -48,9 +49,8 @@ class TodoService(
 
     @Transactional
     @CacheEvict(value = ["todos"])
-    fun createTodo(request: TodoServiceRequestDTO): TodoServiceResponseDTO {
-        // 1. 저장하여 영속화 먼저
-        val todo = Todo(todo = request.todo, isDone = request.isDone)
+    fun createTodo(request: TodoServiceRequestDTO, owner: User): TodoServiceResponseDTO {
+        val todo = Todo(todo = request.todo, isDone = request.isDone, owner = owner)
         todoRepository.save(todo)
 
         checkExistAndAddCategory(request, todo)

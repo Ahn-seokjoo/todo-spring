@@ -1,11 +1,14 @@
 package com.seokjoo.todo.domain.entity.todouser
 
 import com.seokjoo.todo.domain.entity.BaseEntity
+import com.seokjoo.todo.domain.entity.todo.Todo
+import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
+import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
 
 @Entity
@@ -23,4 +26,12 @@ class User(
 
     @Column(nullable = false)
     var balance: Long = 0L,
-) : BaseEntity()
+
+    @Column(name = "todo_list", nullable = false)
+    @OneToMany(cascade = [CascadeType.ALL], mappedBy = "owner", orphanRemoval = true)
+    val todoList: MutableList<Todo> = mutableListOf(),
+) : BaseEntity() {
+    fun removeTodo(todo: Todo) {
+        todoList.remove(todo)
+    }
+}
