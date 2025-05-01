@@ -6,14 +6,21 @@ import jakarta.persistence.Entity
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
+import jakarta.persistence.Table
 
-@Entity(name = "todo_user")
+@Entity
+@Table(name = "todo_user")
 class User(
+    @Column(name = "user_id", nullable = false)
     val userId: String,
+    @Column(nullable = false)
     val password: String,
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "todo_user_id")
     val id: Long = 0L,
+
+    @Column(nullable = false)
+    var balance: Long = 0L,
 ) : BaseEntity()

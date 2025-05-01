@@ -25,6 +25,9 @@ class Todo(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "todo_id")
     val id: Long = 0L,
+
+    @Column(nullable = false)
+    var price: Long = 0L,
 ) : BaseEntity() {
     fun hasCategory(categoryName: String): Boolean {
         return todoCategories.any { it.category?.name == categoryName }
