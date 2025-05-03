@@ -18,7 +18,14 @@ class JwtAuthFilter(
      */
     override fun shouldNotFilter(request: HttpServletRequest): Boolean {
         val excludePatterns =
-            listOf("/api/v1/auth/login", "/api/v1/auth/signup", "/api/v1/auth/refresh", "/api/v1/auth/delete")
+            listOf(
+                "/api/v1/auth/login",
+                "/api/v1/auth/signup",
+                "/api/v1/auth/refresh",
+                "/api/v1/auth/delete",
+                "/swagger-ui",
+                "/v3/api-docs",
+            )
         return excludePatterns.any { request.requestURI.startsWith(it) }
     }
 
