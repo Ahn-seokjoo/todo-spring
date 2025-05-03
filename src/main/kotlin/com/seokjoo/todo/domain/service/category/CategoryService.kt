@@ -19,7 +19,7 @@ class CategoryService(
     }
 
     @Transactional(readOnly = true)
-    fun getCategory(name: String): CategoryServiceResponseDTO {
+    fun getCategoryServiceResponse(name: String): CategoryServiceResponseDTO {
         val category =
             categoryRepository.findCategoryByName(name) ?: throw TodoException.of(TodoExceptionType.CATEGORY_NOT_EXIST)
         return CategoryServiceResponseDTO.from(category = category)
@@ -44,12 +44,6 @@ class CategoryService(
         // 조회
         categoryRepository.findCategoryByName(name)?.let { return it }
 
-        // 삽입 (REQUIRES_NEW로 분리)
-        runCatching {
-            categorySaveHelper.insert(name)
-        }
-
-        // 다시 조회해서 영속성 컨텍스트에 붙은 애 리턴
-        return categoryRepository.findCategoryByName(name)!!
+        return categoryRepository.save(Category(name = name))
     }
 }

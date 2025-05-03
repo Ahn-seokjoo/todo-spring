@@ -49,8 +49,8 @@ class TodoService(
 
     @Transactional
     @CacheEvict(value = ["todos"])
-    fun createTodo(request: TodoServiceRequestDTO, owner: User): TodoServiceResponseDTO {
-        val todo = Todo(todo = request.todo, isDone = request.isDone, owner = owner)
+    fun createTodo(request: TodoCreateServiceRequestDTO, owner: User): TodoServiceResponseDTO {
+        val todo = Todo(todo = request.todo, isDone = request.isDone, owner = owner, price = request.price)
         todoRepository.save(todo)
 
         checkExistAndAddCategory(request, todo)
@@ -60,12 +60,13 @@ class TodoService(
     @Transactional
     @CacheEvict(value = ["todos"])
     @CachePut(cacheNames = ["todo"], key = "#id")
-    fun updateTodo(id: Long, request: TodoServiceRequestDTO): TodoServiceResponseDTO {
+    fun updateTodo(id: Long, request: TodoUpdateServiceRequestDTO): TodoServiceResponseDTO {
         val todo = todoRepository.findByIdOrNull(id) ?: throw TodoException.of(TodoExceptionType.NOT_EXISTED_TODO)
 
         todo.apply {
-            this.todo = request.todo
-            this.isDone = request.isDone
+            this.todo = request.todo.ifBlank { this.todo }
+            this.isDone = request.isDone ?: this.isDone
+            this.price = request.price ?: this.price
         }
         // 더티 체킹으로 save 할 필요 없지만 그냥 명시적으로 해줌
         todoRepository.save(todo)
