@@ -3,10 +3,12 @@ package com.seokjoo.todo.domain.service.remove
 import com.seokjoo.todo.IntegrationTest
 import com.seokjoo.todo.common.exception.TodoException
 import com.seokjoo.todo.common.exception.TodoExceptionType
+import com.seokjoo.todo.domain.entity.todouser.User
 import com.seokjoo.todo.domain.repository.category.CategoryRepository
 import com.seokjoo.todo.domain.repository.todo.TodoRepository
+import com.seokjoo.todo.domain.repository.todouser.TodoAuthRepository
+import com.seokjoo.todo.domain.service.todo.TodoCreateServiceRequestDTO
 import com.seokjoo.todo.domain.service.todo.TodoService
-import com.seokjoo.todo.domain.service.todo.TodoServiceRequestDTO
 import com.seokjoo.todo.domain.service.todo.TodoServiceResponseDTO
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -20,13 +22,16 @@ class TodoRemoveServiceTest @Autowired constructor(
     private val todoDeleteService: TodoDeleteService,
     private val todoRepository: TodoRepository,
     private val categoryRepository: CategoryRepository,
+    private val userRepository: TodoAuthRepository,
 ) {
     private lateinit var todo: TodoServiceResponseDTO
 
     @BeforeEach
     fun before() {
-        val request = TodoServiceRequestDTO(todo = "spring", categoryNames = listOf("drama", "action"))
-        todo = todoService.createTodo(request)
+        val user = User("pita", "pita")
+        userRepository.save(user)
+        val request = TodoCreateServiceRequestDTO(todo = "spring", categoryNames = listOf("drama", "action"))
+        todo = todoService.createTodo(request = request, owner = user)
     }
 
     @AfterEach

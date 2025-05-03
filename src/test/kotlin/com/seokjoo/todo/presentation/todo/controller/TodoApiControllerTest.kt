@@ -2,12 +2,15 @@ package com.seokjoo.todo.presentation.todo.controller
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.seokjoo.todo.common.exception.TodoExceptionType
+import com.seokjoo.todo.domain.entity.todouser.User
+import com.seokjoo.todo.domain.service.auth.TodoAuthService
 import com.seokjoo.todo.domain.service.todo.TodoPageServiceResponseDTO
 import com.seokjoo.todo.domain.service.todo.TodoService
 import com.seokjoo.todo.domain.service.todo.TodoServiceResponseDTO
 import com.seokjoo.todo.presentation.todo.dto.request.TodoRequest
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
+import org.mockito.kotlin.eq
 import org.mockito.kotlin.given
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
@@ -27,7 +30,10 @@ class TodoApiControllerTest {
     private lateinit var objectMapper: ObjectMapper
 
     @MockitoBean
-    internal lateinit var service: TodoService
+    internal lateinit var todoService: TodoService
+
+    @MockitoBean
+    internal lateinit var authService: TodoAuthService
 
     @Test
     fun `getAllTodo 함수를 호출하면 200 이 나온다`() {
@@ -35,9 +41,11 @@ class TodoApiControllerTest {
             id = 1L,
             todo = "create todo",
             isDone = false,
-            categories = listOf()
+            categories = listOf(),
+            owner = "pita",
+            price = 0L,
         )
-        given(service.getPagedTodos(any())).willReturn(
+        given(todoService.getPagedTodos(any())).willReturn(
             TodoPageServiceResponseDTO(
                 isLast = true, responseList = listOf(
                     mockResponse
@@ -80,21 +88,44 @@ class TodoApiControllerTest {
     }
 
     @Test
+    fun `create todo 시에 음수 값이 못들어가게 막히고 있는지`() {
+        // 유효하지 않은 요청
+        val request = TodoRequest(
+            todo = "ab",
+            price = -200L
+        )
+        mockMvc.post("/api/v1/todos") {
+            content = objectMapper.writeValueAsString(request)
+            contentType = MediaType.APPLICATION_JSON
+        }
+            .andDo { print() }
+            .andExpect {
+                status { isBadRequest() }
+                jsonPath("$.message") { value("잔액은 음수일 수 없습니다.") } // 메시지 검증
+            }
+    }
+
+    @Test
     fun `create todo 시에 예상한 것 처럼 응답을 잘 만들어 낸다`() {
         val request = TodoRequest(
             todo = "create todo",
         )
+        val user = User("pita", "pita")
         val mockResponse = TodoServiceResponseDTO(
             id = 1L,
             todo = "create todo",
             isDone = false,
-            categories = listOf()
+            categories = listOf(),
+            owner = "pita",
+            price = 0L,
         )
-        given(service.createTodo(any())).willReturn(mockResponse)
+        given(authService.findUser(any())).willReturn(user)
+        given(todoService.createTodo(any(), eq(user))).willReturn(mockResponse)
 
         mockMvc.post("/api/v1/todos") {
             content = objectMapper.writeValueAsString(request)
             contentType = MediaType.APPLICATION_JSON
+            header("Authorization", "Bearer a") // 위에 given(authService.findUser(any())).willReturn(user) 를 통해 아무거나 넣어도됨
         }
             .andDo { print() }
             .andExpect {

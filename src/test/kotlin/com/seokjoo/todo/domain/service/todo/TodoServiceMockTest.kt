@@ -5,6 +5,7 @@ import com.seokjoo.todo.common.exception.TodoExceptionType
 import com.seokjoo.todo.domain.entity.category.Category
 import com.seokjoo.todo.domain.entity.todo.Todo
 import com.seokjoo.todo.domain.entity.todocategory.TodoCategory
+import com.seokjoo.todo.domain.entity.todouser.User
 import com.seokjoo.todo.domain.repository.todo.TodoRepository
 import com.seokjoo.todo.domain.service.category.CategoryService
 import com.seokjoo.todo.presentation.todo.dto.request.TodoPageRequest
@@ -22,6 +23,7 @@ import org.springframework.data.repository.findByIdOrNull
 class TodoServiceMockTest : BehaviorSpec({
     val todoRepository: TodoRepository = mockk()
     val categoryService: CategoryService = mockk()
+    val user = User("pita", "pita")
 
     val todoService = TodoService(
         todoRepository = todoRepository,
@@ -30,14 +32,14 @@ class TodoServiceMockTest : BehaviorSpec({
     )
 
     Given("create todo") {
-        val request = TodoServiceRequestDTO(
+        val request = TodoCreateServiceRequestDTO(
             todo = "abcde",
             isDone = false,
         )
-        val requestTodo = Todo(id = 1L, todo = request.todo, isDone = request.isDone)
+        val requestTodo = Todo(id = 1L, todo = request.todo, isDone = request.isDone, owner = user)
         When("정상 케이스에서") {
             every { todoRepository.save(any()) } returns requestTodo
-            val todo = todoService.createTodo(request)
+            val todo = todoService.createTodo(request, user)
             Then("create Todo 시에, todo 한개가 잘 생성된다") {
                 todo.isDone shouldBe false
                 todo.todo shouldBe "abcde"
@@ -47,7 +49,7 @@ class TodoServiceMockTest : BehaviorSpec({
 
     Given("getTodos") {
         val id = 1L
-        every { todoRepository.findByIdOrNull(id) } returns Todo(id = 1L, todo = "abcde")
+        every { todoRepository.findByIdOrNull(id) } returns Todo(id = 1L, todo = "abcde", owner = user)
         When("정상 케이스에서") {
             val todo = todoService.getTodoById(id)
             Then("getTodos 를 수행했을 때, todo 한개가 잘 나온다") {
@@ -71,8 +73,8 @@ class TodoServiceMockTest : BehaviorSpec({
 
     Given("getAll todo") {
         val result = listOf(
-            Todo(todo = "abcde", isDone = true),
-            Todo(todo = "abcdef", isDone = false),
+            Todo(todo = "abcde", isDone = true, owner = user),
+            Todo(todo = "abcdef", isDone = false, owner = user),
         )
         val pageRequest = PageRequest.of(0, 10)
         every { todoRepository.findAllSlicedTodoOrderByUpdatedAt(any()) } returns SliceImpl(result, pageRequest, true)
@@ -89,26 +91,32 @@ class TodoServiceMockTest : BehaviorSpec({
 
     Given("update test") {
         val id = 1L
-        val request = TodoServiceRequestDTO(
+        val request = TodoUpdateServiceRequestDTO(
             todo = "abcdef",
             isDone = false,
-            categoryNames = listOf()
+            categoryNames = listOf(),
+            price = 10L,
         )
         val previousTodo = Todo(
             id = 1L,
             todo = "abcde",
             isDone = false,
+            owner = user,
         )
         val nextTodo = Todo(
             id = 1L,
             todo = "abcdef",
             isDone = false,
+            owner = user
         )
         When("업데이트 시에 없는 id를 주면") {
             every { todoRepository.findByIdOrNull(id) } throws TodoException.of(TodoExceptionType.NOT_EXISTED_TODO)
             Then("에러가 난다") {
                 val exception = shouldThrow<TodoException> {
-                    todoService.updateTodo(id = id, request = TodoServiceRequestDTO(todo = "abas"))
+                    todoService.updateTodo(
+                        id = id,
+                        request = TodoUpdateServiceRequestDTO(todo = "abas", isDone = null, price = null)
+                    )
                 }
                 exception.message shouldBe "존재하지 않는 Todo 입니다"
                 exception.httpStatusCode shouldBe 404
@@ -125,6 +133,7 @@ class TodoServiceMockTest : BehaviorSpec({
                 updatedTodo.todo shouldBe "abcdef"
                 updatedTodo.isDone shouldBe false
                 updatedTodo.id shouldNotBe null
+                updatedTodo.price shouldBe 10L
             }
         }
 
@@ -153,8 +162,14 @@ class TodoServiceMockTest : BehaviorSpec({
             val newPreviousTodo = previousTodo.copy(todo = "abcde")
             val newNextTodo = nextTodo.copy(
                 todo = "abcde", todoCategories = mutableListOf(
-                    TodoCategory(todo = Todo("abcde", isDone = false), Category(name = "horror")),
-                    TodoCategory(todo = Todo("abcde", isDone = false), Category(name = "comedy")),
+                    TodoCategory(
+                        todo = Todo("abcde", isDone = false, owner = user, price = 10L),
+                        Category(name = "horror")
+                    ),
+                    TodoCategory(
+                        todo = Todo("abcde", isDone = false, owner = user, price = 10L),
+                        Category(name = "comedy")
+                    ),
                 )
             )
             every { todoRepository.findByIdOrNull(1L) } returns newPreviousTodo

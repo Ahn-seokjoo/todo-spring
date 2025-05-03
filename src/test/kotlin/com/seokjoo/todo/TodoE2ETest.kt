@@ -3,12 +3,15 @@ package com.seokjoo.todo
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.seokjoo.todo.domain.repository.todo.TodoRepository
+import com.seokjoo.todo.domain.repository.todouser.TodoAuthRepository
 import com.seokjoo.todo.domain.service.auth.TodoAuthService
+import com.seokjoo.todo.domain.service.auth.TodoAuthServiceLoginResponse
+import com.seokjoo.todo.domain.service.todo.TodoCreateServiceRequestDTO
 import com.seokjoo.todo.domain.service.todo.TodoService
-import com.seokjoo.todo.domain.service.todo.TodoServiceRequestDTO
 import com.seokjoo.todo.domain.service.todo.TodoServiceResponseDTO
 import com.seokjoo.todo.presentation.category.dto.CategoryDTO
 import com.seokjoo.todo.presentation.todo.dto.request.TodoRequest
+import com.seokjoo.todo.presentation.todo.dto.request.TodoUpdateRequest
 import com.seokjoo.todo.presentation.todo.dto.response.TodoPageResponse
 import com.seokjoo.todo.presentation.todo.dto.response.TodoResponse
 import org.assertj.core.api.Assertions.assertThat
@@ -43,6 +46,7 @@ class TodoE2ETest @Autowired constructor(
     private val loginService: TodoAuthService,
     private val todoService: TodoService,
     private val todoRepository: TodoRepository,
+    private val userRepository: TodoAuthRepository,
 ) {
 
     @LocalServerPort
@@ -59,7 +63,14 @@ class TodoE2ETest @Autowired constructor(
         val expected = TodoPageResponse(
             isLast = true,
             todoList = listOf(
-                TodoResponse(id = 1L, todo = "spring", isDone = false, categories = emptyList())
+                TodoResponse(
+                    id = 1L,
+                    todo = "spring",
+                    isDone = false,
+                    categories = emptyList(),
+                    owner = "pita",
+                    price = 10L,
+                )
             )
         )
 
@@ -80,7 +91,14 @@ class TodoE2ETest @Autowired constructor(
     @Test
     fun `GET Todo by id e2e 테스트`() {
         val url = "http://localhost:$port/api/v1/todos/${todoResponse.id}"
-        val expected = TodoResponse(id = todoResponse.id, todo = "spring", isDone = false, categories = emptyList())
+        val expected = TodoResponse(
+            id = todoResponse.id,
+            todo = "spring",
+            isDone = false,
+            categories = emptyList(),
+            owner = "pita",
+            price = 10L,
+        )
 
         val response: ResponseEntity<String> = restTemplate.exchange(
             url,
@@ -100,8 +118,16 @@ class TodoE2ETest @Autowired constructor(
     fun `POST Todo create e2e 테스트`() {
         val url = "http://localhost:$port/api/v1/todos"
         val expectedId = todoResponse.id + 1
-        val expected = TodoResponse(id = expectedId, todo = "Android", isDone = true, categories = listOf("drama"))
-        val request = TodoRequest(todo = "Android", isDone = true, categories = listOf(CategoryDTO("drama")))
+        val expected = TodoResponse(
+            id = expectedId,
+            todo = "Android",
+            isDone = true,
+            categories = listOf("drama"),
+            owner = "pita",
+            price = 10L,
+        )
+        val request =
+            TodoRequest(todo = "Android", isDone = true, categories = listOf(CategoryDTO("drama")), price = 10L)
 
         val response: ResponseEntity<String> = restTemplate.exchange(
             url,
@@ -138,8 +164,15 @@ class TodoE2ETest @Autowired constructor(
             requestFactory = HttpComponentsClientHttpRequestFactory()
         }
         val url = "http://localhost:$port/api/v1/todos/${todoResponse.id}"
-        val expected = TodoResponse(id = todoResponse.id, todo = "node", isDone = true, categories = listOf("drama"))
-        val request = TodoRequest(todo = "node", isDone = true, categories = listOf(CategoryDTO("drama")))
+        val expected = TodoResponse(
+            id = todoResponse.id,
+            todo = "node",
+            isDone = true,
+            categories = listOf("drama"),
+            owner = "pita",
+            price = 10L,
+        )
+        val request = TodoUpdateRequest(todo = "node", isDone = true, categories = listOf(CategoryDTO("drama")), price = null)
 
         val responseEntity: ResponseEntity<String> =
             restTemplate.exchange(url, HttpMethod.PATCH, HttpEntity(request, header), String::class)
@@ -153,10 +186,13 @@ class TodoE2ETest @Autowired constructor(
 
     @BeforeEach
     fun beforeEach() {
+        val user = userRepository.findUserByUserId("pita") ?: error("올수 없음")
         todoResponse = todoService.createTodo(
-            TodoServiceRequestDTO(
+            TodoCreateServiceRequestDTO(
                 todo = "spring",
-            )
+                price = 10L,
+            ),
+            owner = user,
         )
     }
 
@@ -173,13 +209,12 @@ class TodoE2ETest @Autowired constructor(
     @BeforeAll
     fun beforeAll() {
         loginService.signUp("pita", "pita")
-        createHeader()
+        createHeader(loginService.login("pita", "pita"))
     }
 
-    private fun createHeader() {
-        val refreshToken = loginService.login("pita", "pita").refreshToken
+    private fun createHeader(login: TodoAuthServiceLoginResponse) {
         header = HttpHeaders().apply {
-            set("Authorization", "Bearer $refreshToken")
+            set("Authorization", "Bearer ${login.refreshToken}")
             contentType = MediaType.APPLICATION_JSON
         }
     }
