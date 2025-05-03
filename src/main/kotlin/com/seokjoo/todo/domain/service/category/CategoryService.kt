@@ -25,11 +25,6 @@ class CategoryService(
         return CategoryServiceResponseDTO.from(category = category)
     }
 
-    @Transactional(readOnly = true)
-    fun getCategory(name: String): Category? {
-        return categoryRepository.findCategoryByName(name)
-    }
-
     @Transactional
     fun createCategory(request: CategoryServiceRequestDTO): CategoryServiceResponseDTO {
         val category = categoryRepository.save(Category(name = request.name))
