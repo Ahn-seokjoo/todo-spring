@@ -2,8 +2,10 @@ package com.seokjoo.todo.domain.entity.todouser
 
 import com.seokjoo.todo.common.exception.TodoException
 import com.seokjoo.todo.common.exception.TodoExceptionType
+import jakarta.persistence.Embeddable
 
-data class Money(
+@Embeddable
+class Money(
     val balance: Long = 0L,
 ) {
     init {
@@ -11,11 +13,11 @@ data class Money(
     }
 
     fun increase(balance: Long): Money {
-        return copy(balance = this.balance + balance)
+        return Money(balance = this.balance + balance)
     }
 
     fun decrease(balance: Long): Money {
         check(this.balance - balance >= 0) { throw TodoException.of(TodoExceptionType.BALANCE_NOT_ENOUGH_MONEY) }
-        return copy(balance = this.balance - balance)
+        return Money(balance = this.balance - balance)
     }
 }

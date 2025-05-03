@@ -33,7 +33,7 @@ class CategoryApiController(
     @GetMapping("/category")
     @Operation(summary = "카테고리 존재 여부 확인", description = "name을 이용해 카테고리가 이미 존재하는지 확인")
     fun getCategory(@Parameter name: String): ResponseEntity<CategoryResponse> {
-        val category = categoryService.getCategory(name).toResponse()
+        val category = categoryService.getCategoryServiceResponse(name).toResponse()
         return ResponseEntity.ok(category)
     }
 
