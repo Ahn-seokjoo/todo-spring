@@ -35,6 +35,7 @@ class ApiExceptionHandler {
         val error = when (exception.bindingResult.fieldErrors.firstOrNull()?.field) {
             "todo" -> TodoExceptionType.ID_VALIDATION_BAD_REQUEST
             "name" -> TodoExceptionType.CATEGORY_VALIDATION_BAD_REQUEST
+            "price" -> TodoExceptionType.BALANCE_CAN_NOT_BE_NEGATIVE
             else -> TodoExceptionType.COMMON_VALIDATION_BAD_REQUEST
         }
 

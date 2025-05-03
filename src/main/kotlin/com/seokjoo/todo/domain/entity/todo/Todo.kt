@@ -51,11 +51,13 @@ class Todo(
         todoCategories: MutableList<TodoCategory>? = null,
         id: Long? = null,
         owner: User? = null,
+        price: Long? = null,
     ) = Todo(
         todo = todo ?: this.todo,
         isDone = isDone ?: this.isDone,
         todoCategories = todoCategories ?: this.todoCategories,
         id = id ?: this.id,
-        owner = owner ?: this.owner
+        owner = owner ?: this.owner,
+        price = price ?: this.price,
     )
 }

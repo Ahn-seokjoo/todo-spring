@@ -11,7 +11,7 @@ data class TodoUpdateRequest(
     val todo: String = "",
     @Schema(description = "todo 완료 정보를 알려줍니다.", example = "위플래시 재개봉 보러가기", required = false)
     val isDone: Boolean?,
-    @Min(value = 0L)
+    @field:Min(value = 0L)
     @Schema(description = "todo의 가격을 입력합니다.", example = "0L", required = false)
     val price: Long?,
     @Schema(description = "category를 list로 입력합니다", implementation = CategoryDTO::class)
