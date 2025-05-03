@@ -7,8 +7,8 @@ import com.seokjoo.todo.presentation.todo.dto.request.TodoPageRequest
 import com.seokjoo.todo.presentation.todo.dto.request.TodoRequest
 import com.seokjoo.todo.presentation.todo.dto.request.TodoUpdateRequest
 import com.seokjoo.todo.presentation.todo.dto.request.toPageServiceDTO
-import com.seokjoo.todo.presentation.todo.dto.request.toTodoCreateServiceRequest
-import com.seokjoo.todo.presentation.todo.dto.request.toTodoUpdateServiceRequest
+import com.seokjoo.todo.presentation.todo.dto.request.toCreateRequest
+import com.seokjoo.todo.presentation.todo.dto.request.toUpdateRequest
 import com.seokjoo.todo.presentation.todo.dto.response.TodoPageResponse
 import com.seokjoo.todo.presentation.todo.dto.response.TodoResponse
 import com.seokjoo.todo.presentation.todo.dto.response.toResponse
@@ -79,7 +79,7 @@ class TodoApiController(
         servletRequest: HttpServletRequest,
     ): ResponseEntity<TodoResponse> {
         val user = authService.findUser(servletRequest.getBearerToken())
-        val todo = todoService.createTodo(request = request.toTodoCreateServiceRequest(), user).toResponse()
+        val todo = todoService.createTodo(request = request.toCreateRequest(), user).toResponse()
         return ResponseEntity.created(URI.create("/todos/${todo.id}")).body(todo)
     }
 
@@ -89,7 +89,7 @@ class TodoApiController(
         @PathVariable id: Long,
         @RequestBody @Validated request: TodoUpdateRequest,
     ): ResponseEntity<TodoResponse> {
-        val todo = todoService.updateTodo(id = id, request = request.toTodoUpdateServiceRequest()).toResponse()
+        val todo = todoService.updateTodo(id = id, request = request.toUpdateRequest()).toResponse()
         return ResponseEntity.ok(todo)
     }
 

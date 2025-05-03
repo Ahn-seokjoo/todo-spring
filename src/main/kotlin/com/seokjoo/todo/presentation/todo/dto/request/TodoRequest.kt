@@ -18,7 +18,7 @@ data class TodoRequest(
     val categories: List<CategoryDTO> = listOf(),
 )
 
-fun TodoRequest.toTodoCreateServiceRequest() = TodoCreateServiceRequestDTO(
+fun TodoRequest.toCreateRequest() = TodoCreateServiceRequestDTO(
     todo = todo,
     isDone = isDone,
     categoryNames = categories.map { it.name },

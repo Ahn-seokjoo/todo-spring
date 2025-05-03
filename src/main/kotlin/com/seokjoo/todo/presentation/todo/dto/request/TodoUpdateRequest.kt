@@ -18,7 +18,7 @@ data class TodoUpdateRequest(
     val categories: List<CategoryDTO> = listOf(),
 )
 
-fun TodoUpdateRequest.toTodoUpdateServiceRequest() = TodoUpdateServiceRequestDTO(
+fun TodoUpdateRequest.toUpdateRequest() = TodoUpdateServiceRequestDTO(
     todo = todo,
     isDone = isDone,
     categoryNames = categories.map { it.name },
