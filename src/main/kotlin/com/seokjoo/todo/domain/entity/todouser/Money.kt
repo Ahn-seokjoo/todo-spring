@@ -17,7 +17,7 @@ class Money(
     }
 
     fun decrease(balance: Long): Money {
-        check(this.balance - balance >= 0) { throw TodoException.of(TodoExceptionType.BALANCE_NOT_ENOUGH_MONEY) }
+        check(this.balance - balance >= 0) { throw TodoException.of(TodoExceptionType.BALANCE_NOT_ENOUGH) }
         return Money(balance = this.balance - balance)
     }
 }

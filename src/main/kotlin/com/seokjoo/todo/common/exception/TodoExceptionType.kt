@@ -42,7 +42,7 @@ enum class TodoExceptionType(
     AUTH_SIGN_UP_ERROR(message = "이미 존재하는 ID 입니다", errorCode = "A004_USER_ALREADY_EXIST", httpStatusCode = 400),
 
     // MONEY
-    BALANCE_NOT_ENOUGH_MONEY(message = "잔액 부족입니다.", errorCode = "M000_BALANCE_NOT_ENOUGH_MONEY", httpStatusCode = 400),
+    BALANCE_NOT_ENOUGH(message = "잔액 부족입니다.", errorCode = "M000_BALANCE_NOT_ENOUGH", httpStatusCode = 400),
     BALANCE_CAN_NOT_BE_NEGATIVE(
         message = "잔액은 음수일 수 없습니다.",
         errorCode = "M001_CANT_NOT_BE_NEGATIVE",
