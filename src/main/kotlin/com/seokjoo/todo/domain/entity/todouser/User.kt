@@ -25,7 +25,7 @@ class User(
     val id: Long = 0L,
 
     @Column(nullable = false)
-    var balance: Long = 0L,
+    var money: Money = Money(),
 
     @Column(name = "todo_list", nullable = false)
     @OneToMany(cascade = [CascadeType.ALL], mappedBy = "owner", orphanRemoval = true)
@@ -33,5 +33,13 @@ class User(
 ) : BaseEntity() {
     fun removeTodo(todo: Todo) {
         todoList.remove(todo)
+    }
+
+    fun increaseBalance(balance: Long) {
+        money.increase(balance)
+    }
+
+    fun decreaseBalance(balance: Long) {
+        money.decrease(balance)
     }
 }
