@@ -4,6 +4,7 @@ import com.seokjoo.todo.domain.entity.BaseEntity
 import com.seokjoo.todo.domain.entity.category.Category
 import com.seokjoo.todo.domain.entity.todocategory.TodoCategory
 import com.seokjoo.todo.domain.entity.todouser.User
+import com.seokjoo.todo.domain.service.todo.TodoUpdateServiceRequestDTO
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
@@ -43,6 +44,16 @@ class Todo(
         val todoCategory = TodoCategory(todo = this, category = category)
         todoCategories.add(todoCategory)
         category.todoCategories.add(todoCategory)
+    }
+
+    fun todoUpdateApply(
+        request: TodoUpdateServiceRequestDTO,
+    ) {
+        todo.apply {
+            todo = request.todo.ifBlank { todo }
+            isDone = request.isDone ?: isDone
+            price = request.price ?: price
+        }
     }
 
     fun copy(

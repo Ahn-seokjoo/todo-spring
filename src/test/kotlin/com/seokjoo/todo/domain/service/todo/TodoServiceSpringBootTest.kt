@@ -2,8 +2,10 @@ package com.seokjoo.todo.domain.service.todo
 
 import com.seokjoo.todo.IntegrationTest
 import com.seokjoo.todo.common.exception.TodoException
+import com.seokjoo.todo.domain.entity.todouser.User
 import com.seokjoo.todo.domain.repository.category.CategoryRepository
 import com.seokjoo.todo.domain.repository.categorytodo.TodoCategoryRepository
+import com.seokjoo.todo.domain.repository.todouser.TodoAuthRepository
 import com.seokjoo.todo.presentation.todo.dto.request.TodoPageRequest
 import com.seokjoo.todo.presentation.todo.dto.request.toPageServiceDTO
 import org.assertj.core.api.Assertions
@@ -19,14 +21,17 @@ class TodoServiceSpringBootTest @Autowired constructor(
     private val categoryRepository: CategoryRepository,
     private val todoCategoryRepository: TodoCategoryRepository,
     private val redisTemplate: RedisTemplate<String, Any>,
+    private val authRepository: TodoAuthRepository,
 ) {
     lateinit var result: TodoServiceResponseDTO
+    val user = User("pita", "pita")
 
     @BeforeEach
     fun beforeEach() {
-        val request = TodoServiceRequestDTO(todo = "android", isDone = true, categoryNames = listOf("drama"))
+        authRepository.save(user)
+        val request = TodoCreateServiceRequestDTO(todo = "android", isDone = true, categoryNames = listOf("drama"))
         // when
-        result = service.createTodo(request)
+        result = service.createTodo(request, user)
     }
 
     @AfterEach
@@ -39,9 +44,11 @@ class TodoServiceSpringBootTest @Autowired constructor(
     @Test
     fun `createTodo 테스트`() {
         // given
-        val request = TodoServiceRequestDTO("spring")
+        val user = User("pita2", "pita")
+        authRepository.save(user)
+        val request = TodoCreateServiceRequestDTO("spring", price = 10L)
         // when
-        val result = service.createTodo(request)
+        val result = service.createTodo(request, user)
 
         // then
         Assertions.assertThat(result)
@@ -49,10 +56,12 @@ class TodoServiceSpringBootTest @Autowired constructor(
             .ignoringFields("id")
             .isEqualTo(
                 TodoServiceResponseDTO(
-                    todo = "spring",
-                    isDone = false,
+                    todo = request.todo,
+                    isDone = request.isDone,
                     categories = listOf(),
-                    id = 0L
+                    id = 0L,
+                    owner = user.userId,
+                    price = request.price,
                 )
             )
     }
@@ -71,6 +80,8 @@ class TodoServiceSpringBootTest @Autowired constructor(
                     todo = "android",
                     isDone = true,
                     categories = listOf("drama"),
+                    owner = "pita",
+                    price = 0L,
                 )
             )
     }
@@ -81,8 +92,8 @@ class TodoServiceSpringBootTest @Autowired constructor(
          * 이미 한개가 존재하기 때문에, 한개 더 추가 이후 총 2개인지 테스트
          * given
          */
-        val request = TodoServiceRequestDTO("node")
-        service.createTodo(request)
+        val request = TodoCreateServiceRequestDTO(todo = "node", price = 100L)
+        service.createTodo(request, user)
 
         // when
         val todoPageRequest = TodoPageRequest()
@@ -94,8 +105,22 @@ class TodoServiceSpringBootTest @Autowired constructor(
             .ignoringFields("id")
             .isEqualTo(
                 listOf(
-                    TodoServiceResponseDTO(id = 1L, isDone = true, todo = "android", categories = listOf("drama")),
-                    TodoServiceResponseDTO(id = 2L, isDone = false, todo = "node", categories = listOf()),
+                    TodoServiceResponseDTO(
+                        id = 1L,
+                        isDone = true,
+                        todo = "android",
+                        categories = listOf("drama"),
+                        owner = "pita",
+                        price = 0L,
+                    ),
+                    TodoServiceResponseDTO(
+                        id = 2L,
+                        isDone = false,
+                        todo = "node",
+                        categories = listOf(),
+                        owner = "pita",
+                        price = 100L,
+                    ),
                 )
             )
     }
@@ -104,7 +129,8 @@ class TodoServiceSpringBootTest @Autowired constructor(
     fun `updateTodo 테스트`() {
         // given
         val updateId = result.id
-        val request = TodoServiceRequestDTO(todo = "iOS", isDone = false, categoryNames = listOf("horror"))
+        val request =
+            TodoUpdateServiceRequestDTO(todo = "iOS", isDone = false, categoryNames = listOf("horror"), price = 400L)
 
         // when
         val result = service.updateTodo(id = updateId, request = request)
@@ -117,6 +143,8 @@ class TodoServiceSpringBootTest @Autowired constructor(
                     isDone = false,
                     todo = "iOS",
                     categories = listOf("drama", "horror"),
+                    owner = "pita",
+                    price = 400L,
                 ),
             )
     }
@@ -185,7 +213,7 @@ class TodoServiceSpringBootTest @Autowired constructor(
     @Test
     fun `updateByTodo 시에 없는 아이디를 조회했을 때 NOT_EXISTED_TODO 을 잘 던져주는지`() {
         val exception = kotlin.runCatching {
-            service.updateTodo(200L, TodoServiceRequestDTO(todo = ""))
+            service.updateTodo(200L, TodoUpdateServiceRequestDTO(todo = "", isDone = null, price = null))
         }.exceptionOrNull()
 
         assert(exception is TodoException)

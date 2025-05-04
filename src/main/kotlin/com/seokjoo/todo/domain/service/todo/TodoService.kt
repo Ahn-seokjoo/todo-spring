@@ -63,11 +63,7 @@ class TodoService(
     fun updateTodo(id: Long, request: TodoUpdateServiceRequestDTO): TodoServiceResponseDTO {
         val todo = todoRepository.findByIdOrNull(id) ?: throw TodoException.of(TodoExceptionType.NOT_EXISTED_TODO)
 
-        todo.apply {
-            this.todo = request.todo.ifBlank { this.todo }
-            this.isDone = request.isDone ?: this.isDone
-            this.price = request.price ?: this.price
-        }
+        todo.todoUpdateApply(request)
         // 더티 체킹으로 save 할 필요 없지만 그냥 명시적으로 해줌
         todoRepository.save(todo)
 
