@@ -77,12 +77,12 @@ class TodoServiceMockTest : BehaviorSpec({
             Todo(todo = "abcdef", isDone = false, owner = user),
         )
         val pageRequest = PageRequest.of(0, 10)
-        every { todoRepository.findAllSlicedTodoOrderByUpdatedAt(any()) } returns SliceImpl(result, pageRequest, true)
+        every { todoRepository.findAllSlicedTodoOrderByUpdatedAt(any(), any()) } returns SliceImpl(result, pageRequest, true)
         every { todoRepository.getFetchJoinedTodoList(any()) } returns result
 
         When("정상 케이스에서") {
             val todoPageRequest = TodoPageRequest()
-            val allTodos = todoService.getPagedTodos(todoPageRequest.toPageServiceDTO())
+            val allTodos = todoService.getPagedTodos(user.userId, todoPageRequest.toPageServiceDTO())
             Then("getAll 시에 추가한 만큼 잘 들어가있다.") {
                 allTodos.responseList.count() shouldBe 2
             }

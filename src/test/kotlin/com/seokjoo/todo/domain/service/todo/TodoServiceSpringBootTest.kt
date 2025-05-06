@@ -97,7 +97,7 @@ class TodoServiceSpringBootTest @Autowired constructor(
 
         // when
         val todoPageRequest = TodoPageRequest()
-        val todoList = service.getPagedTodos(todoPageRequest.toPageServiceDTO()).responseList
+        val todoList = service.getPagedTodos(user.userId, todoPageRequest.toPageServiceDTO()).responseList
         // then
         assert(todoList.size == 2)
         Assertions.assertThat(todoList)
@@ -157,7 +157,7 @@ class TodoServiceSpringBootTest @Autowired constructor(
 
         // when
         val todoPageRequest = TodoPageRequest()
-        val removedList = service.getPagedTodos(todoPageRequest.toPageServiceDTO())
+        val removedList = service.getPagedTodos(user.userId, todoPageRequest.toPageServiceDTO())
 
         // then
         assert(removedList.responseList.isEmpty())
