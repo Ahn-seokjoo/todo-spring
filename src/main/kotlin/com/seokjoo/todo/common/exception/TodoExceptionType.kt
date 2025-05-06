@@ -13,6 +13,9 @@ enum class TodoExceptionType(
         errorCode = "TO02_TODO_VALIDATION_BAD_REQUEST",
         httpStatusCode = 400
     ),
+    UNAUTHORIZED_TODO_ACCESS(message = "자신의 Todo만 볼 수 있습니다.", errorCode = "T003_GET_TODO_AUTHORIZATION", httpStatusCode = 401),
+    UNAUTHORIZED_TODO_UPDATE(message = "자신의 Todo만 수정할 수 있습니다.", errorCode = "T004_UPDATE_TODO_AUTHORIZATION", httpStatusCode = 401),
+    UNAUTHORIZED_TODO_DELETE(message = "자신의 Todo만 삭제할 수 있습니다.", errorCode = "T005_DELETE_TODO_AUTHORIZATION", httpStatusCode = 401),
 
     // CATEGORY
     CATEGORY_NOT_EXIST(message = "존재하지 않은 Category 입니다", errorCode = "CAOOO_CATEGORY_NOT_EXIT", 404),

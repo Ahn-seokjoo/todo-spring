@@ -70,7 +70,7 @@ class TodoServiceSpringBootTest @Autowired constructor(
     fun `getTodoById 테스트`() {
         val id = result.id
 
-        val todo = service.getTodoById(id)
+        val todo = service.getTodoById(id, user.userId)
 
         Assertions.assertThat(todo)
             .usingRecursiveComparison()
@@ -199,7 +199,7 @@ class TodoServiceSpringBootTest @Autowired constructor(
     @Test
     fun `getByTodo 시에 없는 아이디를 조회했을 때 NOT_EXISTED_TODO 을 잘 던져주는지`() {
         val exception = kotlin.runCatching {
-            service.getTodoById(200L)
+            service.getTodoById(200L, user.userId)
         }.exceptionOrNull()
 
         assert(exception is TodoException)

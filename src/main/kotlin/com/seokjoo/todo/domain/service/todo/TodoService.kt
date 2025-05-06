@@ -42,8 +42,9 @@ class TodoService(
     }
 
     @Cacheable(cacheNames = ["todo"], key = "#id")
-    fun getTodoById(id: Long): TodoServiceResponseDTO {
+    fun getTodoById(id: Long, userId: String): TodoServiceResponseDTO {
         val result = todoRepository.findByIdOrNull(id) ?: throw TodoException.of(TodoExceptionType.NOT_EXISTED_TODO)
+        if (result.owner.userId != userId) throw TodoException.of(TodoExceptionType.UNAUTHORIZED_TODO_ACCESS)
         return TodoServiceResponseDTO.from(result)
     }
 
