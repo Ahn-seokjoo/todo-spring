@@ -202,7 +202,7 @@ class TodoServiceMockTest : BehaviorSpec({
             every { todoRepository.findByIdOrNull(id) } throws TodoException.of(TodoExceptionType.NOT_EXISTED_TODO)
             Then("없는 ID를 주는 경우 ") {
                 val exception = shouldThrow<TodoException> {
-                    todoService.deleteTodo(id)
+                    todoService.deleteTodo(id, user.userId)
                 }
                 exception.message shouldBe "존재하지 않는 Todo 입니다"
                 exception.httpStatusCode shouldBe expectedStatusCode

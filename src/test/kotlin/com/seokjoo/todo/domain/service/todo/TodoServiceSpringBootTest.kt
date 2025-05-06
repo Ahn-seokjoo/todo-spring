@@ -153,7 +153,7 @@ class TodoServiceSpringBootTest @Autowired constructor(
     fun `delete 테스트 - 제거 이후 Todo DB 조회`() {
         // given
         val deleteId = result.id
-        service.deleteTodo(deleteId)
+        service.deleteTodo(deleteId, user.userId)
 
         // when
         val todoPageRequest = TodoPageRequest()
@@ -169,7 +169,7 @@ class TodoServiceSpringBootTest @Autowired constructor(
         val beforeEntity = categoryRepository.findCategoryByName("drama")
 
         val deleteId = result.id
-        service.deleteTodo(deleteId)
+        service.deleteTodo(deleteId, user.userId)
 
         // when
         val deletedEntity = categoryRepository.findCategoryByName("drama")
@@ -186,7 +186,7 @@ class TodoServiceSpringBootTest @Autowired constructor(
             categoryRepository.findCategoryByName("drama")?.id ?: 0L
         val todoCategoryBeforeCountByRemove = todoCategoryRepository.countByCategoryId(categoryId)
         val deleteId = result.id
-        service.deleteTodo(deleteId)
+        service.deleteTodo(deleteId, user.userId)
 
         // when
         val todoCategoryAfterCountByRemove = todoCategoryRepository.countByCategoryId(categoryId)
@@ -227,7 +227,7 @@ class TodoServiceSpringBootTest @Autowired constructor(
     @Test
     fun `deleteTodo 시에 없는 아이디를 조회했을 때 NOT_EXISTED_TODO 을 잘 던져주는지`() {
         val exception = kotlin.runCatching {
-            service.deleteTodo(200L)
+            service.deleteTodo(200L, user.userId)
         }.exceptionOrNull()
 
         assert(exception is TodoException)

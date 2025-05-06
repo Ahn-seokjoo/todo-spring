@@ -110,8 +110,9 @@ class TodoApiController(
         description = "삭제 성공",
         content = [Content(mediaType = "text/plain", schema = Schema(example = "ok"))]
     )
-    fun deleteTodo(@PathVariable id: Long): ResponseEntity<String> {
-        todoService.deleteTodo(id)
+    fun deleteTodo(servletRequest: HttpServletRequest, @PathVariable id: Long): ResponseEntity<String> {
+        val user = authService.findUser(servletRequest.getBearerToken())
+        todoService.deleteTodo(id = id, userId = user.userId)
         return ResponseEntity.noContent().build()
     }
 }

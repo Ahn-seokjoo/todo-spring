@@ -204,7 +204,7 @@ class TodoE2ETest @Autowired constructor(
             delete(keys("todo:*"))
         }
         if (testInfo.displayName.contains("DELETE Todo delete e2e 테스트")) return
-        todoService.deleteTodo(todoResponse.id)
+        todoService.deleteTodo(todoResponse.id, "pita")
     }
 
     @BeforeAll
