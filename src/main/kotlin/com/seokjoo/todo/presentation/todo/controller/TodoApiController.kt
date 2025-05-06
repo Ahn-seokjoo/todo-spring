@@ -99,7 +99,8 @@ class TodoApiController(
         @RequestBody @Validated request: TodoUpdateRequest,
     ): ResponseEntity<TodoResponse> {
         val user = authService.findUser(servletRequest.getBearerToken())
-        val todo = todoService.updateTodo(id = id, userId = user.userId, request = request.toUpdateRequest()).toResponse()
+        val todo =
+            todoService.updateTodo(id = id, userId = user.userId, request = request.toUpdateRequest()).toResponse()
         return ResponseEntity.ok(todo)
     }
 
