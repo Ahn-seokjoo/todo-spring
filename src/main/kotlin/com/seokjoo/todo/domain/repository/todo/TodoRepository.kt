@@ -10,8 +10,8 @@ import org.springframework.stereotype.Repository
 
 @Repository
 interface TodoRepository : JpaRepository<Todo, Long> {
-    @Query("select t from Todo t ORDER BY t.createdAt ASC")
-    fun findAllSlicedTodoOrderByUpdatedAt(pageable: Pageable): Slice<Todo>
+    @Query("select t from Todo t where t.owner.userId = :ownerId ORDER BY t.createdAt ASC")
+    fun findAllSlicedTodoOrderByUpdatedAt(pageable: Pageable, ownerId: String): Slice<Todo>
 
     @Query("select distinct t from Todo t left join fetch t.todoCategories tc left join fetch tc.category where t in :todos")
     fun getFetchJoinedTodoList(@Param("todos") todos: List<Todo>): List<Todo>

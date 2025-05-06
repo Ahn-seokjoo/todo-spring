@@ -31,13 +31,13 @@ import org.springframework.web.bind.annotation.RestController
 import java.net.URI
 
 /**
- * 요구사항 다시 정해보기
  * 1. 사용자는 카테고리 없이 투두를 만들 수 있다.
  * 2. 사용자는 카테고리를 1개 이상으로 저장할 수 있다.
  * 3. 이때, 기존에 없던 카테고리라면 카테고리를 저장하고 추가한다
  * 4. 기존에 있던 카테고리라면 새로 저장하지 않고 투두에 추가한다
  * 5. 기존에 카테고리가 있고, 업데이트를 해준다면 업데이트 되는 부분만 추가해준다
  * 6. 이때 카테고리는 중복이 없어야 한다.
+ * 7. 각 Todo는 Owner 정보를 가지고 있고, 자신의 Todo만 볼 수 있다.
  */
 @Tag(name = "Todo", description = "Todo 조회, 삭제, 수정 API")
 @RestController
@@ -49,9 +49,13 @@ class TodoApiController(
 
     @GetMapping("/todos")
     @Operation(summary = "사용자 todo를 페이지네이션을 통해 리턴", description = "사용자가 등록한 todo 와 카테고리 정보를 n개씩 가져옵니다. (default = 20)")
-    fun getPagedTodos(@RequestBody todoPageRequest: TodoPageRequest = TodoPageRequest()): ResponseEntity<TodoPageResponse> {
+    fun getPagedTodos(
+        servletRequest: HttpServletRequest,
+        @RequestBody todoPageRequest: TodoPageRequest = TodoPageRequest(),
+    ): ResponseEntity<TodoPageResponse> {
+        val user = authService.findUser(servletRequest.getBearerToken())
         val pagedDto = todoPageRequest.toPageServiceDTO()
-        val pagedResponse = todoService.getPagedTodos(pagedDto)
+        val pagedResponse = todoService.getPagedTodos(userId = user.userId, pageServiceDTO = pagedDto)
         return ResponseEntity.ok(
             TodoPageResponse(
                 isLast = pagedResponse.isLast,

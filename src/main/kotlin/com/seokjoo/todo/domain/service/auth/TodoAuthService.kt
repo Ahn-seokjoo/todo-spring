@@ -60,8 +60,10 @@ class TodoAuthService(
     }
 
     fun findUser(accessToken: String): User {
-        val subject = jwtProvider.getSubject(accessToken)
+        val subject = getSubject(accessToken)
         return todoAuthRepository.findUserByUserId(subject)
             ?: throw TodoException.of(TodoExceptionType.AUTH_USER_NOT_EXIST)
     }
+
+    fun getSubject(accessToken: String) = jwtProvider.getSubject(accessToken)
 }

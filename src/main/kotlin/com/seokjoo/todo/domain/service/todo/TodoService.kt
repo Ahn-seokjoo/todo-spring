@@ -31,10 +31,10 @@ class TodoService(
         key = "'todos:page:' + #pageServiceDTO.pageNumber + ':size:' + #pageServiceDTO.pageSize",
         cacheManager = "todoCacheManager"
     )
-    fun getPagedTodos(pageServiceDTO: TodoPageServiceDTO): TodoPageServiceResponseDTO {
+    fun getPagedTodos(userId: String, pageServiceDTO: TodoPageServiceDTO): TodoPageServiceResponseDTO {
         val pageRequest =
             PageRequest.of(pageServiceDTO.pageNumber, pageServiceDTO.pageSize, Sort.by("updatedAt").ascending())
-        val todoPage = todoRepository.findAllSlicedTodoOrderByUpdatedAt(pageRequest)
+        val todoPage = todoRepository.findAllSlicedTodoOrderByUpdatedAt(pageable = pageRequest, ownerId = userId)
         val pageResult = todoRepository.getFetchJoinedTodoList(todos = todoPage.content)
         val todoPagedList = pageResult.map { todo -> TodoServiceResponseDTO.from(todo) }
 
