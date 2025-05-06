@@ -172,7 +172,8 @@ class TodoE2ETest @Autowired constructor(
             owner = "pita",
             price = 10L,
         )
-        val request = TodoUpdateRequest(todo = "node", isDone = true, categories = listOf(CategoryDTO("drama")), price = null)
+        val request =
+            TodoUpdateRequest(todo = "node", isDone = true, categories = listOf(CategoryDTO("drama")), price = null)
 
         val responseEntity: ResponseEntity<String> =
             restTemplate.exchange(url, HttpMethod.PATCH, HttpEntity(request, header), String::class)
