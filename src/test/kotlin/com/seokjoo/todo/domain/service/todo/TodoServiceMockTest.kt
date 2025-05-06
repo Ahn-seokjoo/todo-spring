@@ -51,7 +51,7 @@ class TodoServiceMockTest : BehaviorSpec({
         val id = 1L
         every { todoRepository.findByIdOrNull(id) } returns Todo(id = 1L, todo = "abcde", owner = user)
         When("정상 케이스에서") {
-            val todo = todoService.getTodoById(id)
+            val todo = todoService.getTodoById(id, user.userId)
             Then("getTodos 를 수행했을 때, todo 한개가 잘 나온다") {
                 todo.isDone shouldBe false
                 todo.todo shouldBe "abcde"
@@ -62,7 +62,7 @@ class TodoServiceMockTest : BehaviorSpec({
             every { todoRepository.findByIdOrNull(id) } throws TodoException.of(TodoExceptionType.NOT_EXISTED_TODO)
             Then("에러 케이스의 경우 404, T000_TODO_ERROR를 준다") {
                 val exception = shouldThrow<TodoException> {
-                    todoService.getTodoById(id = id)
+                    todoService.getTodoById(id = id, userId = user.userId)
                 }
                 exception.message shouldBe "존재하지 않는 Todo 입니다"
                 exception.httpStatusCode shouldBe 404
@@ -77,12 +77,16 @@ class TodoServiceMockTest : BehaviorSpec({
             Todo(todo = "abcdef", isDone = false, owner = user),
         )
         val pageRequest = PageRequest.of(0, 10)
-        every { todoRepository.findAllSlicedTodoOrderByUpdatedAt(any()) } returns SliceImpl(result, pageRequest, true)
+        every { todoRepository.findAllSlicedTodoOrderByUpdatedAt(any(), any()) } returns SliceImpl(
+            result,
+            pageRequest,
+            true
+        )
         every { todoRepository.getFetchJoinedTodoList(any()) } returns result
 
         When("정상 케이스에서") {
             val todoPageRequest = TodoPageRequest()
-            val allTodos = todoService.getPagedTodos(todoPageRequest.toPageServiceDTO())
+            val allTodos = todoService.getPagedTodos(user.userId, todoPageRequest.toPageServiceDTO())
             Then("getAll 시에 추가한 만큼 잘 들어가있다.") {
                 allTodos.responseList.count() shouldBe 2
             }
@@ -115,7 +119,8 @@ class TodoServiceMockTest : BehaviorSpec({
                 val exception = shouldThrow<TodoException> {
                     todoService.updateTodo(
                         id = id,
-                        request = TodoUpdateServiceRequestDTO(todo = "abas", isDone = null, price = null)
+                        request = TodoUpdateServiceRequestDTO(todo = "abas", isDone = null, price = null),
+                        userId = user.userId
                     )
                 }
                 exception.message shouldBe "존재하지 않는 Todo 입니다"
@@ -128,7 +133,7 @@ class TodoServiceMockTest : BehaviorSpec({
             every { todoRepository.findByIdOrNull(id) } returns previousTodo
             every { todoRepository.save(any()) } returns nextTodo
 
-            val updatedTodo = todoService.updateTodo(id = id, request = request)
+            val updatedTodo = todoService.updateTodo(id = id, request = request, userId = user.userId)
             Then("업데이트가 잘 된다") {
                 updatedTodo.todo shouldBe "abcdef"
                 updatedTodo.isDone shouldBe false
@@ -143,7 +148,7 @@ class TodoServiceMockTest : BehaviorSpec({
             val newNextTodo = nextTodo.copy(isDone = true)
             every { todoRepository.findByIdOrNull(id) } returns newPreviousTodo
             every { todoRepository.save(any()) } returns newNextTodo
-            val updatedTodo = todoService.updateTodo(id = id, request = newRequest)
+            val updatedTodo = todoService.updateTodo(id = id, request = newRequest, userId = user.userId)
 
             Then("업데이트가 잘 된다.") {
                 updatedTodo.todo shouldBe "abcdef"
@@ -178,7 +183,7 @@ class TodoServiceMockTest : BehaviorSpec({
                 Category(name = "horror"),
                 Category(name = "comedy")
             )
-            val updatedTodo = todoService.updateTodo(id = id, request = newRequest)
+            val updatedTodo = todoService.updateTodo(id = id, request = newRequest, userId = user.userId)
             Then("업데이트가 잘 된다") {
                 updatedTodo.todo shouldBe "abcdef"
                 updatedTodo.isDone shouldBe false
@@ -197,7 +202,7 @@ class TodoServiceMockTest : BehaviorSpec({
             every { todoRepository.findByIdOrNull(id) } throws TodoException.of(TodoExceptionType.NOT_EXISTED_TODO)
             Then("없는 ID를 주는 경우 ") {
                 val exception = shouldThrow<TodoException> {
-                    todoService.deleteTodo(id)
+                    todoService.deleteTodo(id, user.userId)
                 }
                 exception.message shouldBe "존재하지 않는 Todo 입니다"
                 exception.httpStatusCode shouldBe expectedStatusCode

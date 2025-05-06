@@ -37,6 +37,7 @@ class TodoApiControllerTest {
 
     @Test
     fun `getAllTodo 함수를 호출하면 200 이 나온다`() {
+        val user = User("pita", "pita")
         val mockResponse = TodoServiceResponseDTO(
             id = 1L,
             todo = "create todo",
@@ -45,14 +46,15 @@ class TodoApiControllerTest {
             owner = "pita",
             price = 0L,
         )
-        given(todoService.getPagedTodos(any())).willReturn(
+        given(authService.findUser(any())).willReturn(user)
+        given(todoService.getPagedTodos(eq(user.userId), any())).willReturn(
             TodoPageServiceResponseDTO(
                 isLast = true, responseList = listOf(
                     mockResponse
                 )
             )
         )
-        mockMvc.get("/api/v1/todos")
+        mockMvc.get("/api/v1/todos") { header("Authorization", "Bearer a") }
             .andDo { print() }
             .andExpect {
                 status { isOk() }
