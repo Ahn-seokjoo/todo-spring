@@ -133,7 +133,7 @@ class TodoServiceSpringBootTest @Autowired constructor(
             TodoUpdateServiceRequestDTO(todo = "iOS", isDone = false, categoryNames = listOf("horror"), price = 400L)
 
         // when
-        val result = service.updateTodo(id = updateId, request = request)
+        val result = service.updateTodo(id = updateId, request = request, userId = user.userId)
 
         // then
         Assertions.assertThat(result)
@@ -213,7 +213,7 @@ class TodoServiceSpringBootTest @Autowired constructor(
     @Test
     fun `updateByTodo 시에 없는 아이디를 조회했을 때 NOT_EXISTED_TODO 을 잘 던져주는지`() {
         val exception = kotlin.runCatching {
-            service.updateTodo(200L, TodoUpdateServiceRequestDTO(todo = "", isDone = null, price = null))
+            service.updateTodo(200L, user.userId, TodoUpdateServiceRequestDTO(todo = "", isDone = null, price = null))
         }.exceptionOrNull()
 
         assert(exception is TodoException)

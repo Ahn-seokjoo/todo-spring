@@ -67,8 +67,8 @@ class TodoApiController(
     @GetMapping("/todos/{id}")
     @Operation(summary = "특정 id todo 조회", description = "id를 이용해 todo 한개를 조회합니다.")
     fun getTodoById(
-        @PathVariable id: Long,
         servletRequest: HttpServletRequest,
+        @PathVariable id: Long,
     ): ResponseEntity<TodoResponse> {
         val user = authService.findUser(servletRequest.getBearerToken())
         val todo = todoService.getTodoById(id, user.userId).toResponse()
@@ -83,8 +83,8 @@ class TodoApiController(
         content = [Content(mediaType = "text/plain", schema = Schema(example = "ok"))]
     )
     fun createTodo(
-        @RequestBody @Validated request: TodoRequest,
         servletRequest: HttpServletRequest,
+        @RequestBody @Validated request: TodoRequest,
     ): ResponseEntity<TodoResponse> {
         val user = authService.findUser(servletRequest.getBearerToken())
         val todo = todoService.createTodo(request = request.toCreateRequest(), user).toResponse()
@@ -94,10 +94,12 @@ class TodoApiController(
     @PatchMapping("/todos/{id}")
     @Operation(summary = "특정 id todo 업데이트", description = "id를 이용해 todo 한개를 업데이트 합니다.")
     fun updateTodo(
+        servletRequest: HttpServletRequest,
         @PathVariable id: Long,
         @RequestBody @Validated request: TodoUpdateRequest,
     ): ResponseEntity<TodoResponse> {
-        val todo = todoService.updateTodo(id = id, request = request.toUpdateRequest()).toResponse()
+        val user = authService.findUser(servletRequest.getBearerToken())
+        val todo = todoService.updateTodo(id = id, userId = user.userId, request = request.toUpdateRequest()).toResponse()
         return ResponseEntity.ok(todo)
     }
 

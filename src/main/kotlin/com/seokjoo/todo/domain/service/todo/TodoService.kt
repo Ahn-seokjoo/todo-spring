@@ -43,9 +43,9 @@ class TodoService(
 
     @Cacheable(cacheNames = ["todo"], key = "#id")
     fun getTodoById(id: Long, userId: String): TodoServiceResponseDTO {
-        val result = todoRepository.findByIdOrNull(id) ?: throw TodoException.of(TodoExceptionType.NOT_EXISTED_TODO)
-        if (result.owner.userId != userId) throw TodoException.of(TodoExceptionType.UNAUTHORIZED_TODO_ACCESS)
-        return TodoServiceResponseDTO.from(result)
+        val todo = todoRepository.findByIdOrNull(id) ?: throw TodoException.of(TodoExceptionType.NOT_EXISTED_TODO)
+        if (checkIsMe(todo, userId)) throw TodoException.of(TodoExceptionType.UNAUTHORIZED_TODO_ACCESS)
+        return TodoServiceResponseDTO.from(todo)
     }
 
     @Transactional
@@ -61,9 +61,9 @@ class TodoService(
     @Transactional
     @CacheEvict(value = ["todos"])
     @CachePut(cacheNames = ["todo"], key = "#id")
-    fun updateTodo(id: Long, request: TodoUpdateServiceRequestDTO): TodoServiceResponseDTO {
+    fun updateTodo(id: Long, userId: String, request: TodoUpdateServiceRequestDTO): TodoServiceResponseDTO {
         val todo = todoRepository.findByIdOrNull(id) ?: throw TodoException.of(TodoExceptionType.NOT_EXISTED_TODO)
-
+        if (checkIsMe(todo, userId)) throw TodoException.of(TodoExceptionType.UNAUTHORIZED_TODO_UPDATE)
         todo.todoUpdateApply(request)
         // 더티 체킹으로 save 할 필요 없지만 그냥 명시적으로 해줌
         todoRepository.save(todo)
@@ -98,4 +98,6 @@ class TodoService(
             }
         }
     }
+
+    private fun checkIsMe(todo: Todo, userId: String) = todo.owner.userId != userId
 }
