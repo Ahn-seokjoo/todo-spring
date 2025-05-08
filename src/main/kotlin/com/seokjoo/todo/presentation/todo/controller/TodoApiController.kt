@@ -1,6 +1,6 @@
 package com.seokjoo.todo.presentation.todo.controller
 
-import com.seokjoo.todo.common.common.jwt.getBearerToken
+import com.seokjoo.todo.common.jwt.getBearerToken
 import com.seokjoo.todo.domain.service.auth.TodoAuthService
 import com.seokjoo.todo.domain.service.todo.TodoService
 import com.seokjoo.todo.presentation.todo.dto.request.TodoPageRequest

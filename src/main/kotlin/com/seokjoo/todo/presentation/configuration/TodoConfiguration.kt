@@ -6,8 +6,11 @@ import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.seokjoo.todo.common.common.jwt.JwtAuthFilter
-import com.seokjoo.todo.common.common.jwt.JwtProvider
+import com.seokjoo.todo.common.jwt.JwtAuthFilter
+import com.seokjoo.todo.common.jwt.JwtProvider
+import org.redisson.Redisson
+import org.redisson.api.RedissonClient
+import org.redisson.config.Config
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.web.servlet.FilterRegistrationBean
 import org.springframework.cache.CacheManager
@@ -42,6 +45,15 @@ class TodoConfiguration(
             addUrlPatterns("/*")
             order = 1
         }
+    }
+
+    @Bean
+    fun redisson(): RedissonClient {
+        val config = Config().apply {
+            val redisHost = System.getenv("REDIS_HOST") ?: "localhost"
+            useSingleServer().address = "redis://$redisHost:6379"
+        }
+        return Redisson.create(config)
     }
 
     @Bean

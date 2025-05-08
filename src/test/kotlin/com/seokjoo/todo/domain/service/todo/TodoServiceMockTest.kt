@@ -29,6 +29,7 @@ class TodoServiceMockTest : BehaviorSpec({
         todoRepository = todoRepository,
         todoDeleteService = mockk(),
         categoryService = categoryService,
+        redisUtils = mockk()
     )
 
     Given("create todo") {

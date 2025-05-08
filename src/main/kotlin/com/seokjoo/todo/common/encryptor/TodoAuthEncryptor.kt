@@ -1,4 +1,4 @@
-package com.seokjoo.todo.common.common.encryptor
+package com.seokjoo.todo.common.encryptor
 
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Component
