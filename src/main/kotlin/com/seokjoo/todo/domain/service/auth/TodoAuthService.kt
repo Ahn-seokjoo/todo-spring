@@ -17,11 +17,12 @@ class TodoAuthService(
     private val todoAuthRepository: TodoAuthRepository,
 ) {
     @Transactional
-    fun signUp(userId: String, password: String): User {
+    fun signUp(userId: String, password: String) {
         todoAuthRepository.findUserByUserId(userId) ?: run {
             val encodedPassword = encryptor.encrypt(password)
             val user = User(userId = userId, password = encodedPassword)
-            return todoAuthRepository.save(user)
+            todoAuthRepository.save(user)
+            return
         }
         throw TodoException.of(TodoExceptionType.AUTH_SIGN_UP_ERROR)
     }
