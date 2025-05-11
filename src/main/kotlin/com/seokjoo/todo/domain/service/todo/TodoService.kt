@@ -56,11 +56,7 @@ class TodoService(
         val todo = Todo(todo = request.todo, isDone = request.isDone, owner = owner, price = request.price)
         todoRepository.save(todo)
 
-        request.categoryNames.map {
-            redisUtils.tryLock(it) {
-                checkExistAndAddCategory(request, todo)
-            }
-        }
+        checkExistAndAddCategory(request, todo)
         return TodoServiceResponseDTO.from(todo)
     }
 
@@ -96,10 +92,10 @@ class TodoService(
         request: TodoServiceRequestDTO,
         todo: Todo,
     ) {
-        if (request.categoryNames.isNotEmpty()) {
-            request.categoryNames.forEach { categoryName ->
+        request.categoryNames.map { categoryName ->
+            redisUtils.tryLock(categoryName) {
+                val matchedCategory = categoryService.getOrCreateCategory(categoryName)
                 if (todo.hasCategory(categoryName).not()) {
-                    val matchedCategory = categoryService.getOrCreateCategory(categoryName)
                     todo.addCategory(category = matchedCategory)
                 }
             }
