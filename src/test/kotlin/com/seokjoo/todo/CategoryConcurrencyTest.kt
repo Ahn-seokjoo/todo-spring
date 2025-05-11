@@ -56,7 +56,6 @@ class CategoryConcurrencyTest @Autowired constructor(
         threads.forEach { it.join() }
 
         val allCategories = categoryRepository.findAll()
-        println("최종 카테고리 개수: ${allCategories.size}, allCategories = ${allCategories.map { it.name }}")
         assert(allCategories.size == 1)
     }
 }
