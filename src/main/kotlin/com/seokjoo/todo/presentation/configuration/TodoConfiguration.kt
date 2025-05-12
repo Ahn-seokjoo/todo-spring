@@ -51,7 +51,7 @@ class TodoConfiguration(
     fun redisson(): RedissonClient {
         val config = Config().apply {
             val redisHost = System.getenv("REDIS_HOST") ?: "localhost"
-            useSingleServer().address = "redis://$redisHost:6379"
+            useSingleServer().address = "redis://$redisHost:6380"
         }
         return Redisson.create(config)
     }

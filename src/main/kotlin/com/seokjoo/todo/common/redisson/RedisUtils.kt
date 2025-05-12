@@ -8,18 +8,22 @@ import java.util.concurrent.TimeUnit
 class RedisUtils(
     private val redisson: RedissonClient,
 ) {
-    fun tryLock(key: String, block: () -> Unit) {
+    fun <T> tryLock(key: String, block: () -> T): T {
         val lock = redisson.getLock(key)
         try {
             // 5초간 락 시도, 3초간 락을 유지
-            if (lock.tryLock(5, 3, TimeUnit.SECONDS)) block.invoke()
+            if (lock.tryLock(5, 3, TimeUnit.SECONDS)) return block.invoke()
             else throw IllegalStateException()
         } catch (e: InterruptedException) {
             Thread.currentThread().interrupt()
+            throw IllegalStateException()
         } catch (e: Exception) {
             // 처리 고민 ,,
+            throw IllegalStateException()
         } finally {
-            if (lock.isHeldByCurrentThread) { lock.unlock() }
+            if (lock.isHeldByCurrentThread) {
+                lock.unlock()
+            }
         }
     }
 }

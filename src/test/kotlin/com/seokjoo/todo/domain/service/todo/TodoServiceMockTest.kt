@@ -2,7 +2,6 @@ package com.seokjoo.todo.domain.service.todo
 
 import com.seokjoo.todo.common.exception.TodoException
 import com.seokjoo.todo.common.exception.TodoExceptionType
-import com.seokjoo.todo.common.redisson.RedisUtils
 import com.seokjoo.todo.domain.entity.category.Category
 import com.seokjoo.todo.domain.entity.todo.Todo
 import com.seokjoo.todo.domain.entity.todocategory.TodoCategory
@@ -17,7 +16,6 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.mockk.every
 import io.mockk.mockk
-import org.redisson.api.RedissonClient
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.SliceImpl
 import org.springframework.data.repository.findByIdOrNull
@@ -26,13 +24,11 @@ class TodoServiceMockTest : BehaviorSpec({
     val todoRepository: TodoRepository = mockk()
     val categoryService: CategoryService = mockk()
     val user = User("pita", "pita")
-    val redisUtils: RedisUtils = mockk()
 
     val todoService = TodoService(
         todoRepository = todoRepository,
         todoDeleteService = mockk(),
         categoryService = categoryService,
-        redisUtils = redisUtils,
     )
 
     Given("create todo") {
@@ -184,13 +180,13 @@ class TodoServiceMockTest : BehaviorSpec({
             every { todoRepository.findByIdOrNull(1L) } returns newPreviousTodo
             every { todoRepository.save(any()) } returns newNextTodo
             every { categoryService.getOrCreateCategory(any()) } returnsMany listOf(
+                1L,
+                2L
+            )
+            every { categoryService.findById(any()) } returnsMany listOf(
                 Category(name = "horror"),
                 Category(name = "comedy")
             )
-            every { redisUtils.tryLock(any(), any()) } answers {
-                val block = secondArg<() -> Unit>()
-                block()
-            }
 
             val updatedTodo = todoService.updateTodo(id = id, request = newRequest, userId = user.userId)
             Then("업데이트가 잘 된다") {

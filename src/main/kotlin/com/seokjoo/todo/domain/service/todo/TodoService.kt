@@ -2,7 +2,6 @@ package com.seokjoo.todo.domain.service.todo
 
 import com.seokjoo.todo.common.exception.TodoException
 import com.seokjoo.todo.common.exception.TodoExceptionType
-import com.seokjoo.todo.common.redisson.RedisUtils
 import com.seokjoo.todo.domain.entity.todo.Todo
 import com.seokjoo.todo.domain.entity.todouser.User
 import com.seokjoo.todo.domain.repository.todo.TodoRepository
@@ -24,7 +23,6 @@ class TodoService(
     private val todoRepository: TodoRepository,
     private val todoDeleteService: TodoDeleteService,
     private val categoryService: CategoryService,
-    private val redisUtils: RedisUtils,
 ) {
     // 현재 캐시매니저가 1개라서 안써도 되지만 공부용으로 명시함
     @Cacheable(
@@ -93,11 +91,10 @@ class TodoService(
         todo: Todo,
     ) {
         request.categoryNames.map { categoryName ->
-            redisUtils.tryLock(categoryName) {
-                val matchedCategory = categoryService.getOrCreateCategory(categoryName)
-                if (todo.hasCategory(categoryName).not()) {
-                    todo.addCategory(category = matchedCategory)
-                }
+            if (todo.hasCategory(categoryName).not()) {
+                val matchedCategoryId = categoryService.getOrCreateCategory(categoryName)
+                val matchedCategory = categoryService.findById(matchedCategoryId)
+                todo.addCategory(category = matchedCategory)
             }
         }
     }
