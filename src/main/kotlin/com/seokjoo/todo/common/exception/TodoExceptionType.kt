@@ -50,7 +50,14 @@ enum class TodoExceptionType(
     BALANCE_NOT_ENOUGH(message = "잔액 부족입니다.", errorCode = "M000_BALANCE_NOT_ENOUGH", httpStatusCode = 400),
     BALANCE_CAN_NOT_BE_NEGATIVE(
         message = "잔액은 음수일 수 없습니다.",
-        errorCode = "M001_CANT_NOT_BE_NEGATIVE",
+        errorCode = "M001_CAN_NOT_BE_NEGATIVE",
         httpStatusCode = 400
+    ),
+
+    // LOCK
+    LOCK_GET_FAILED(
+        message = "LOCK 획득에 실패했습니다.",
+        errorCode = "L001_LOCK_GET_FAILED",
+        httpStatusCode = 500
     ),
 }

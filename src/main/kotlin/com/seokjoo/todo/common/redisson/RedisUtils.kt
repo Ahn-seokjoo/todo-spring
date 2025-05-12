@@ -18,7 +18,6 @@ class RedisUtils(
             Thread.currentThread().interrupt()
             throw IllegalStateException()
         } catch (e: Exception) {
-            // 처리 고민 ,,
             throw IllegalStateException()
         } finally {
             if (lock.isHeldByCurrentThread) {
