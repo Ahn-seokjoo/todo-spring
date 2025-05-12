@@ -15,8 +15,10 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.repository.findByIdOrNull
+import org.springframework.transaction.annotation.Transactional
 
 @IntegrationTest
+@Transactional
 class TodoRemoveServiceTest @Autowired constructor(
     private val todoService: TodoService,
     private val todoDeleteService: TodoDeleteService,

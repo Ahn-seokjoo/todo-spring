@@ -14,8 +14,10 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.redis.core.RedisTemplate
+import org.springframework.transaction.annotation.Transactional
 
 @IntegrationTest
+@Transactional
 class TodoServiceSpringBootTest @Autowired constructor(
     private val service: TodoService,
     private val categoryRepository: CategoryRepository,

@@ -1,10 +1,10 @@
 package com.seokjoo.todo.domain.service.auth
 
-import com.seokjoo.todo.common.common.encryptor.TodoAuthEncryptor
-import com.seokjoo.todo.common.common.jwt.JwtProvider
-import com.seokjoo.todo.common.common.jwt.JwtTokenType
+import com.seokjoo.todo.common.encryptor.TodoAuthEncryptor
 import com.seokjoo.todo.common.exception.TodoException
 import com.seokjoo.todo.common.exception.TodoExceptionType
+import com.seokjoo.todo.common.jwt.JwtProvider
+import com.seokjoo.todo.common.jwt.JwtTokenType
 import com.seokjoo.todo.domain.entity.todouser.User
 import com.seokjoo.todo.domain.repository.todouser.TodoAuthRepository
 import org.springframework.stereotype.Service

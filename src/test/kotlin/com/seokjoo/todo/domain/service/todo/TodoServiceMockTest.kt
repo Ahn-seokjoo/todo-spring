@@ -180,9 +180,14 @@ class TodoServiceMockTest : BehaviorSpec({
             every { todoRepository.findByIdOrNull(1L) } returns newPreviousTodo
             every { todoRepository.save(any()) } returns newNextTodo
             every { categoryService.getOrCreateCategory(any()) } returnsMany listOf(
+                1L,
+                2L
+            )
+            every { categoryService.findById(any()) } returnsMany listOf(
                 Category(name = "horror"),
                 Category(name = "comedy")
             )
+
             val updatedTodo = todoService.updateTodo(id = id, request = newRequest, userId = user.userId)
             Then("업데이트가 잘 된다") {
                 updatedTodo.todo shouldBe "abcdef"

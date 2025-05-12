@@ -1,4 +1,4 @@
-package com.seokjoo.todo.common.common.jwt
+package com.seokjoo.todo.common.jwt
 
 import com.seokjoo.todo.common.exception.TodoException
 import com.seokjoo.todo.common.exception.TodoExceptionType
