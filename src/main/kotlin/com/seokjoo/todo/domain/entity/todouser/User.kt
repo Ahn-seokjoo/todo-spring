@@ -36,10 +36,10 @@ class User(
     }
 
     fun increaseBalance(balance: Long) {
-        money.increase(balance)
+        money = money.increase(balance)
     }
 
     fun decreaseBalance(balance: Long) {
-        money.decrease(balance)
+        money = money.decrease(balance)
     }
 }
