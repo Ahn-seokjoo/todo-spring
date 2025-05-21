@@ -43,7 +43,7 @@ class TodoApiControllerTest {
             todo = "create todo",
             isDone = false,
             categories = listOf(),
-            owner = "pita",
+            ownerId = "pita",
             price = 0L,
         )
         given(authService.findUser(any())).willReturn(user)
@@ -118,7 +118,7 @@ class TodoApiControllerTest {
             todo = "create todo",
             isDone = false,
             categories = listOf(),
-            owner = "pita",
+            ownerId = "pita",
             price = 0L,
         )
         given(authService.findUser(any())).willReturn(user)

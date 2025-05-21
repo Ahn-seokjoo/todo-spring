@@ -51,7 +51,7 @@ class TodoServiceMockTest : BehaviorSpec({
         val id = 1L
         every { todoRepository.findByIdOrNull(id) } returns Todo(id = 1L, todo = "abcde", owner = user)
         When("정상 케이스에서") {
-            val todo = todoService.getTodoById(id, user.userId)
+            val todo = todoService.getTodoById(id)
             Then("getTodos 를 수행했을 때, todo 한개가 잘 나온다") {
                 todo.isDone shouldBe false
                 todo.todo shouldBe "abcde"
@@ -62,7 +62,7 @@ class TodoServiceMockTest : BehaviorSpec({
             every { todoRepository.findByIdOrNull(id) } throws TodoException.of(TodoExceptionType.NOT_EXISTED_TODO)
             Then("에러 케이스의 경우 404, T000_TODO_ERROR를 준다") {
                 val exception = shouldThrow<TodoException> {
-                    todoService.getTodoById(id = id, userId = user.userId)
+                    todoService.getTodoById(id = id)
                 }
                 exception.message shouldBe "존재하지 않는 Todo 입니다"
                 exception.httpStatusCode shouldBe 404

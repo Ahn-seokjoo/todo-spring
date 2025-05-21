@@ -41,10 +41,11 @@ class TodoService(
         return TodoPageServiceResponseDTO(isLast = todoPage.isLast, responseList = todoPagedList)
     }
 
+
     @Cacheable(cacheNames = ["todo"], key = "#id")
-    fun getTodoById(id: Long, userId: String): TodoServiceResponseDTO {
+    fun getTodoById(id: Long): TodoServiceResponseDTO {
         val todo = todoRepository.findByIdOrNull(id) ?: throw TodoException.of(TodoExceptionType.NOT_EXISTED_TODO)
-        if (isMe(todo.owner.userId, userId)) throw TodoException.of(TodoExceptionType.UNAUTHORIZED_TODO_ACCESS)
+
         return TodoServiceResponseDTO.from(todo)
     }
 
@@ -84,6 +85,14 @@ class TodoService(
         if (isMe(todo.owner.userId, userId)) throw TodoException.of(TodoExceptionType.UNAUTHORIZED_TODO_ACCESS)
 
         todoDeleteService.deleteTodo(todo)
+    }
+
+    @Transactional
+    fun updateOwner(todoId: Long, owner: User): TodoServiceResponseDTO {
+        val todo = todoRepository.findByIdOrNull(todoId) ?: throw TodoException.of(TodoExceptionType.NOT_EXISTED_TODO)
+        todoRepository.save(todo.copy(owner = owner))
+
+        return TodoServiceResponseDTO.from(todo)
     }
 
     private fun checkExistAndAddCategory(

@@ -20,6 +20,6 @@ fun TodoServiceResponseDTO.toResponse() = TodoResponse(
     todo = todo,
     isDone = isDone,
     categories = categories.map { it },
-    owner = owner,
+    owner = ownerId,
     price = price,
 )
