@@ -30,10 +30,8 @@ class TodoTradeApiController(
     ): TodoResponse {
         val user = authService.findUser(servletRequest.getBearerToken())
         // 잔액이 0원이면 다른 요청 없이 끝냄
-        // 임의로 천원 충전 -> charge로 분리
-        user.increaseBalance(1000L)
+        if (user.money.hasNoBalance()) throw TodoException.of(TodoExceptionType.BALANCE_NOT_ENOUGH)
 
-        if (user.money.balance == 0L) throw TodoException.of(TodoExceptionType.BALANCE_NOT_ENOUGH)
         return todoTradeService.buyTodo(buyRequest.todoId, user).toResponse()
     }
 }

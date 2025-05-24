@@ -1,7 +1,6 @@
 package com.seokjoo.todo.presentation.charge.controller
 
 import com.seokjoo.todo.common.jwt.getBearerToken
-import com.seokjoo.todo.domain.entity.todouser.User
 import com.seokjoo.todo.domain.service.auth.TodoAuthService
 import com.seokjoo.todo.domain.service.charge.TodoChargeService
 import com.seokjoo.todo.presentation.charge.dto.TodoChargeRequest

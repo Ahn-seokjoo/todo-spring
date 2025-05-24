@@ -4,6 +4,7 @@ import com.seokjoo.todo.domain.entity.BaseEntity
 import com.seokjoo.todo.domain.entity.todo.Todo
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
+import jakarta.persistence.Embedded
 import jakarta.persistence.Entity
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
@@ -25,6 +26,7 @@ class User(
     val id: Long = 0L,
 
     @Column(nullable = false)
+    @Embedded
     var money: Money = Money(),
 
     @Column(name = "todo_list", nullable = false)

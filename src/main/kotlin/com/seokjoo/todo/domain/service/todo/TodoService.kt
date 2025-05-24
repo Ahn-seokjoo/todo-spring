@@ -41,7 +41,6 @@ class TodoService(
         return TodoPageServiceResponseDTO(isLast = todoPage.isLast, responseList = todoPagedList)
     }
 
-
     @Cacheable(cacheNames = ["todo"], key = "#id")
     fun getTodoById(id: Long): TodoServiceResponseDTO {
         val todo = todoRepository.findByIdOrNull(id) ?: throw TodoException.of(TodoExceptionType.NOT_EXISTED_TODO)
@@ -90,7 +89,8 @@ class TodoService(
     @Transactional
     fun updateOwner(todoId: Long, owner: User): TodoServiceResponseDTO {
         val todo = todoRepository.findByIdOrNull(todoId) ?: throw TodoException.of(TodoExceptionType.NOT_EXISTED_TODO)
-        todoRepository.save(todo.copy(owner = owner))
+        todo.owner = owner
+        todoRepository.save(todo)
 
         return TodoServiceResponseDTO.from(todo)
     }
