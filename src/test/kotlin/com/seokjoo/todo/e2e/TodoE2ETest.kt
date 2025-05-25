@@ -1,4 +1,4 @@
-package com.seokjoo.todo
+package com.seokjoo.todo.e2e
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue

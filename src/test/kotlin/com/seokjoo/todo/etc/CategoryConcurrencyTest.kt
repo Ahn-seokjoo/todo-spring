@@ -1,5 +1,6 @@
-package com.seokjoo.todo
+package com.seokjoo.todo.etc
 
+import com.seokjoo.todo.annotation.IntegrationTest
 import com.seokjoo.todo.domain.repository.category.CategoryRepository
 import com.seokjoo.todo.domain.repository.categorytodo.TodoCategoryRepository
 import com.seokjoo.todo.domain.repository.todo.TodoRepository

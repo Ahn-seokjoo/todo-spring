@@ -1,4 +1,4 @@
-package com.seokjoo.todo
+package com.seokjoo.todo.annotation
 
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
