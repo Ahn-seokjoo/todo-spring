@@ -27,6 +27,23 @@ class TodoTradeServiceTest @Autowired constructor(
 ) {
     lateinit var todo: TodoServiceResponseDTO
 
+    @Test
+    @Transactional
+    fun `todo를 거래했을 때, 금액이 잘 차감되고 owner 가 자신으로 잘 변경된다`() {
+        val user2 = todoAuthService.findUserByUserId("pita2")
+        todoTradeService.buyTodo(todo.id, user2)
+
+        // Service 레이어에서 id로 캐싱하고 있어서 repository 를 직접 찌름
+        val todo = todoRepository.findByIdOrNull(todo.id) ?: throw IllegalStateException("엥 아이디 없음")
+        assert(todo.todo == "테스트 500원 짜리 투두")
+        assert(todo.price == 500L)
+        assert(todo.owner.userId == user2.userId)
+        assert(user2.money.currentBalance() == 500L)
+
+        val user1 = todoAuthService.findUserByUserId("pita1")
+        assert(user1.money.currentBalance() == 500L)
+    }
+
     @BeforeEach
     fun before() {
         val user1 = User("pita1", "pita1")
@@ -47,27 +64,10 @@ class TodoTradeServiceTest @Autowired constructor(
         todo = todoService.createTodo(request, user)
     }
 
-    @AfterEach()
+    @AfterEach
     fun after() {
         todoService.deleteTodo(todo.id, "pita2")
         todoAuthService.delete("pita1", "pita1")
         todoAuthService.delete("pita2", "pita2")
-    }
-
-    @Test
-    @Transactional
-    fun `todo를 거래했을 때, 금액이 잘 차감되고 owner 가 자신으로 잘 변경된다`() {
-        val user2 = todoAuthService.findUserByUserId("pita2")
-        todoTradeService.buyTodo(todo.id, user2)
-
-        // Service 레이어에서 id로 캐싱하고 있어서 repository 를 직접 찌름
-        val todo = todoRepository.findByIdOrNull(todo.id) ?: throw IllegalStateException("엥 아이디 없음")
-        assert(todo.todo == "테스트 500원 짜리 투두")
-        assert(todo.price == 500L)
-        assert(todo.owner.userId == user2.userId)
-        assert(user2.money.currentBalance() == 500L)
-
-        val user1 = todoAuthService.findUserByUserId("pita1")
-        assert(user1.money.currentBalance() == 500L)
     }
 }
