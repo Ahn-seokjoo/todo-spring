@@ -1,5 +1,6 @@
 package com.seokjoo.todo.domain.service.trade
 
+import com.seokjoo.todo.common.exception.TodoException
 import com.seokjoo.todo.domain.entity.todouser.User
 import com.seokjoo.todo.domain.service.auth.TodoAuthService
 import com.seokjoo.todo.domain.service.charge.TodoChargeService
@@ -38,6 +39,54 @@ class TodoTradeServiceTest @Autowired constructor(
 
         val user1 = todoAuthService.findUserByUserId("pita1")
         assert(user1.money.currentBalance() == 500L)
+
+        todoService.deleteTodo(todo.id, todo.ownerId)
+    }
+
+    @Test
+    @Transactional
+    fun `자기 Todo를 구매시도 했을때 에러가 난다`() {
+        val user = todoAuthService.findUserByUserId("pita1")
+
+        val exception = kotlin.runCatching {
+            todoTradeService.buyTodo(todo.id, user)
+        }.exceptionOrNull()
+
+        assert(exception is TodoException)
+        with(exception as? TodoException) {
+            assert(this?.message == "자신의 Todo를 팔 수 없습니다.")
+            assert(this?.errorCode == "T000_CAN_NOT_TRADE_TODO")
+            assert(this?.httpStatusCode == 400)
+        }
+        todoService.deleteTodo(todo.id, todo.ownerId)
+    }
+
+    @Test
+    @Transactional
+    fun `금액 부족일 때 에러가 난다`() {
+        // GIVEN
+        val user1 = todoAuthService.findUserByUserId("pita1")
+        val user2 = todoAuthService.findUserByUserId("pita2")
+        val request = TodoCreateServiceRequestDTO(
+            todo = "테스트 1500원 짜리 투두",
+            price = 1500L
+        )
+        val newTodo = todoService.createTodo(request, user1)
+
+        // WHEN
+        val exception = kotlin.runCatching {
+            todoTradeService.buyTodo(newTodo.id, user2)
+        }.exceptionOrNull()
+
+        // THEN
+        assert(exception is TodoException)
+        with(exception as? TodoException) {
+            assert(this?.message == "잔액 부족입니다.")
+            assert(this?.errorCode == "M000_BALANCE_NOT_ENOUGH")
+            assert(this?.httpStatusCode == 400)
+        }
+        todoService.deleteTodo(newTodo.id, newTodo.ownerId)
+        todoService.deleteTodo(todo.id, todo.ownerId)
     }
 
     @BeforeEach
@@ -62,7 +111,6 @@ class TodoTradeServiceTest @Autowired constructor(
 
     @AfterEach
     fun after() {
-        todoService.deleteTodo(todo.id, "pita2")
         todoAuthService.delete("pita1", "pita1")
         todoAuthService.delete("pita2", "pita2")
     }
