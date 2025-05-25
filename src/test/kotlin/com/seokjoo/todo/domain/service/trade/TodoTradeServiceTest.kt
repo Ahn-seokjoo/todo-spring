@@ -1,7 +1,6 @@
 package com.seokjoo.todo.domain.service.trade
 
 import com.seokjoo.todo.domain.entity.todouser.User
-import com.seokjoo.todo.domain.repository.todo.TodoRepository
 import com.seokjoo.todo.domain.service.auth.TodoAuthService
 import com.seokjoo.todo.domain.service.charge.TodoChargeService
 import com.seokjoo.todo.domain.service.todo.TodoCreateServiceRequestDTO
@@ -12,7 +11,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.data.repository.findByIdOrNull
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
 
@@ -23,7 +21,6 @@ class TodoTradeServiceTest @Autowired constructor(
     private val todoChargeService: TodoChargeService,
     private val todoAuthService: TodoAuthService,
     private val todoTradeService: TodoTradeService,
-    private val todoRepository: TodoRepository,
 ) {
     lateinit var todo: TodoServiceResponseDTO
 
@@ -33,11 +30,10 @@ class TodoTradeServiceTest @Autowired constructor(
         val user2 = todoAuthService.findUserByUserId("pita2")
         todoTradeService.buyTodo(todo.id, user2)
 
-        // Service 레이어에서 id로 캐싱하고 있어서 repository 를 직접 찌름
-        val todo = todoRepository.findByIdOrNull(todo.id) ?: throw IllegalStateException("엥 아이디 없음")
+        val todo = todoService.getTodoById(todo.id)
         assert(todo.todo == "테스트 500원 짜리 투두")
         assert(todo.price == 500L)
-        assert(todo.owner.userId == user2.userId)
+        assert(todo.ownerId == user2.userId)
         assert(user2.money.currentBalance() == 500L)
 
         val user1 = todoAuthService.findUserByUserId("pita1")
