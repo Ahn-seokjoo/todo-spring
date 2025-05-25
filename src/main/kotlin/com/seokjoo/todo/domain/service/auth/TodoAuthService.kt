@@ -65,6 +65,7 @@ class TodoAuthService(
         return jwtProvider.generateToken(userId, JwtTokenType.REFRESH)
     }
 
+    @Transactional
     fun findUser(accessToken: String): User {
         val subject = getSubject(accessToken)
         return todoAuthRepository.findUserByUserId(subject)

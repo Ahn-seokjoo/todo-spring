@@ -28,8 +28,7 @@ class TodoChargeApiController(
         servletRequest: HttpServletRequest,
         @RequestBody @Validated request: TodoChargeRequest,
     ): TodoChargeResponse {
-        val user = authService.findUser(servletRequest.getBearerToken())
-        chargeService.charge(amount = request.amount, owner = user)
+        val user = chargeService.charge(amount = request.amount, accessToken = servletRequest.getBearerToken())
         return TodoChargeResponse(userId = user.userId, amount = user.money.currentBalance())
     }
 
