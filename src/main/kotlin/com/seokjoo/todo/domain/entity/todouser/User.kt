@@ -1,10 +1,11 @@
 package com.seokjoo.todo.domain.entity.todouser
 
+import com.seokjoo.todo.common.exception.TodoException
+import com.seokjoo.todo.common.exception.TodoExceptionType
 import com.seokjoo.todo.domain.entity.BaseEntity
 import com.seokjoo.todo.domain.entity.todo.Todo
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
-import jakarta.persistence.Embedded
 import jakarta.persistence.Entity
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
@@ -26,7 +27,6 @@ class User(
     val id: Long = 0L,
 
     @Column(nullable = false)
-    @Embedded
     var money: Money = Money(),
 
     @Column(name = "todo_list", nullable = false)
@@ -44,4 +44,12 @@ class User(
     fun decreaseBalance(balance: Long) {
         money = money.decrease(balance)
     }
+
+    fun isAffordable(price: Long) {
+        check(currentBalance() >= price) { throw TodoException.of(TodoExceptionType.BALANCE_NOT_ENOUGH) }
+    }
+
+    fun needToCharge() = money.needToCharge()
+
+    fun currentBalance() = money.currentBalance()
 }

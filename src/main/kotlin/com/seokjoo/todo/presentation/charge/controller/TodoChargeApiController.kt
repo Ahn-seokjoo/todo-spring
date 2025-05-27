@@ -29,7 +29,7 @@ class TodoChargeApiController(
         @RequestBody @Valid request: TodoChargeRequest,
     ): TodoChargeResponse {
         val user = chargeService.charge(amount = request.amount, accessToken = servletRequest.getBearerToken())
-        return TodoChargeResponse(userId = user.userId, amount = user.money.currentBalance())
+        return TodoChargeResponse(userId = user.userId, amount = user.currentBalance())
     }
 
     @GetMapping("/current")
@@ -37,6 +37,6 @@ class TodoChargeApiController(
         servletRequest: HttpServletRequest,
     ): TodoCurrentBalanceResponse {
         val user = authService.findUser(servletRequest.getBearerToken())
-        return TodoCurrentBalanceResponse(balance = user.money.currentBalance())
+        return TodoCurrentBalanceResponse(balance = user.currentBalance())
     }
 }

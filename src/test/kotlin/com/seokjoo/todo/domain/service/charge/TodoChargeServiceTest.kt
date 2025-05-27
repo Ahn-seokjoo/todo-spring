@@ -23,6 +23,6 @@ class TodoChargeServiceTest @Autowired constructor(
 
         val resultUser = todoAuthService.findUserByUserId("pita")
 
-        assert(resultUser.money.currentBalance() == 1000L)
+        assert(resultUser.currentBalance() == 1000L)
     }
 }

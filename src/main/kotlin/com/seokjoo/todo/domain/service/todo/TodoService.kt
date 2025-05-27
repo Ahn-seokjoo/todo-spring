@@ -90,7 +90,7 @@ class TodoService(
     @CacheEvict(value = ["todo"], key = "#todoId")
     fun updateOwner(todoId: Long, owner: User): TodoServiceResponseDTO {
         val todo = todoRepository.findByIdOrNull(todoId) ?: throw TodoException.of(TodoExceptionType.NOT_EXISTED_TODO)
-        todo.owner = owner
+        todo.updateOwner(owner)
         todoRepository.save(todo)
 
         return TodoServiceResponseDTO.from(todo)

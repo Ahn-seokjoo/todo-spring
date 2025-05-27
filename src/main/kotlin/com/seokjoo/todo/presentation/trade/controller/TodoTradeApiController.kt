@@ -30,7 +30,7 @@ class TodoTradeApiController(
     ): TodoResponse {
         val user = authService.findUser(servletRequest.getBearerToken())
         // 잔액이 0원이면 다른 요청 없이 끝냄
-        if (user.money.hasNoBalance()) throw TodoException.of(TodoExceptionType.BALANCE_NOT_ENOUGH)
+        if (user.needToCharge()) throw TodoException.of(TodoExceptionType.BALANCE_NOT_ENOUGH)
 
         return todoTradeService.buyTodo(buyRequest.todoId, user).toResponse()
     }
