@@ -35,10 +35,10 @@ class TodoTradeServiceTest @Autowired constructor(
         assert(todo.todo == "테스트 500원 짜리 투두")
         assert(todo.price == 500L)
         assert(todo.ownerId == user2.userId)
-        assert(user2.money.currentBalance() == 500L)
+        assert(user2.currentBalance() == 500L)
 
         val user1 = todoAuthService.findUserByUserId("pita1")
-        assert(user1.money.currentBalance() == 500L)
+        assert(user1.currentBalance() == 500L)
 
         todoService.deleteTodo(todo.id, todo.ownerId)
     }
