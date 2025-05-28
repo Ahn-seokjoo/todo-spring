@@ -67,11 +67,9 @@ class TodoApiController(
     @GetMapping("/todos/{id}")
     @Operation(summary = "특정 id todo 조회", description = "id를 이용해 todo 한개를 조회합니다.")
     fun getTodoById(
-        servletRequest: HttpServletRequest,
         @PathVariable id: Long,
     ): ResponseEntity<TodoResponse> {
-        val user = authService.findUser(servletRequest.getBearerToken())
-        val todo = todoService.getTodoById(id, user.userId).toResponse()
+        val todo = todoService.getTodoById(id).toResponse()
         return ResponseEntity.ok(todo)
     }
 

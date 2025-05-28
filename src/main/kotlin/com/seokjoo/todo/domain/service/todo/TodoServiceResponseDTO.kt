@@ -11,7 +11,7 @@ data class TodoServiceResponseDTO(
     @JsonProperty("isDone") // is가 붙으면 is를 빼버리고 내부에 저장해버림;;
     val isDone: Boolean = false,
     val categories: List<String> = emptyList(),
-    val owner: String,
+    val ownerId: String,
     val price: Long,
 ) {
     companion object {
@@ -20,7 +20,7 @@ data class TodoServiceResponseDTO(
             todo = todo.todo,
             isDone = todo.isDone,
             categories = todo.todoCategories.map { it.category?.name.orEmpty() },
-            owner = todo.owner.userId,
+            ownerId = todo.owner.userId,
             price = todo.price,
         )
     }

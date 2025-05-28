@@ -50,6 +50,12 @@ class TodoAuthService(
         else throw TodoException.of(TodoExceptionType.AUTH_NOT_MATCHED_PASSWORD)
     }
 
+    @Transactional
+    fun findUserByUserId(userId: String): User {
+        return todoAuthRepository.findUserByUserId(userId)
+            ?: throw TodoException.of(TodoExceptionType.AUTH_USER_NOT_EXIST)
+    }
+
     fun checkTokenSignature(userId: String, accessToken: String) {
         val isNotValidSignature = jwtProvider.checkValidSignature(userId, accessToken).not()
         if (isNotValidSignature) throw TodoException.of(TodoExceptionType.AUTH_REFRESH_TOKEN_NOT_VALID)

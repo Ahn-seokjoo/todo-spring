@@ -60,4 +60,11 @@ enum class TodoExceptionType(
         errorCode = "L001_LOCK_GET_FAILED",
         httpStatusCode = 500
     ),
+
+    // TRADE
+    CAN_NOT_TRADE_OWN_TODO(
+        message = "자신의 Todo를 팔 수 없습니다.",
+        errorCode = "T000_CAN_NOT_TRADE_TODO",
+        httpStatusCode = 400
+    ),
 }

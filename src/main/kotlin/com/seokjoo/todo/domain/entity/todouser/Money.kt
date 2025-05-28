@@ -6,7 +6,7 @@ import jakarta.persistence.Embeddable
 
 @Embeddable
 class Money(
-    val balance: Long = 0L,
+    private val balance: Long = 0L,
 ) {
     init {
         require(balance >= 0L) { throw TodoException.of(TodoExceptionType.BALANCE_CAN_NOT_BE_NEGATIVE) }
@@ -20,4 +20,11 @@ class Money(
         check(this.balance - balance >= 0) { throw TodoException.of(TodoExceptionType.BALANCE_NOT_ENOUGH) }
         return Money(balance = this.balance - balance)
     }
+
+    fun hasNoBalance() = balance == 0L
+    fun isOutOfBalance(price: Long) {
+        if (balance < price) throw TodoException.of(TodoExceptionType.BALANCE_NOT_ENOUGH)
+    }
+
+    fun currentBalance() = balance
 }

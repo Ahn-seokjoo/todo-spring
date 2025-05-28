@@ -62,7 +62,7 @@ class TodoServiceSpringBootTest @Autowired constructor(
                     isDone = request.isDone,
                     categories = listOf(),
                     id = 0L,
-                    owner = user.userId,
+                    ownerId = user.userId,
                     price = request.price,
                 )
             )
@@ -72,7 +72,7 @@ class TodoServiceSpringBootTest @Autowired constructor(
     fun `getTodoById 테스트`() {
         val id = result.id
 
-        val todo = service.getTodoById(id, user.userId)
+        val todo = service.getTodoById(id)
 
         Assertions.assertThat(todo)
             .usingRecursiveComparison()
@@ -82,7 +82,7 @@ class TodoServiceSpringBootTest @Autowired constructor(
                     todo = "android",
                     isDone = true,
                     categories = listOf("drama"),
-                    owner = "pita",
+                    ownerId = "pita",
                     price = 0L,
                 )
             )
@@ -112,7 +112,7 @@ class TodoServiceSpringBootTest @Autowired constructor(
                         isDone = true,
                         todo = "android",
                         categories = listOf("drama"),
-                        owner = "pita",
+                        ownerId = "pita",
                         price = 0L,
                     ),
                     TodoServiceResponseDTO(
@@ -120,7 +120,7 @@ class TodoServiceSpringBootTest @Autowired constructor(
                         isDone = false,
                         todo = "node",
                         categories = listOf(),
-                        owner = "pita",
+                        ownerId = "pita",
                         price = 100L,
                     ),
                 )
@@ -145,7 +145,7 @@ class TodoServiceSpringBootTest @Autowired constructor(
                     isDone = false,
                     todo = "iOS",
                     categories = listOf("drama", "horror"),
-                    owner = "pita",
+                    ownerId = "pita",
                     price = 400L,
                 ),
             )
@@ -201,7 +201,7 @@ class TodoServiceSpringBootTest @Autowired constructor(
     @Test
     fun `getByTodo 시에 없는 아이디를 조회했을 때 NOT_EXISTED_TODO 을 잘 던져주는지`() {
         val exception = kotlin.runCatching {
-            service.getTodoById(200L, user.userId)
+            service.getTodoById(200L)
         }.exceptionOrNull()
 
         assert(exception is TodoException)
