@@ -2,6 +2,7 @@ package com.seokjoo.todo.domain.service.trade
 
 import com.seokjoo.todo.common.exception.TodoException
 import com.seokjoo.todo.domain.entity.todouser.User
+import com.seokjoo.todo.domain.repository.todo.TodoRepository
 import com.seokjoo.todo.domain.service.auth.TodoAuthService
 import com.seokjoo.todo.domain.service.charge.TodoChargeService
 import com.seokjoo.todo.domain.service.todo.TodoCreateServiceRequestDTO
@@ -22,6 +23,7 @@ class TodoTradeServiceTest @Autowired constructor(
     private val todoChargeService: TodoChargeService,
     private val todoAuthService: TodoAuthService,
     private val todoTradeService: TodoTradeService,
+    private val todoRepository: TodoRepository,
 ) {
     lateinit var todo: TodoServiceResponseDTO
 
@@ -39,8 +41,6 @@ class TodoTradeServiceTest @Autowired constructor(
 
         val user1 = todoAuthService.findUserByUserId("pita1")
         assert(user1.currentBalance() == 500L)
-
-        todoService.deleteTodo(todo.id, todo.ownerId)
     }
 
     @Test
@@ -58,7 +58,6 @@ class TodoTradeServiceTest @Autowired constructor(
             assert(this?.errorCode == "T000_CAN_NOT_TRADE_TODO")
             assert(this?.httpStatusCode == 400)
         }
-        todoService.deleteTodo(todo.id, todo.ownerId)
     }
 
     @Test
@@ -85,8 +84,6 @@ class TodoTradeServiceTest @Autowired constructor(
             assert(this?.errorCode == "M000_BALANCE_NOT_ENOUGH")
             assert(this?.httpStatusCode == 400)
         }
-        todoService.deleteTodo(newTodo.id, newTodo.ownerId)
-        todoService.deleteTodo(todo.id, todo.ownerId)
     }
 
     @BeforeEach
@@ -111,6 +108,7 @@ class TodoTradeServiceTest @Autowired constructor(
 
     @AfterEach
     fun after() {
+        todoRepository.deleteAll()
         todoAuthService.delete("pita1", "pita1")
         todoAuthService.delete("pita2", "pita2")
     }
