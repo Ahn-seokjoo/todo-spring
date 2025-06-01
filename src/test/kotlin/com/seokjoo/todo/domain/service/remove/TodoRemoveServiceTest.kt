@@ -1,6 +1,6 @@
 package com.seokjoo.todo.domain.service.remove
 
-import com.seokjoo.todo.IntegrationTest
+import com.seokjoo.todo.annotation.IntegrationTest
 import com.seokjoo.todo.common.exception.TodoException
 import com.seokjoo.todo.common.exception.TodoExceptionType
 import com.seokjoo.todo.domain.entity.todouser.User

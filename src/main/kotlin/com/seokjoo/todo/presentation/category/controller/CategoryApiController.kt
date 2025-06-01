@@ -8,8 +8,8 @@ import com.seokjoo.todo.presentation.category.dto.toResponse
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
+import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
-import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -39,7 +39,7 @@ class CategoryApiController(
 
     @PostMapping("category")
     @Operation(summary = "카테고리 추가", description = "카테고리만 추가합니다")
-    fun createCategory(@RequestBody @Validated request: CategoryRequest): ResponseEntity<CategoryResponse> {
+    fun createCategory(@RequestBody @Valid request: CategoryRequest): ResponseEntity<CategoryResponse> {
         val category = categoryService.createCategory(request.toCategoryServiceRequest()).toResponse()
         return ResponseEntity.created(URI.create("category")).body(category)
     }

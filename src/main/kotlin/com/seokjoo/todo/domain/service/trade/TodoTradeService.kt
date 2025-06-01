@@ -18,9 +18,9 @@ class TodoTradeService(
     fun buyTodo(todoId: Long, user: User): TodoServiceResponseDTO {
         // 1. 자기 todo 인지 확인
         val todo = todoService.getTodoById(todoId)
-        if (todo.ownerId == user.userId) throw TodoException.of(TodoExceptionType.CAN_NOT_TRADE_OWN_TODO)
+        check(todo.ownerId != user.userId) { throw TodoException.of(TodoExceptionType.CAN_NOT_TRADE_OWN_TODO) }
         // 2. 아니라면 금액 충분한지 확인
-        user.money.isOutOfBalance(todo.price)
+        user.isAffordable(todo.price)
         // 3. 판매처리하기
         // 3-1 금액 차감
         user.decreaseBalance(todo.price)

@@ -18,8 +18,8 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.servlet.http.HttpServletRequest
+import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
-import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
@@ -82,7 +82,7 @@ class TodoApiController(
     )
     fun createTodo(
         servletRequest: HttpServletRequest,
-        @RequestBody @Validated request: TodoRequest,
+        @RequestBody @Valid request: TodoRequest,
     ): ResponseEntity<TodoResponse> {
         val user = authService.findUser(servletRequest.getBearerToken())
         val todo = todoService.createTodo(request = request.toCreateRequest(), user).toResponse()
@@ -94,7 +94,7 @@ class TodoApiController(
     fun updateTodo(
         servletRequest: HttpServletRequest,
         @PathVariable id: Long,
-        @RequestBody @Validated request: TodoUpdateRequest,
+        @RequestBody @Valid request: TodoUpdateRequest,
     ): ResponseEntity<TodoResponse> {
         val user = authService.findUser(servletRequest.getBearerToken())
         val todo =

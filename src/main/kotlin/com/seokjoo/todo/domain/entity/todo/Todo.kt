@@ -56,6 +56,10 @@ class Todo(
         }
     }
 
+    fun updateOwner(owner: User) {
+        this.owner = owner
+    }
+
     fun copy(
         todo: String? = null,
         isDone: Boolean? = null,

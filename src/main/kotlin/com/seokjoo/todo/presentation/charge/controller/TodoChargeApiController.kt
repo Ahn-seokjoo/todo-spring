@@ -8,7 +8,7 @@ import com.seokjoo.todo.presentation.charge.dto.TodoChargeResponse
 import com.seokjoo.todo.presentation.charge.dto.TodoCurrentBalanceResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.servlet.http.HttpServletRequest
-import org.springframework.validation.annotation.Validated
+import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -26,11 +26,10 @@ class TodoChargeApiController(
     @PostMapping("/charge")
     fun chargeBalance(
         servletRequest: HttpServletRequest,
-        @RequestBody @Validated request: TodoChargeRequest,
+        @RequestBody @Valid request: TodoChargeRequest,
     ): TodoChargeResponse {
-        val user = authService.findUser(servletRequest.getBearerToken())
-        chargeService.charge(amount = request.amount, owner = user)
-        return TodoChargeResponse(userId = user.userId, amount = user.money.currentBalance())
+        val user = chargeService.charge(amount = request.amount, accessToken = servletRequest.getBearerToken())
+        return TodoChargeResponse(userId = user.userId, amount = user.currentBalance())
     }
 
     @GetMapping("/current")
@@ -38,6 +37,6 @@ class TodoChargeApiController(
         servletRequest: HttpServletRequest,
     ): TodoCurrentBalanceResponse {
         val user = authService.findUser(servletRequest.getBearerToken())
-        return TodoCurrentBalanceResponse(balance = user.money.currentBalance())
+        return TodoCurrentBalanceResponse(balance = user.currentBalance())
     }
 }

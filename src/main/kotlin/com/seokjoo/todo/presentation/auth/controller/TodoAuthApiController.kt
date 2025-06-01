@@ -12,7 +12,6 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
-import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -30,13 +29,13 @@ class TodoAuthApiController(
         responseCode = "200",
         description = "회원 가입",
     )
-    fun signup(@RequestBody @Validated request: TodoAuthLoginRequest): ResponseEntity<String> {
+    fun signup(@RequestBody @Valid request: TodoAuthLoginRequest): ResponseEntity<String> {
         authService.signUp(request.userId, request.password)
         return ResponseEntity.ok("회원가입 성공!")
     }
 
     @PostMapping("/login")
-    fun login(@RequestBody @Validated request: TodoAuthLoginRequest): ResponseEntity<TodoAuthLoginResponse> {
+    fun login(@RequestBody @Valid request: TodoAuthLoginRequest): ResponseEntity<TodoAuthLoginResponse> {
         val result = authService.login(request.userId, request.password)
         return ResponseEntity.ok(
             TodoAuthLoginResponse(
@@ -65,7 +64,7 @@ class TodoAuthApiController(
 
     @DeleteMapping("/delete")
     fun deleteUser(
-        @RequestBody @Validated request: TodoAuthDeleteRequest,
+        @RequestBody @Valid request: TodoAuthDeleteRequest,
     ): ResponseEntity<String> {
         authService.delete(request.userId, request.password)
         return ResponseEntity.ok("삭제 성공")

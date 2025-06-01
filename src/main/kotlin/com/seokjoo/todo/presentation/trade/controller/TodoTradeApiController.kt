@@ -10,7 +10,7 @@ import com.seokjoo.todo.presentation.todo.dto.response.toResponse
 import com.seokjoo.todo.presentation.trade.dto.request.TodoBuyRequest
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.servlet.http.HttpServletRequest
-import org.springframework.validation.annotation.Validated
+import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -26,11 +26,11 @@ class TodoTradeApiController(
     @PostMapping("/trade")
     fun buyTodo(
         servletRequest: HttpServletRequest,
-        @Validated @RequestBody buyRequest: TodoBuyRequest,
+        @Valid @RequestBody buyRequest: TodoBuyRequest,
     ): TodoResponse {
         val user = authService.findUser(servletRequest.getBearerToken())
         // 잔액이 0원이면 다른 요청 없이 끝냄
-        if (user.money.hasNoBalance()) throw TodoException.of(TodoExceptionType.BALANCE_NOT_ENOUGH)
+        if (user.needToCharge()) throw TodoException.of(TodoExceptionType.BALANCE_NOT_ENOUGH)
 
         return todoTradeService.buyTodo(buyRequest.todoId, user).toResponse()
     }
