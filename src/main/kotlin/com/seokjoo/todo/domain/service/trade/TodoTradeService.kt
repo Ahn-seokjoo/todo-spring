@@ -2,6 +2,7 @@ package com.seokjoo.todo.domain.service.trade
 
 import com.seokjoo.todo.common.exception.TodoException
 import com.seokjoo.todo.common.exception.TodoExceptionType
+import com.seokjoo.todo.common.redisson.RedisUtils
 import com.seokjoo.todo.domain.entity.todouser.User
 import com.seokjoo.todo.domain.service.auth.TodoAuthService
 import com.seokjoo.todo.domain.service.todo.TodoService
@@ -13,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional
 class TodoTradeService(
     private val todoService: TodoService,
     private val todoAuthService: TodoAuthService,
+    private val redisUtils: RedisUtils,
 ) {
     @Transactional
     fun buyTodo(todoId: Long, user: User): TodoServiceResponseDTO {
@@ -23,11 +25,12 @@ class TodoTradeService(
         user.isAffordable(todo.price)
         // 3. 판매처리하기
         // 3-1 금액 차감
-        user.decreaseBalance(todo.price)
-        // 3-2 상대방 금액 증가
-        todoAuthService.findUserByUserId(todo.ownerId).increaseBalance(todo.price)
-
-        // 3-2 owner"만" 변경
-        return todoService.updateOwner(todoId = todo.id, owner = user)
+        return redisUtils.tryLock(key = user.userId) { // 가입시 user_id로 가입 유무를 체크하기 때문에 고유함
+            user.decreaseBalance(todo.price)
+            // 3-2 상대방 금액 증가
+            todoAuthService.findUserByUserId(todo.ownerId).increaseBalance(todo.price)
+            // 3-2 owner"만" 변경
+            todoService.updateOwner(todoId = todo.id, owner = user)
+        }
     }
 }
