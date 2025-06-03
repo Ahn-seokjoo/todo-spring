@@ -18,19 +18,20 @@ class TodoTradeService(
 ) {
     @Transactional
     fun buyTodo(todoId: Long, user: User): TodoServiceResponseDTO {
-        // 1. 자기 todo 인지 확인
-        val todo = todoService.getTodoById(todoId)
-        check(todo.ownerId != user.userId) { throw TodoException.of(TodoExceptionType.CAN_NOT_TRADE_OWN_TODO) }
-        // 2. 아니라면 금액 충분한지 확인
-        user.isAffordable(todo.price)
-        // 3. 판매처리하기
-        // 3-1 금액 차감
         return redisUtils.tryLock(key = user.userId) { // 가입시 user_id로 가입 유무를 체크하기 때문에 고유함
+            // 1. 자기 todo 인지 확인
+            val todo = todoService.getTodoById(todoId)
+
+            check(todo.ownerId != user.userId) { throw TodoException.of(TodoExceptionType.CAN_NOT_TRADE_OWN_TODO) }
+            // 2. 아니라면 금액 충분한지 확인
+            user.isAffordable(todo.price)
+            // 3. 판매처리하기
+            // 3-1 금액 차감
             user.decreaseBalance(todo.price)
             // 3-2 상대방 금액 증가
             todoAuthService.findUserByUserId(todo.ownerId).increaseBalance(todo.price)
             // 3-2 owner"만" 변경
-            todoService.updateOwner(todoId = todo.id, owner = user)
+            todoService.updateOwner(id = todo.id, owner = user)
         }
     }
 }

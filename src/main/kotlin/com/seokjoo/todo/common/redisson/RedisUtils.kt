@@ -1,5 +1,6 @@
 package com.seokjoo.todo.common.redisson
 
+import com.seokjoo.todo.common.exception.TodoException
 import org.redisson.api.RedissonClient
 import org.springframework.stereotype.Component
 import java.util.concurrent.TimeUnit
@@ -13,12 +14,14 @@ class RedisUtils(
         try {
             // 5초간 락 시도, 3초간 락을 유지
             if (lock.tryLock(5, 3, TimeUnit.SECONDS)) return block.invoke()
-            else throw IllegalStateException()
+            else error("tryLock error")
         } catch (e: InterruptedException) {
             Thread.currentThread().interrupt()
-            throw IllegalStateException()
+            error("InterruptedException")
+        } catch (e: TodoException) {
+            throw e
         } catch (e: Exception) {
-            throw IllegalStateException()
+            error("just exception")
         } finally {
             if (lock.isHeldByCurrentThread) {
                 lock.unlock()
