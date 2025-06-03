@@ -14,7 +14,6 @@ import org.springframework.transaction.annotation.Transactional
 @Transactional
 class CategoryService(
     private val categoryRepository: CategoryRepository,
-    private val categorySaveHelper: CategorySaveHelper,
     private val redisUtils: RedisUtils,
 ) {
     @Transactional(readOnly = true)
@@ -43,6 +42,7 @@ class CategoryService(
         }
     }
 
+    @Transactional(readOnly = true)
     fun findById(id: Long): Category {
         return categoryRepository.findByIdOrNull(id) ?: throw TodoException.of(TodoExceptionType.CATEGORY_NOT_EXIST)
     }
