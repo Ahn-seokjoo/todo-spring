@@ -43,7 +43,6 @@ class CategoryService(
         }
     }
 
-    @Transactional
     fun findById(id: Long): Category {
         return categoryRepository.findByIdOrNull(id) ?: throw TodoException.of(TodoExceptionType.CATEGORY_NOT_EXIST)
     }
