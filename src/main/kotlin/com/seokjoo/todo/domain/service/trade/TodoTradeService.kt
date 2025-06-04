@@ -22,16 +22,17 @@ class TodoTradeService(
             val todo = todoService.getTodoById(todoId)
 
             check(todo.ownerId != userId) { throw TodoException.of(TodoExceptionType.CAN_NOT_TRADE_OWN_TODO) }
-            // 2. 아니라면 금액 충분한지 확인
-            val buyUser = todoAuthService.findUserByUserId(userId)
-            buyUser.isAffordable(todo.price)
+            // 2. 아니라면 구매자의 금액이 충분한지 확인
+            val buyer = todoAuthService.findUserByUserId(userId)
+            buyer.isAffordable(todo.price)
             // 3. 판매처리하기
-            // 3-1 금액 차감
-            buyUser.decreaseBalance(todo.price)
-            // 3-2 상대방 금액 증가
-            todoAuthService.findUserByUserId(todo.ownerId).increaseBalance(todo.price)
+            // 3-1 구매자 금액 차감
+            buyer.decreaseBalance(todo.price)
+            // 3-2 판매자 금액 증가
+            val seller = todoAuthService.findUserByUserId(todo.ownerId)
+            seller.increaseBalance(todo.price)
             // 3-2 owner"만" 변경
-            todoService.updateOwner(todoId = todo.id, owner = buyUser)
+            todoService.updateOwner(todoId = todo.id, owner = buyer)
         }
     }
 }
