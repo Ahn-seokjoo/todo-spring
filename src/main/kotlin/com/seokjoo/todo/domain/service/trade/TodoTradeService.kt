@@ -2,7 +2,7 @@ package com.seokjoo.todo.domain.service.trade
 
 import com.seokjoo.todo.common.exception.TodoException
 import com.seokjoo.todo.common.exception.TodoExceptionType
-import com.seokjoo.todo.common.redisson.RedisUtils
+import com.seokjoo.todo.common.redisson.RedisLockManager
 import com.seokjoo.todo.domain.entity.todouser.User
 import com.seokjoo.todo.domain.service.auth.TodoAuthService
 import com.seokjoo.todo.domain.service.todo.TodoService
@@ -14,11 +14,11 @@ import org.springframework.transaction.annotation.Transactional
 class TodoTradeService(
     private val todoService: TodoService,
     private val todoAuthService: TodoAuthService,
-    private val redisUtils: RedisUtils,
+    private val redisLockManager: RedisLockManager,
 ) {
     @Transactional
     fun buyTodo(todoId: Long, user: User): TodoServiceResponseDTO {
-        return redisUtils.tryLock(key = user.userId) { // 가입시 user_id로 가입 유무를 체크하기 때문에 고유함
+        return redisLockManager.tryLock(key = user.userId) { // 가입시 user_id로 가입 유무를 체크하기 때문에 고유함
             // 1. 자기 todo 인지 확인
             val todo = todoService.getTodoById(todoId)
 

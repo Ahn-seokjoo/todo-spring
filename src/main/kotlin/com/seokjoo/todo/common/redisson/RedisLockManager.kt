@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component
 import java.util.concurrent.TimeUnit
 
 @Component
-class RedisUtils(
+class RedisLockManager(
     private val redisson: RedissonClient,
 ) {
     fun <T> tryLock(key: String, block: () -> T): T {
