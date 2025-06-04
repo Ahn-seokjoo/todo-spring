@@ -3,6 +3,7 @@ package com.seokjoo.todo.domain.service.trade
 import com.seokjoo.todo.annotation.IntegrationTest
 import com.seokjoo.todo.domain.entity.todouser.User
 import com.seokjoo.todo.domain.repository.todo.TodoRepository
+import com.seokjoo.todo.domain.repository.todouser.TodoAuthRepository
 import com.seokjoo.todo.domain.service.auth.TodoAuthService
 import com.seokjoo.todo.domain.service.charge.TodoChargeService
 import com.seokjoo.todo.domain.service.todo.TodoCreateServiceRequestDTO
@@ -21,6 +22,7 @@ class TodoTradeConcurrencyTest @Autowired constructor(
     private val todoService: TodoService,
     private val todoChargeService: TodoChargeService,
     private val todoAuthService: TodoAuthService,
+    private val todoAuthRepository: TodoAuthRepository,
     private val todoTradeService: TodoTradeService,
     private val todoRepository: TodoRepository,
     private val redisTemplate: RedisTemplate<String, Any>,
@@ -123,7 +125,6 @@ class TodoTradeConcurrencyTest @Autowired constructor(
     @AfterEach
     fun after() {
         todoRepository.deleteAll()
-        todoAuthService.delete("pita1", "pita1")
-        todoAuthService.delete("pita2", "pita2")
+        todoAuthRepository.deleteAll()
     }
 }
