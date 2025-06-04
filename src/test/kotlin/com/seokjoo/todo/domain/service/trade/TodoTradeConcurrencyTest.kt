@@ -38,7 +38,7 @@ class TodoTradeConcurrencyTest @Autowired constructor(
         repeat(100) {
             executor.submit {
                 try {
-                    todoTradeService.buyTodo(todo.id, user2)
+                    todoTradeService.buyTodo(todo.id, user2.userId)
                 } finally {
                     latch.countDown()
                 }
@@ -49,11 +49,13 @@ class TodoTradeConcurrencyTest @Autowired constructor(
         val todo = todoService.getTodoById(todo.id)
         assert(todo.todo == "테스트 500원 짜리 투두")
         assert(todo.price == 500L)
-        assert(todo.ownerId == user2.userId)
-        assert(user2.currentBalance() == 0L)
 
         val user1 = todoAuthService.findUserByUserId("pita1")
         assert(user1.currentBalance() == 500L)
+
+        val dbUser2 = todoAuthService.findUserByUserId("pita2")
+        assert(todo.ownerId == dbUser2.userId)
+        assert(dbUser2.currentBalance() == 0L)
     }
 
     @BeforeEach
