@@ -58,6 +58,45 @@ class TodoTradeConcurrencyTest @Autowired constructor(
         assert(dbUser2.currentBalance() == 0L)
     }
 
+    @Test
+    fun `20명이 같은 todo를 동시에 구매할 때 모두 다 구매가 잘된다`() {
+        val userList = (3..23).map {
+            val user = User("pita$it", "pita$it")
+            todoAuthService.signUp(user.userId, user.password)
+            val token = todoAuthService.login(user.userId, user.password)
+            todoChargeService.charge(500L, token.refreshToken)
+            todoAuthService.findUser(token.refreshToken)
+        }
+
+        val executor = Executors.newFixedThreadPool(32)
+        val latch = CountDownLatch(20)
+
+        userList.map {
+            executor.submit {
+                try {
+                    todoTradeService.buyTodo(todo.id, it.userId)
+                } finally {
+                    latch.countDown()
+                }
+            }
+        }
+        latch.await()
+
+        val newUserList = userList.map {
+            todoAuthService.findUserByUserId(it.userId)
+        }
+        val allNewUserBalance = newUserList.map { it.money }
+
+        /**
+         * 21명의 유저가 한 투두를 사고팔면 첫 owner 인 유저1 을 제외하고 21명끼리 사고팔고 진행함.
+         * 이때, 20명은 각각 사고 팔아서 500원을 가지고 있고, 마지막 구매한 유저만 잔액이 0원이게됨
+         */
+        val user = todoAuthService.findUserByUserId("pita1")
+        assert(user.money.currentBalance() == 500L)
+        assert(allNewUserBalance.count { it.currentBalance() == 500L } == 20)
+        assert(allNewUserBalance.count { it.currentBalance() == 0L } == 1)
+    }
+
     @BeforeEach
     fun before() {
         val keys = redisTemplate.keys("*")
