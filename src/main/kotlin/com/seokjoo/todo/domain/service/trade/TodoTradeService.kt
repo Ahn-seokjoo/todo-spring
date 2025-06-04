@@ -31,7 +31,7 @@ class TodoTradeService(
             // 3-2 상대방 금액 증가
             todoAuthService.findUserByUserId(todo.ownerId).increaseBalance(todo.price)
             // 3-2 owner"만" 변경
-            todoService.updateOwner(id = todo.id, owner = user)
+            todoService.updateOwner(todoId = todo.id, owner = user)
         }
     }
 }

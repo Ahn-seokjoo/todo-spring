@@ -135,7 +135,7 @@ class TodoServiceSpringBootTest @Autowired constructor(
             TodoUpdateServiceRequestDTO(todo = "iOS", isDone = false, categoryNames = listOf("horror"), price = 400L)
 
         // when
-        val result = service.updateTodo(id = updateId, request = request, userId = user.userId)
+        val result = service.updateTodo(todoId = updateId, request = request, userId = user.userId)
 
         // then
         Assertions.assertThat(result)

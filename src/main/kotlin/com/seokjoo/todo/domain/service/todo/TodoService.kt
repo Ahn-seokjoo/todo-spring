@@ -41,9 +41,9 @@ class TodoService(
         return TodoPageServiceResponseDTO(isLast = todoPage.isLast, responseList = todoPagedList)
     }
 
-    @Cacheable(cacheNames = ["todo"], key = "#id")
-    fun getTodoById(id: Long): TodoServiceResponseDTO {
-        val todo = todoRepository.findByIdOrNull(id) ?: throw TodoException.of(TodoExceptionType.NOT_EXISTED_TODO)
+    @Cacheable(cacheNames = ["todo"], key = "#todoId")
+    fun getTodoById(todoId: Long): TodoServiceResponseDTO {
+        val todo = todoRepository.findByIdOrNull(todoId) ?: throw TodoException.of(TodoExceptionType.NOT_EXISTED_TODO)
 
         return TodoServiceResponseDTO.from(todo)
     }
@@ -60,9 +60,9 @@ class TodoService(
 
     @Transactional
     @CacheEvict(value = ["todos"])
-    @CachePut(cacheNames = ["todo"], key = "#id")
-    fun updateTodo(id: Long, userId: String, request: TodoUpdateServiceRequestDTO): TodoServiceResponseDTO {
-        val todo = todoRepository.findByIdOrNull(id) ?: throw TodoException.of(TodoExceptionType.NOT_EXISTED_TODO)
+    @CachePut(cacheNames = ["todo"], key = "#todoId")
+    fun updateTodo(todoId: Long, userId: String, request: TodoUpdateServiceRequestDTO): TodoServiceResponseDTO {
+        val todo = todoRepository.findByIdOrNull(todoId) ?: throw TodoException.of(TodoExceptionType.NOT_EXISTED_TODO)
         if (isMe(todo.owner.userId, userId)) throw TodoException.of(TodoExceptionType.UNAUTHORIZED_TODO_ACCESS)
         todo.todoUpdateApply(request)
         // 더티 체킹으로 save 할 필요 없지만 그냥 명시적으로 해줌
@@ -76,20 +76,20 @@ class TodoService(
     @Caching(
         evict = [
             CacheEvict(value = ["todos"]),
-            CacheEvict(value = ["todo"], key = "#id"),
+            CacheEvict(value = ["todo"], key = "#todoId"),
         ]
     )
-    fun deleteTodo(id: Long, userId: String) {
-        val todo = todoRepository.findByIdOrNull(id) ?: throw TodoException.of(TodoExceptionType.NOT_EXISTED_TODO)
+    fun deleteTodo(todoId: Long, userId: String) {
+        val todo = todoRepository.findByIdOrNull(todoId) ?: throw TodoException.of(TodoExceptionType.NOT_EXISTED_TODO)
         if (isMe(todo.owner.userId, userId)) throw TodoException.of(TodoExceptionType.UNAUTHORIZED_TODO_ACCESS)
 
         todoDeleteService.deleteTodo(todo)
     }
 
     @Transactional
-    @CachePut(cacheNames = ["todo"], key = "#id")
-    fun updateOwner(id: Long, owner: User): TodoServiceResponseDTO {
-        val todo = todoRepository.findByIdOrNull(id) ?: throw TodoException.of(TodoExceptionType.NOT_EXISTED_TODO)
+    @CachePut(cacheNames = ["todo"], key = "#todoId")
+    fun updateOwner(todoId: Long, owner: User): TodoServiceResponseDTO {
+        val todo = todoRepository.findByIdOrNull(todoId) ?: throw TodoException.of(TodoExceptionType.NOT_EXISTED_TODO)
         todo.updateOwner(owner)
         todoRepository.save(todo)
 
