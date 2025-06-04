@@ -58,7 +58,7 @@ export default function (accessToken) {
     'Content-Type': 'application/json',
   };
 
-  const res = http.post(`${BASE_URL}/api/v1/todos`, { headers });
+  const res = http.get(`${BASE_URL}/api/v1/todos`, { headers });
 
   check(res, {
     'todos status is 200': (res) => res.status === 200,
