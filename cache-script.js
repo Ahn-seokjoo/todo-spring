@@ -1,18 +1,18 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
 
-const BASE_URL = 'http://localhost:8080';
+const BASE_URL = 'http://localhost:8080'
 
 const USER_ID = __ENV.USER_ID;
 const PASSWORD = __ENV.PASSWORD;
 
 export const options = {
-    stages: [
-        { duration: '1m', target: 50 },
-        { duration: '2m', target: 50 },
-        { duration: '1m', target: 0 }
-    ]
-}
+  stages: [
+    { duration: '1m', target: 10 }, // Warm-up: 캐시 적재
+    { duration: '1m', target: 50 }, // Main: 캐시 hit 여부 성능 측정
+    { duration: '1m', target: 0 },  // 종료
+  ],
+};
 
 export function setup() {
   const payload = JSON.stringify({
@@ -36,12 +36,19 @@ export function setup() {
   // 2️⃣ 로그인 요청
   const loginRes = http.post(`${BASE_URL}/api/v1/auth/login`, payload, { headers });
 
+  // 상태 코드 체크 먼저
   check(loginRes, {
     'login status is 200': (res) => res.status === 200,
-    'received access token': (res) => !!res.json().accessToken,
   });
 
+  // 실패한 경우 로그 출력하고 테스트 중단
+  if (loginRes.status !== 200) {
+    console.error(`❌ Login failed: ${loginRes.status} - ${loginRes.body}`);
+    throw new Error('Login failed');
+  }
+
   const accessToken = loginRes.json().accessToken;
+
   return accessToken;
 }
 
@@ -51,10 +58,11 @@ export default function (accessToken) {
     'Content-Type': 'application/json',
   };
 
-  const res = http.get(`${BASE_URL}/api/v1/todos`, { headers });
+  const res = http.post(`${BASE_URL}/api/v1/todos`, { headers });
 
   check(res, {
     'todos status is 200': (res) => res.status === 200,
+    'todos response time < 100ms': (res) => res.timings.duration < 100,
   });
 
   sleep(1);
