@@ -14,7 +14,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.redis.core.RedisTemplate
-import java.util.concurrent.Callable
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 
@@ -48,6 +47,7 @@ class TodoTradeConcurrencyTest @Autowired constructor(
             }
         }
         latch.await()
+        executor.shutdown()
 
         val todo = todoService.getTodoById(todo.id)
         assert(todo.todo == "테스트 500원 짜리 투두")
@@ -74,17 +74,20 @@ class TodoTradeConcurrencyTest @Autowired constructor(
         val executor = Executors.newFixedThreadPool(32)
         val latch = CountDownLatch(20)
 
-        val futures = userList.map {
-            executor.submit(Callable {
+        userList.map {
+            executor.submit {
                 try {
                     todoTradeService.buyTodo(todo.id, it.userId)
+                } catch (e: Exception) {
+                    throw e
                 } finally {
                     latch.countDown()
                 }
-            })
+            }
         }
         latch.await()
-        futures.forEach { it.get() }
+        Thread.sleep(500L)
+        executor.shutdown()
 
         val newUserList = userList.map { todoAuthService.findUserByUserId(it.userId) }
         val allNewUserBalance = newUserList.map { it.money.currentBalance() }
@@ -94,11 +97,8 @@ class TodoTradeConcurrencyTest @Autowired constructor(
          * 이때, 19명은 각각 사고 팔아서 500원을 가지고 있고, 마지막 구매한 유저만 잔액이 0원이게됨
          */
         val user = todoAuthService.findUserByUserId("pita1")
-        println("pita-pat user.money.currentBalance() is ${user.money.currentBalance()}")
         assert(user.money.currentBalance() == 500L)
-        println("pita-pat allNewUserBalance.count { it == 500L } is ${allNewUserBalance.count { it == 500L }}")
         assert(allNewUserBalance.count { it == 500L } == 19)
-        println("pita-pat allNewUserBalance.count { it == 0 } is ${allNewUserBalance.count { it == 0L }}")
         assert(allNewUserBalance.count { it == 0L } == 1)
     }
 
