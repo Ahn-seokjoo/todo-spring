@@ -14,6 +14,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.redis.core.RedisTemplate
+import java.util.concurrent.Callable
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 
@@ -74,8 +75,8 @@ class TodoTradeConcurrencyTest @Autowired constructor(
         val executor = Executors.newFixedThreadPool(32)
         val latch = CountDownLatch(20)
 
-        userList.map {
-            executor.submit {
+        val futures = userList.map {
+            executor.submit(Callable {
                 try {
                     todoTradeService.buyTodo(todo.id, it.userId)
                 } catch (e: Exception) {
@@ -83,10 +84,10 @@ class TodoTradeConcurrencyTest @Autowired constructor(
                 } finally {
                     latch.countDown()
                 }
-            }
+            })
         }
         latch.await()
-        Thread.sleep(500L)
+        futures.forEach { it.get() }
         executor.shutdown()
 
         val newUserList = userList.map { todoAuthService.findUserByUserId(it.userId) }
