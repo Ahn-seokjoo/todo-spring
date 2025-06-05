@@ -14,6 +14,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.redis.core.RedisTemplate
+import java.util.concurrent.Callable
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 
@@ -62,7 +63,7 @@ class TodoTradeConcurrencyTest @Autowired constructor(
 
     @Test
     fun `20명이 같은 todo를 동시에 구매할 때 모두 다 구매가 잘된다`() {
-        val userList = (3..23).map {
+        val userList = (10..29).map {
             val user = User("pita$it", "pita$it")
             todoAuthService.signUp(user.userId, user.password)
             val token = todoAuthService.login(user.userId, user.password)
@@ -73,30 +74,32 @@ class TodoTradeConcurrencyTest @Autowired constructor(
         val executor = Executors.newFixedThreadPool(32)
         val latch = CountDownLatch(20)
 
-        userList.map {
-            executor.submit {
+        val futures = userList.map {
+            executor.submit(Callable {
                 try {
                     todoTradeService.buyTodo(todo.id, it.userId)
                 } finally {
                     latch.countDown()
                 }
-            }
+            })
         }
         latch.await()
+        futures.forEach { it.get() }
 
-        val newUserList = userList.map {
-            todoAuthService.findUserByUserId(it.userId)
-        }
-        val allNewUserBalance = newUserList.map { it.money }
+        val newUserList = userList.map { todoAuthService.findUserByUserId(it.userId) }
+        val allNewUserBalance = newUserList.map { it.money.currentBalance() }
 
         /**
-         * 21명의 유저가 한 투두를 사고팔면 첫 owner 인 유저1 을 제외하고 21명끼리 사고팔고 진행함.
-         * 이때, 20명은 각각 사고 팔아서 500원을 가지고 있고, 마지막 구매한 유저만 잔액이 0원이게됨
+         * 20명의 유저가 한 투두를 사고팔면 첫 owner 인 유저1 을 제외하고 20명끼리 사고팔고 진행함.
+         * 이때, 19명은 각각 사고 팔아서 500원을 가지고 있고, 마지막 구매한 유저만 잔액이 0원이게됨
          */
         val user = todoAuthService.findUserByUserId("pita1")
+        println("pita-pat user.money.currentBalance() is ${user.money.currentBalance()}")
         assert(user.money.currentBalance() == 500L)
-        assert(allNewUserBalance.count { it.currentBalance() == 500L } == 20)
-        assert(allNewUserBalance.count { it.currentBalance() == 0L } == 1)
+        println("pita-pat allNewUserBalance.count { it == 500L } is ${allNewUserBalance.count { it == 500L }}")
+        assert(allNewUserBalance.count { it == 500L } == 19)
+        println("pita-pat allNewUserBalance.count { it == 0 } is ${allNewUserBalance.count { it == 0L }}")
+        assert(allNewUserBalance.count { it == 0L } == 1)
     }
 
     @BeforeEach
