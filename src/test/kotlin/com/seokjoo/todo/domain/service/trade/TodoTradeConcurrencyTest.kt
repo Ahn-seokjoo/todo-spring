@@ -90,8 +90,7 @@ class TodoTradeConcurrencyTest @Autowired constructor(
         futures.forEach { it.get() }
         executor.shutdown()
 
-        val newUserList = userList.map { todoAuthService.findUserByUserId(it.userId) }
-        val allNewUserBalance = newUserList.map { todoAuthService.findUserByUserId(it.userId).currentBalance() }
+        val allNewUserBalance = userList.map { todoAuthService.findUserByUserId(it.userId).currentBalance() }
 
         /**
          * 20명의 유저가 한 투두를 사고팔면 첫 owner 인 유저1 을 제외하고 20명끼리 사고팔고 진행함.
