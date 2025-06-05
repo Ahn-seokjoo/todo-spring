@@ -17,21 +17,21 @@ class RedisLockManager(
                     // 5초간 락 시도, 3초간 락을 유지
                     if (lock.tryLock(5, 3, TimeUnit.SECONDS)) {
                         return@retryLoop block.invoke()
-                    } else error("tryLock error")
+                    } else error("TryLock error")
                 } catch (e: InterruptedException) {
                     Thread.currentThread().interrupt()
                     error("InterruptedException")
                 } catch (e: TodoException) {
                     throw e
                 } catch (e: Exception) {
-                    error("just exception ${e}")
+                    error("Just exception ${e}")
                 } finally {
-                    if (lock.isHeldByCurrentThread) {
+                    if (lock.isLocked && lock.isHeldByCurrentThread) {
                         lock.unlock()
                     }
                 }
             }
-            error("tryLock fail after retry")
+            error("TryLock fail after retry")
         }
     }
 }
