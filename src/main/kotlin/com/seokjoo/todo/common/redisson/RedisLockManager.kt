@@ -12,8 +12,8 @@ class RedisLockManager(
     fun <T> tryLock(key: String, block: () -> T): T {
         val lock = redisson.getLock(key)
         try {
-            // 5초간 락 시도, 3초간 락을 유지
-            if (lock.tryLock(10, 5, TimeUnit.SECONDS)) return block.invoke()
+            // 15초간 락 시도, 3초간 락을 유지
+            if (lock.tryLock(18, 3, TimeUnit.SECONDS)) return block.invoke()
             else error("tryLock error")
         } catch (e: InterruptedException) {
             Thread.currentThread().interrupt()
@@ -21,7 +21,7 @@ class RedisLockManager(
         } catch (e: TodoException) {
             throw e
         } catch (e: Exception) {
-            error("just exception")
+            error("just exception ${e}")
         } finally {
             if (lock.isHeldByCurrentThread) {
                 lock.unlock()
