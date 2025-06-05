@@ -9,23 +9,29 @@ import java.util.concurrent.TimeUnit
 class RedisLockManager(
     private val redisson: RedissonClient,
 ) {
-    fun <T> tryLock(key: String, block: () -> T): T {
+    fun <T> tryLock(key: String, retryCount: Int = 3, block: () -> T): T {
         val lock = redisson.getLock(key)
-        try {
-            // 15초간 락 시도, 3초간 락을 유지
-            if (lock.tryLock(15, 5, TimeUnit.SECONDS)) return block.invoke()
-            else error("tryLock error")
-        } catch (e: InterruptedException) {
-            Thread.currentThread().interrupt()
-            error("InterruptedException")
-        } catch (e: TodoException) {
-            throw e
-        } catch (e: Exception) {
-            error("just exception ${e}")
-        } finally {
-            if (lock.isHeldByCurrentThread) {
-                lock.unlock()
+        return run retryLoop@{
+            repeat(retryCount) {
+                try {
+                    // 5초간 락 시도, 3초간 락을 유지
+                    if (lock.tryLock(5, 3, TimeUnit.SECONDS)) {
+                        return@retryLoop block.invoke()
+                    } else error("tryLock error")
+                } catch (e: InterruptedException) {
+                    Thread.currentThread().interrupt()
+                    error("InterruptedException")
+                } catch (e: TodoException) {
+                    throw e
+                } catch (e: Exception) {
+                    error("just exception ${e}")
+                } finally {
+                    if (lock.isHeldByCurrentThread) {
+                        lock.unlock()
+                    }
+                }
             }
+            error("tryLock fail after retry")
         }
     }
 }
