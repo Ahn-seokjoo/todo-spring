@@ -7,11 +7,11 @@ import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotBlank
 
 data class TodoRequest(
-    @field:NotBlank
+    @field:NotBlank(message = "Todo는 빈 값일 수 없습니다")
     @Schema(description = "todo를 입력합니다.", example = "위플래시 재개봉 보러가기", required = true)
     val todo: String,
     val isDone: Boolean = false,
-    @field:Min(value = 0L)
+    @field:Min(value = 0L, message = "잔액은 음수일 수 없습니다.")
     @Schema(description = "todo의 가격을 입력합니다.", example = "0L", required = false)
     val price: Long = 0L,
     @Schema(description = "category를 list로 입력합니다", implementation = CategoryDTO::class)
