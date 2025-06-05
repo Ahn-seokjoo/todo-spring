@@ -13,7 +13,7 @@ class RedisLockManager(
         val lock = redisson.getLock(key)
         try {
             // 15초간 락 시도, 3초간 락을 유지
-            if (lock.tryLock(18, 3, TimeUnit.SECONDS)) return block.invoke()
+            if (lock.tryLock(15, 5, TimeUnit.SECONDS)) return block.invoke()
             else error("tryLock error")
         } catch (e: InterruptedException) {
             Thread.currentThread().interrupt()
