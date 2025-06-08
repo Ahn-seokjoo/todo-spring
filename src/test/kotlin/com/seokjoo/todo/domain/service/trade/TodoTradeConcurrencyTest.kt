@@ -97,11 +97,8 @@ class TodoTradeConcurrencyTest @Autowired constructor(
          * 이때, 19명은 각각 사고 팔아서 500원을 가지고 있고, 마지막 구매한 유저만 잔액이 0원이게됨
          */
         val user = todoAuthService.findUserByUserId("pita1")
-        println("tjrwn 1 ${user.money.currentBalance() == 500L}")
         assert(user.money.currentBalance() == 500L)
-        println("tjrwn 2 ${allNewUserBalance.count { it == 500L }}")
         assert(allNewUserBalance.count { it == 500L } == 19)
-        println("tjrwn 3 ${allNewUserBalance.count { it == 0L }}")
         assert(allNewUserBalance.count { it == 0L } == 1)
     }
 
