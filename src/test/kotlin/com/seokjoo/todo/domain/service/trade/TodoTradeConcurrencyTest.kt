@@ -3,16 +3,19 @@ package com.seokjoo.todo.domain.service.trade
 import com.seokjoo.todo.annotation.IntegrationTest
 import com.seokjoo.todo.domain.entity.todouser.User
 import com.seokjoo.todo.domain.repository.todo.TodoRepository
+import com.seokjoo.todo.domain.repository.todouser.TodoAuthRepository
 import com.seokjoo.todo.domain.service.auth.TodoAuthService
 import com.seokjoo.todo.domain.service.charge.TodoChargeService
 import com.seokjoo.todo.domain.service.todo.TodoCreateServiceRequestDTO
 import com.seokjoo.todo.domain.service.todo.TodoService
 import com.seokjoo.todo.domain.service.todo.TodoServiceResponseDTO
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.redis.core.RedisTemplate
+import java.util.concurrent.Callable
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 
@@ -21,6 +24,7 @@ class TodoTradeConcurrencyTest @Autowired constructor(
     private val todoService: TodoService,
     private val todoChargeService: TodoChargeService,
     private val todoAuthService: TodoAuthService,
+    private val todoAuthRepository: TodoAuthRepository,
     private val todoTradeService: TodoTradeService,
     private val todoRepository: TodoRepository,
     private val redisTemplate: RedisTemplate<String, Any>,
@@ -38,22 +42,65 @@ class TodoTradeConcurrencyTest @Autowired constructor(
         repeat(100) {
             executor.submit {
                 try {
-                    todoTradeService.buyTodo(todo.id, user2)
+                    todoTradeService.buyTodo(todo.id, user2.userId)
                 } finally {
                     latch.countDown()
                 }
             }
         }
         latch.await()
+        executor.shutdown()
 
         val todo = todoService.getTodoById(todo.id)
         assert(todo.todo == "테스트 500원 짜리 투두")
         assert(todo.price == 500L)
-        assert(todo.ownerId == user2.userId)
-        assert(user2.currentBalance() == 0L)
 
         val user1 = todoAuthService.findUserByUserId("pita1")
         assert(user1.currentBalance() == 500L)
+
+        val dbUser2 = todoAuthService.findUserByUserId("pita2")
+        assert(todo.ownerId == dbUser2.userId)
+        assert(dbUser2.currentBalance() == 0L)
+    }
+
+    @Test
+    fun `10명이 같은 todo를 동시에 구매할 때 모두 다 구매가 잘된다`() {
+        val userList = (10..19).map {
+            val user = User("pita$it", "pita$it")
+            todoAuthService.signUp(user.userId, user.password)
+            val token = todoAuthService.login(user.userId, user.password)
+            todoChargeService.charge(500L, token.refreshToken)
+            todoAuthService.findUser(token.refreshToken)
+        }
+
+        val executor = Executors.newFixedThreadPool(10)
+        val latch = CountDownLatch(10)
+
+        val futures = userList.map {
+            executor.submit(Callable {
+                try {
+                    todoTradeService.buyTodo(todo.id, it.userId)
+                } catch (e: Exception) {
+                    throw e
+                } finally {
+                    latch.countDown()
+                }
+            })
+        }
+        latch.await()
+        futures.forEach { it.get() }
+        executor.shutdown()
+
+        val allNewUserBalance = userList.map { todoAuthService.findUserByUserId(it.userId).currentBalance() }
+
+        /**
+         * 20명의 유저가 한 투두를 사고팔면 첫 owner 인 유저1 을 제외하고 20명끼리 사고팔고 진행함.
+         * 이때, 19명은 각각 사고 팔아서 500원을 가지고 있고, 마지막 구매한 유저만 잔액이 0원이게됨
+         */
+        val user = todoAuthService.findUserByUserId("pita1")
+        assertThat(user.money.currentBalance()).isEqualTo(500L)
+        assertThat(allNewUserBalance.count { it == 500L }).isEqualTo(9)
+        assertThat(allNewUserBalance.count { it == 0L }).isEqualTo(1)
     }
 
     @BeforeEach
@@ -82,7 +129,6 @@ class TodoTradeConcurrencyTest @Autowired constructor(
     @AfterEach
     fun after() {
         todoRepository.deleteAll()
-        todoAuthService.delete("pita1", "pita1")
-        todoAuthService.delete("pita2", "pita2")
+        todoAuthRepository.deleteAll()
     }
 }

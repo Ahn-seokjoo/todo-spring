@@ -62,7 +62,7 @@ class TodoServiceMockTest : BehaviorSpec({
             every { todoRepository.findByIdOrNull(id) } throws TodoException.of(TodoExceptionType.NOT_EXISTED_TODO)
             Then("에러 케이스의 경우 404, T000_TODO_ERROR를 준다") {
                 val exception = shouldThrow<TodoException> {
-                    todoService.getTodoById(id = id)
+                    todoService.getTodoById(todoId = id)
                 }
                 exception.message shouldBe "존재하지 않는 Todo 입니다"
                 exception.httpStatusCode shouldBe 404
@@ -118,7 +118,7 @@ class TodoServiceMockTest : BehaviorSpec({
             Then("에러가 난다") {
                 val exception = shouldThrow<TodoException> {
                     todoService.updateTodo(
-                        id = id,
+                        todoId = id,
                         request = TodoUpdateServiceRequestDTO(todo = "abas", isDone = null, price = null),
                         userId = user.userId
                     )
@@ -133,7 +133,7 @@ class TodoServiceMockTest : BehaviorSpec({
             every { todoRepository.findByIdOrNull(id) } returns previousTodo
             every { todoRepository.save(any()) } returns nextTodo
 
-            val updatedTodo = todoService.updateTodo(id = id, request = request, userId = user.userId)
+            val updatedTodo = todoService.updateTodo(todoId = id, request = request, userId = user.userId)
             Then("업데이트가 잘 된다") {
                 updatedTodo.todo shouldBe "abcdef"
                 updatedTodo.isDone shouldBe false
@@ -148,7 +148,7 @@ class TodoServiceMockTest : BehaviorSpec({
             val newNextTodo = nextTodo.copy(isDone = true)
             every { todoRepository.findByIdOrNull(id) } returns newPreviousTodo
             every { todoRepository.save(any()) } returns newNextTodo
-            val updatedTodo = todoService.updateTodo(id = id, request = newRequest, userId = user.userId)
+            val updatedTodo = todoService.updateTodo(todoId = id, request = newRequest, userId = user.userId)
 
             Then("업데이트가 잘 된다.") {
                 updatedTodo.todo shouldBe "abcdef"
@@ -188,7 +188,7 @@ class TodoServiceMockTest : BehaviorSpec({
                 Category(name = "comedy")
             )
 
-            val updatedTodo = todoService.updateTodo(id = id, request = newRequest, userId = user.userId)
+            val updatedTodo = todoService.updateTodo(todoId = id, request = newRequest, userId = user.userId)
             Then("업데이트가 잘 된다") {
                 updatedTodo.todo shouldBe "abcdef"
                 updatedTodo.isDone shouldBe false

@@ -2,7 +2,7 @@ package com.seokjoo.todo.domain.service.category
 
 import com.seokjoo.todo.common.exception.TodoException
 import com.seokjoo.todo.common.exception.TodoExceptionType
-import com.seokjoo.todo.common.redisson.RedisUtils
+import com.seokjoo.todo.common.redisson.RedisLockManager
 import com.seokjoo.todo.domain.entity.category.Category
 import com.seokjoo.todo.domain.repository.category.CategoryRepository
 import org.springframework.data.repository.findByIdOrNull
@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional
 @Transactional
 class CategoryService(
     private val categoryRepository: CategoryRepository,
-    private val redisUtils: RedisUtils,
+    private val redisLockManager: RedisLockManager,
 ) {
     @Transactional(readOnly = true)
     fun getAllCategories(): List<CategoryServiceResponseDTO> {
@@ -51,7 +51,7 @@ class CategoryService(
     fun getOrCreateCategory(name: String): Long {
         // 조회
         return kotlin.runCatching {
-            redisUtils.tryLock(name) {
+            redisLockManager.tryLock(name) {
                 val category =
                     categoryRepository.findCategoryByName(name = name) ?: categoryRepository.save(Category(name = name))
                 category.id

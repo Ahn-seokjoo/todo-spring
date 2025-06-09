@@ -10,8 +10,12 @@ spring:
     password:
   jpa:
     hibernate:
+      SQL: debug
       ddl-auto: create-drop
-    show-sql: true
+      format_sql: true
+      show-sql: true
+      highlight_sql: true
+      use_sql_comments: true
     database: h2
     database-platform: org.hibernate.dialect.H2Dialect
   data:
@@ -20,6 +24,10 @@ spring:
       port: 6379
   cache:
     type: redis
+
+logging:
+  level:
+    org.hibernate.orm.jdbc.bind: trace
 
 jwt:
   secret: ${JWT_SECRETS}

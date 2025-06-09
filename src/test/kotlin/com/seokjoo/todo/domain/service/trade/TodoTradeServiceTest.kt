@@ -29,7 +29,7 @@ class TodoTradeServiceTest @Autowired constructor(
     @Transactional
     fun `todo를 거래했을 때, 금액이 잘 차감되고 owner 가 자신으로 잘 변경된다`() {
         val user2 = todoAuthService.findUserByUserId("pita2")
-        todoTradeService.buyTodo(todo.id, user2)
+        todoTradeService.buyTodo(todo.id, user2.userId)
 
         val todo = todoService.getTodoById(todo.id)
         assert(todo.todo == "테스트 500원 짜리 투두")
@@ -47,7 +47,7 @@ class TodoTradeServiceTest @Autowired constructor(
         val user = todoAuthService.findUserByUserId("pita1")
 
         val exception = kotlin.runCatching {
-            todoTradeService.buyTodo(todo.id, user)
+            todoTradeService.buyTodo(todo.id, user.userId)
         }.exceptionOrNull()
 
         assert(exception is TodoException)
@@ -72,7 +72,7 @@ class TodoTradeServiceTest @Autowired constructor(
 
         // WHEN
         val exception = kotlin.runCatching {
-            todoTradeService.buyTodo(newTodo.id, user2)
+            todoTradeService.buyTodo(newTodo.id, user2.userId)
         }.exceptionOrNull()
 
         // THEN

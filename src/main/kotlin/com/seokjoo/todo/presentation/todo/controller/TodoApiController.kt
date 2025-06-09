@@ -101,7 +101,7 @@ class TodoApiController(
     ): ResponseEntity<TodoResponse> {
         val user = authService.findUser(servletRequest.getBearerToken())
         val todo =
-            todoService.updateTodo(id = id, userId = user.userId, request = request.toUpdateRequest()).toResponse()
+            todoService.updateTodo(todoId = id, userId = user.userId, request = request.toUpdateRequest()).toResponse()
         return ResponseEntity.ok(todo)
     }
 
@@ -114,7 +114,7 @@ class TodoApiController(
     )
     fun deleteTodo(servletRequest: HttpServletRequest, @PathVariable id: Long): ResponseEntity<String> {
         val user = authService.findUser(servletRequest.getBearerToken())
-        todoService.deleteTodo(id = id, userId = user.userId)
+        todoService.deleteTodo(todoId = id, userId = user.userId)
         return ResponseEntity.noContent().build()
     }
 }
