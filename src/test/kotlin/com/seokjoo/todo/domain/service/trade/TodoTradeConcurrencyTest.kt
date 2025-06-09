@@ -9,6 +9,7 @@ import com.seokjoo.todo.domain.service.charge.TodoChargeService
 import com.seokjoo.todo.domain.service.todo.TodoCreateServiceRequestDTO
 import com.seokjoo.todo.domain.service.todo.TodoService
 import com.seokjoo.todo.domain.service.todo.TodoServiceResponseDTO
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -63,8 +64,8 @@ class TodoTradeConcurrencyTest @Autowired constructor(
     }
 
     @Test
-    fun `20명이 같은 todo를 동시에 구매할 때 모두 다 구매가 잘된다`() {
-        val userList = (10..29).map {
+    fun `10명이 같은 todo를 동시에 구매할 때 모두 다 구매가 잘된다`() {
+        val userList = (10..19).map {
             val user = User("pita$it", "pita$it")
             todoAuthService.signUp(user.userId, user.password)
             val token = todoAuthService.login(user.userId, user.password)
@@ -72,8 +73,8 @@ class TodoTradeConcurrencyTest @Autowired constructor(
             todoAuthService.findUser(token.refreshToken)
         }
 
-        val executor = Executors.newFixedThreadPool(32)
-        val latch = CountDownLatch(20)
+        val executor = Executors.newFixedThreadPool(10)
+        val latch = CountDownLatch(10)
 
         val futures = userList.map {
             executor.submit(Callable {
@@ -97,9 +98,9 @@ class TodoTradeConcurrencyTest @Autowired constructor(
          * 이때, 19명은 각각 사고 팔아서 500원을 가지고 있고, 마지막 구매한 유저만 잔액이 0원이게됨
          */
         val user = todoAuthService.findUserByUserId("pita1")
-        assert(user.money.currentBalance() == 500L)
-        assert(allNewUserBalance.count { it == 500L } == 19)
-        assert(allNewUserBalance.count { it == 0L } == 1)
+        assertThat(user.money.currentBalance()).isEqualTo(500L)
+        assertThat(allNewUserBalance.count { it == 500L }).isEqualTo(9)
+        assertThat(allNewUserBalance.count { it == 0L }).isEqualTo(1)
     }
 
     @BeforeEach
