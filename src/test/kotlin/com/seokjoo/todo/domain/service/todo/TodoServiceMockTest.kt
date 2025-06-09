@@ -180,8 +180,8 @@ class TodoServiceMockTest : BehaviorSpec({
             every { todoRepository.findByIdOrNull(1L) } returns newPreviousTodo
             every { todoRepository.save(any()) } returns newNextTodo
             every { categoryService.getOrCreateCategory(any()) } returnsMany listOf(
-                1L,
-                2L
+                Category(name = "horror"),
+                Category(name = "comedy")
             )
             every { categoryService.findById(any()) } returnsMany listOf(
                 Category(name = "horror"),
