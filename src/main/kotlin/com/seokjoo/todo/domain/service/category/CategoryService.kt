@@ -47,14 +47,14 @@ class CategoryService(
         return categoryRepository.findByIdOrNull(id) ?: throw TodoException.of(TodoExceptionType.CATEGORY_NOT_EXIST)
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    fun getOrCreateCategory(name: String): Long {
+    @Transactional
+    fun getOrCreateCategory(name: String): Category {
         // 조회
         return kotlin.runCatching {
             redisLockManager.tryLock(name) {
                 val category =
                     categoryRepository.findCategoryByName(name = name) ?: categoryRepository.save(Category(name = name))
-                category.id
+                category
             }
         }.getOrNull() ?: throw TodoException.of(TodoExceptionType.LOCK_GET_FAILED)
     }
