@@ -17,7 +17,7 @@ class TodoTradeService(
 ) {
     @Transactional
     fun buyTodo(todoId: Long, userId: String): TodoServiceResponseDTO {
-        return redisLockManager.tryLock(key = todoId.toString(), retryCount = 5) { // 가입시 user_id로 가입 유무를 체크하기 때문에 고유함
+        return redisLockManager.tryLock(key = todoId.toString()) { // 거래 하려는 todoId로 락을 잡음
             // 1. 자기 todo 인지 확인
             val todo = todoService.getTodoById(todoId)
 
