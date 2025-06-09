@@ -18,7 +18,7 @@ class RedisLockManager(
                     if (lock.tryLock(5, 3, TimeUnit.SECONDS)) {
                         return@retryLoop block.invoke()
                     } else {
-                        Thread.sleep(100L)
+                        Thread.sleep(50L)
                     }
                 } catch (e: InterruptedException) {
                     Thread.currentThread().interrupt()
