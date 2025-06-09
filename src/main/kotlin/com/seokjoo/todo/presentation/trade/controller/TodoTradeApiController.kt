@@ -1,7 +1,5 @@
 package com.seokjoo.todo.presentation.trade.controller
 
-import com.seokjoo.todo.common.exception.TodoException
-import com.seokjoo.todo.common.exception.TodoExceptionType
 import com.seokjoo.todo.common.jwt.getBearerToken
 import com.seokjoo.todo.domain.service.auth.TodoAuthService
 import com.seokjoo.todo.domain.service.trade.TodoTradeService
@@ -28,10 +26,8 @@ class TodoTradeApiController(
         servletRequest: HttpServletRequest,
         @Valid @RequestBody buyRequest: TodoBuyRequest,
     ): TodoResponse {
-        val user = authService.findUser(servletRequest.getBearerToken())
-        // 잔액이 0원이면 다른 요청 없이 끝냄
-        if (user.needToCharge()) throw TodoException.of(TodoExceptionType.BALANCE_NOT_ENOUGH)
+        val userId = authService.getSubject(servletRequest.getBearerToken())
 
-        return todoTradeService.buyTodo(buyRequest.todoId, user).toResponse()
+        return todoTradeService.buyTodo(buyRequest.todoId, userId).toResponse()
     }
 }
