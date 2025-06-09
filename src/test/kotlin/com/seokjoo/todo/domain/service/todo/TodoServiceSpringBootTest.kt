@@ -38,7 +38,7 @@ class TodoServiceSpringBootTest @Autowired constructor(
 
     @AfterEach
     fun cleanupRedis() {
-        val keys = redisTemplate.keys("todos:*")
+        val keys = redisTemplate.keys("*")
         redisTemplate.delete(keys)
     }
 
@@ -100,6 +100,7 @@ class TodoServiceSpringBootTest @Autowired constructor(
         // when
         val todoPageRequest = TodoPageRequest()
         val todoList = service.getPagedTodos(user.userId, todoPageRequest.toPageServiceDTO()).responseList
+
         // then
         assert(todoList.size == 2)
         Assertions.assertThat(todoList)
