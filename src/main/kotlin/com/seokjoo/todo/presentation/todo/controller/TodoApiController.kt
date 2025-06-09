@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import java.net.URI
 
@@ -51,9 +52,11 @@ class TodoApiController(
     @Operation(summary = "사용자 todo를 페이지네이션을 통해 리턴", description = "사용자가 등록한 todo 와 카테고리 정보를 n개씩 가져옵니다. (default = 20)")
     fun getPagedTodos(
         servletRequest: HttpServletRequest,
-        @RequestBody todoPageRequest: TodoPageRequest = TodoPageRequest(),
+        @RequestParam(defaultValue = "0") pageNumber: Int,
+        @RequestParam(defaultValue = "20") pageSize: Int,
     ): ResponseEntity<TodoPageResponse> {
         val user = authService.findUser(servletRequest.getBearerToken())
+        val todoPageRequest = TodoPageRequest(pageNumber, pageSize)
         val pagedDto = todoPageRequest.toPageServiceDTO()
         val pagedResponse = todoService.getPagedTodos(userId = user.userId, pageServiceDTO = pagedDto)
         return ResponseEntity.ok(
