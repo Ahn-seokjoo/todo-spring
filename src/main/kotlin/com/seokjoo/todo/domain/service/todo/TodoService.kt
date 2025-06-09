@@ -100,7 +100,7 @@ class TodoService(
         request: TodoServiceRequestDTO,
         todo: Todo,
     ) {
-        request.categoryNames.map { categoryName ->
+        request.categoryNames.forEach { categoryName ->
             if (todo.hasCategory(categoryName).not()) {
                 val matchedCategoryId = categoryService.getOrCreateCategory(categoryName)
                 val matchedCategory = categoryService.findById(matchedCategoryId)

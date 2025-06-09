@@ -47,7 +47,7 @@ class CategoryService(
         return categoryRepository.findByIdOrNull(id) ?: throw TodoException.of(TodoExceptionType.CATEGORY_NOT_EXIST)
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional
     fun getOrCreateCategory(name: String): Long {
         // 조회
         return kotlin.runCatching {
