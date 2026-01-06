@@ -1,12 +1,12 @@
 package com.seokjoo.todo.domain.service.charge
 
-import com.seokjoo.todo.annotation.IntegrationTest
+import com.seokjoo.todo.annotation.TodoTest
 import com.seokjoo.todo.domain.service.auth.TodoAuthService
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.transaction.annotation.Transactional
 
-@IntegrationTest
+@TodoTest
 class TodoChargeServiceTest @Autowired constructor(
     private val todoAuthService: TodoAuthService,
     private val todoChargeService: TodoChargeService,

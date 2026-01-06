@@ -2,6 +2,7 @@ package com.seokjoo.todo.e2e
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.seokjoo.todo.annotation.TodoTest
 import com.seokjoo.todo.domain.repository.todo.TodoRepository
 import com.seokjoo.todo.domain.repository.todouser.TodoAuthRepository
 import com.seokjoo.todo.domain.service.auth.TodoAuthService
@@ -39,7 +40,7 @@ import java.net.URI
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@ActiveProfiles("test")
+@TodoTest
 class TodoE2ETest @Autowired constructor(
     private val redisTemplate: RedisTemplate<String, Any>,
     private val objectMapper: ObjectMapper,

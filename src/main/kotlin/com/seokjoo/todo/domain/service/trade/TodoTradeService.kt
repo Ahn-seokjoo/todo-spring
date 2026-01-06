@@ -2,7 +2,7 @@ package com.seokjoo.todo.domain.service.trade
 
 import com.seokjoo.todo.common.exception.TodoException
 import com.seokjoo.todo.common.exception.TodoExceptionType
-import com.seokjoo.todo.common.redisson.RedisLockManager
+import com.seokjoo.todo.common.redisson.LockManager
 import com.seokjoo.todo.domain.service.auth.TodoAuthService
 import com.seokjoo.todo.domain.service.todo.TodoService
 import com.seokjoo.todo.domain.service.todo.TodoServiceResponseDTO
@@ -13,7 +13,7 @@ import org.springframework.transaction.annotation.Transactional
 class TodoTradeService(
     private val todoService: TodoService,
     private val todoAuthService: TodoAuthService,
-    private val redisLockManager: RedisLockManager,
+    private val redisLockManager: LockManager,
 ) {
     @Transactional
     fun buyTodo(todoId: Long, userId: String): TodoServiceResponseDTO {

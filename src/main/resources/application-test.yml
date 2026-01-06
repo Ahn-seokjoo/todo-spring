@@ -18,12 +18,6 @@ spring:
       use_sql_comments: true
     database: h2
     database-platform: org.hibernate.dialect.H2Dialect
-  data:
-    redis:
-      host: localhost
-      port: 6379
-  cache:
-    type: redis
 
 logging:
   level:

@@ -38,16 +38,22 @@ dependencies {
     testImplementation("org.mockito:mockito-core:4.8.0")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("io.mockk:mockk:1.13.17")
+
     // kotest
     testImplementation("io.kotest:kotest-runner-junit5:5.4.2")
     testImplementation("io.kotest:kotest-assertions-core:5.4.2")
     testImplementation("io.kotest.extensions:kotest-extensions-spring:1.1.2")
     testImplementation("org.assertj:assertj-core:3.24.2")
     testImplementation("org.apache.httpcomponents.client5:httpclient5:5.4.2")
+
     // jwt
     implementation("io.jsonwebtoken:jjwt-api:0.12.6")
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.6")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.6")
+
+    implementation("org.testcontainers:testcontainers-bom:1.20.2")
+    testImplementation("org.testcontainers:junit-jupiter")
+    testImplementation("org.testcontainers:testcontainers")
 }
 
 kotlin {

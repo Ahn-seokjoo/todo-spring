@@ -2,19 +2,18 @@ package com.seokjoo.todo.domain.service.category
 
 import com.seokjoo.todo.common.exception.TodoException
 import com.seokjoo.todo.common.exception.TodoExceptionType
-import com.seokjoo.todo.common.redisson.RedisLockManager
+import com.seokjoo.todo.common.redisson.LockManager
 import com.seokjoo.todo.domain.entity.category.Category
 import com.seokjoo.todo.domain.repository.category.CategoryRepository
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 
 @Service
 @Transactional
 class CategoryService(
     private val categoryRepository: CategoryRepository,
-    private val redisLockManager: RedisLockManager,
+    private val redisLockManager: LockManager,
 ) {
     @Transactional(readOnly = true)
     fun getAllCategories(): List<CategoryServiceResponseDTO> {

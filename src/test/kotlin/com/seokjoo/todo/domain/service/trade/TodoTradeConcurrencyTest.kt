@@ -1,6 +1,6 @@
 package com.seokjoo.todo.domain.service.trade
 
-import com.seokjoo.todo.annotation.IntegrationTest
+import com.seokjoo.todo.annotation.TodoTest
 import com.seokjoo.todo.domain.entity.todouser.User
 import com.seokjoo.todo.domain.repository.todo.TodoRepository
 import com.seokjoo.todo.domain.repository.todouser.TodoAuthRepository
@@ -19,7 +19,7 @@ import java.util.concurrent.Callable
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 
-@IntegrationTest
+@TodoTest
 class TodoTradeConcurrencyTest @Autowired constructor(
     private val todoService: TodoService,
     private val todoChargeService: TodoChargeService,

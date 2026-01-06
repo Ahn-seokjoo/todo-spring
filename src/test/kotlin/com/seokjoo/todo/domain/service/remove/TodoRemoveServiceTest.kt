@@ -1,6 +1,6 @@
 package com.seokjoo.todo.domain.service.remove
 
-import com.seokjoo.todo.annotation.IntegrationTest
+import com.seokjoo.todo.annotation.TodoTest
 import com.seokjoo.todo.common.exception.TodoException
 import com.seokjoo.todo.common.exception.TodoExceptionType
 import com.seokjoo.todo.domain.entity.todouser.User
@@ -17,7 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.transaction.annotation.Transactional
 
-@IntegrationTest
+@TodoTest
 @Transactional
 class TodoRemoveServiceTest @Autowired constructor(
     private val todoService: TodoService,
