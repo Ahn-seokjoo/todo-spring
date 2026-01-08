@@ -46,12 +46,6 @@ class Todo(
         category.todoCategories.add(todoCategory)
     }
 
-    fun clearCategory(category: Category) {
-        todoCategories
-            .first { it.category?.id == category.id }
-            .removeCategory(category)
-    }
-
     fun todoUpdateApply(
         request: TodoUpdateServiceRequestDTO,
     ) {
