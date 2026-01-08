@@ -10,7 +10,6 @@ import com.seokjoo.todo.domain.service.auth.TodoAuthServiceLoginResponse
 import com.seokjoo.todo.domain.service.todo.TodoCreateServiceRequestDTO
 import com.seokjoo.todo.domain.service.todo.TodoService
 import com.seokjoo.todo.domain.service.todo.TodoServiceResponseDTO
-import com.seokjoo.todo.presentation.category.dto.CategoryDTO
 import com.seokjoo.todo.presentation.todo.dto.request.TodoRequest
 import com.seokjoo.todo.presentation.todo.dto.request.TodoUpdateRequest
 import com.seokjoo.todo.presentation.todo.dto.response.TodoPageResponse
@@ -33,7 +32,6 @@ import org.springframework.http.HttpMethod
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory
-import org.springframework.test.context.ActiveProfiles
 import org.springframework.web.client.RestTemplate
 import org.springframework.web.client.exchange
 import java.net.URI
@@ -128,7 +126,7 @@ class TodoE2ETest @Autowired constructor(
             price = 10L,
         )
         val request =
-            TodoRequest(todo = "Android", isDone = true, categories = listOf(CategoryDTO("drama")), price = 10L)
+            TodoRequest(todo = "Android", isDone = true, categories = listOf("drama"), price = 10L)
 
         val response: ResponseEntity<String> = restTemplate.exchange(
             url,
@@ -174,7 +172,7 @@ class TodoE2ETest @Autowired constructor(
             price = 10L,
         )
         val request =
-            TodoUpdateRequest(todo = "node", isDone = true, categories = listOf(CategoryDTO("drama")), price = null)
+            TodoUpdateRequest(todo = "node", isDone = true, categories = listOf("drama"), price = null)
 
         val responseEntity: ResponseEntity<String> =
             restTemplate.exchange(url, HttpMethod.PATCH, HttpEntity(request, header), String::class)
