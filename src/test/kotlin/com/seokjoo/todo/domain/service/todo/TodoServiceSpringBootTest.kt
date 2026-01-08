@@ -145,7 +145,7 @@ class TodoServiceSpringBootTest @Autowired constructor(
                     id = updateId,
                     isDone = false,
                     todo = "iOS",
-                    categories = listOf("drama", "horror"),
+                    categories = listOf("horror"),
                     ownerId = "pita",
                     price = 400L,
                 ),

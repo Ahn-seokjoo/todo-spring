@@ -11,7 +11,7 @@ import com.seokjoo.todo.domain.service.todo.TodoCreateServiceRequestDTO
 import com.seokjoo.todo.domain.service.todo.TodoService
 import com.seokjoo.todo.domain.service.todo.TodoServiceResponseDTO
 import com.seokjoo.todo.presentation.todo.dto.request.TodoRequest
-import com.seokjoo.todo.presentation.todo.dto.request.TodoUpdateRequest
+import com.seokjoo.todo.presentation.todo.dto.request.TodoPatchRequest
 import com.seokjoo.todo.presentation.todo.dto.response.TodoPageResponse
 import com.seokjoo.todo.presentation.todo.dto.response.TodoResponse
 import org.assertj.core.api.Assertions.assertThat
@@ -172,7 +172,7 @@ class TodoE2ETest @Autowired constructor(
             price = 10L,
         )
         val request =
-            TodoUpdateRequest(todo = "node", isDone = true, categories = listOf("drama"), price = null)
+            TodoPatchRequest(todo = "node", isDone = true, categories = listOf("drama"), price = null)
 
         val responseEntity: ResponseEntity<String> =
             restTemplate.exchange(url, HttpMethod.PATCH, HttpEntity(request, header), String::class)

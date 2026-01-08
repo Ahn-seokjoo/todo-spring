@@ -5,7 +5,7 @@ import com.seokjoo.todo.domain.service.auth.TodoAuthService
 import com.seokjoo.todo.domain.service.todo.TodoService
 import com.seokjoo.todo.presentation.todo.dto.request.TodoPageRequest
 import com.seokjoo.todo.presentation.todo.dto.request.TodoRequest
-import com.seokjoo.todo.presentation.todo.dto.request.TodoUpdateRequest
+import com.seokjoo.todo.presentation.todo.dto.request.TodoPatchRequest
 import com.seokjoo.todo.presentation.todo.dto.request.toCreateRequest
 import com.seokjoo.todo.presentation.todo.dto.request.toPageServiceDTO
 import com.seokjoo.todo.presentation.todo.dto.request.toUpdateRequest
@@ -97,7 +97,7 @@ class TodoApiController(
     fun updateTodo(
         servletRequest: HttpServletRequest,
         @PathVariable id: Long,
-        @RequestBody @Valid request: TodoUpdateRequest,
+        @RequestBody @Valid request: TodoPatchRequest,
     ): ResponseEntity<TodoResponse> {
         val user = authService.findUser(servletRequest.getBearerToken())
         val todo =

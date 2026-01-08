@@ -68,7 +68,7 @@ class TodoService(
         // 더티 체킹으로 save 할 필요 없지만 그냥 명시적으로 해줌
         todoRepository.save(todo)
 
-        checkExistAndAddCategory(request, todo)
+        replaceCategoryIfNotEmpty(request, todo)
         return TodoServiceResponseDTO.from(todo)
     }
 
@@ -105,6 +105,18 @@ class TodoService(
                 val category = categoryService.getOrCreateCategory(categoryName)
                 todo.addCategory(category = category)
             }
+        }
+    }
+
+    private fun replaceCategoryIfNotEmpty(
+        request: TodoServiceRequestDTO,
+        todo: Todo,
+    ) {
+        if (request.categoryNames.isEmpty()) return
+        todo.todoCategories.clear()
+        request.categoryNames.forEach { categoryName ->
+            val category = categoryService.getOrCreateCategory(categoryName)
+            todo.addCategory(category = category)
         }
     }
 
