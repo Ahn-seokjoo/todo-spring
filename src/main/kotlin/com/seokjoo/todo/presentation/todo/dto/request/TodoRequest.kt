@@ -1,7 +1,6 @@
 package com.seokjoo.todo.presentation.todo.dto.request
 
 import com.seokjoo.todo.domain.service.todo.TodoCreateServiceRequestDTO
-import com.seokjoo.todo.presentation.category.dto.CategoryDTO
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotBlank
