@@ -1,6 +1,6 @@
 package com.seokjoo.todo.etc
 
-import com.seokjoo.todo.annotation.IntegrationTest
+import com.seokjoo.todo.annotation.TodoTest
 import com.seokjoo.todo.domain.repository.category.CategoryRepository
 import com.seokjoo.todo.domain.repository.categorytodo.TodoCategoryRepository
 import com.seokjoo.todo.domain.repository.todo.TodoRepository
@@ -13,7 +13,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 
-@IntegrationTest
+@TodoTest
 class CategoryConcurrencyTest @Autowired constructor(
     private val todoService: TodoService,
     private val todoRepository: TodoRepository,

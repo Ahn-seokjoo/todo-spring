@@ -16,6 +16,8 @@ import org.springframework.boot.web.servlet.FilterRegistrationBean
 import org.springframework.cache.CacheManager
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.Profile
+import org.springframework.core.env.Environment
 import org.springframework.data.redis.cache.RedisCacheConfiguration
 import org.springframework.data.redis.cache.RedisCacheManager
 import org.springframework.data.redis.connection.RedisConnectionFactory
@@ -33,6 +35,7 @@ import java.time.Duration
 class TodoConfiguration(
     private val jwtProvider: JwtProvider,
     private val objectMapper: ObjectMapper,
+    private val env: Environment,
 ) {
     @Bean
     fun passwordEncoder(): PasswordEncoder {
@@ -48,10 +51,12 @@ class TodoConfiguration(
     }
 
     @Bean
+    @Profile("!test")
     fun redisson(): RedissonClient {
         val config = Config().apply {
-            val redisHost = System.getenv("REDIS_HOST") ?: "localhost"
-            useSingleServer().address = "redis://$redisHost:6379"
+            val redisHost = env.getProperty("spring.data.redis.host") ?: System.getenv("REDIS_HOST") ?: "localhost"
+            val port = env.getProperty("spring.data.redis.port") ?: System.getenv("REDIS_PORT") ?: "6379"
+            useSingleServer().address = "redis://$redisHost:$port"
         }
         return Redisson.create(config)
     }
@@ -87,6 +92,7 @@ class TodoConfiguration(
     }
 
     @Bean
+    @Profile("!test")
     fun redisConnectionFactory(
         @Value("\${spring.data.redis.port:6379}") port: Int,
         @Value("\${spring.data.redis.host:localhost}") redisHost: String,

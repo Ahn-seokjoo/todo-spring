@@ -1,6 +1,6 @@
 package com.seokjoo.todo.domain.service.todo
 
-import com.seokjoo.todo.annotation.IntegrationTest
+import com.seokjoo.todo.annotation.TodoTest
 import com.seokjoo.todo.common.exception.TodoException
 import com.seokjoo.todo.domain.entity.todouser.User
 import com.seokjoo.todo.domain.repository.category.CategoryRepository
@@ -16,7 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.transaction.annotation.Transactional
 
-@IntegrationTest
+@TodoTest
 @Transactional
 class TodoServiceSpringBootTest @Autowired constructor(
     private val service: TodoService,

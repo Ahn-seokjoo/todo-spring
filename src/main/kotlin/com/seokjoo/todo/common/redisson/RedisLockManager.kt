@@ -8,8 +8,8 @@ import java.util.concurrent.TimeUnit
 @Component
 class RedisLockManager(
     private val redisson: RedissonClient,
-) {
-    fun <T> tryLock(key: String, retryCount: Int = 3, block: () -> T): T {
+) : LockManager {
+    override fun <T> tryLock(key: String, retryCount: Int, block: () -> T): T {
         val lock = redisson.getLock(key)
         return run retryLoop@{
             repeat(retryCount) {

@@ -1,6 +1,6 @@
 package com.seokjoo.todo.domain.service.trade
 
-import com.seokjoo.todo.annotation.IntegrationTest
+import com.seokjoo.todo.annotation.TodoTest
 import com.seokjoo.todo.common.exception.TodoException
 import com.seokjoo.todo.domain.entity.todouser.User
 import com.seokjoo.todo.domain.repository.todo.TodoRepository
@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.transaction.annotation.Transactional
 
-@IntegrationTest
+@TodoTest
 class TodoTradeServiceTest @Autowired constructor(
     private val todoService: TodoService,
     private val todoChargeService: TodoChargeService,
