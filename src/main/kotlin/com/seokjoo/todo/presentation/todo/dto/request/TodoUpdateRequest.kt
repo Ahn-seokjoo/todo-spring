@@ -1,26 +1,32 @@
 package com.seokjoo.todo.presentation.todo.dto.request
 
 import com.seokjoo.todo.domain.service.todo.TodoUpdateServiceRequestDTO
-import com.seokjoo.todo.presentation.category.dto.CategoryDTO
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.Min
+import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.NotEmpty
+import jakarta.validation.constraints.NotNull
 
-@Schema(description = "todo를 update할 때 사용합니다. 일반 TodoRequest랑은 다른점은 todo가 required 하지 않습니다.")
+@Schema(description = "todo를 덮어 쓸 때 사용합니다. 모든 필드가 required 입니다.")
 data class TodoUpdateRequest(
-    @Schema(description = "todo를 입력합니다.", example = "위플래시 재개봉 보러가기", required = false)
-    val todo: String = "",
-    @Schema(description = "todo 완료 정보를 알려줍니다.", example = "위플래시 재개봉 보러가기", required = false)
+    @param:Schema(description = "todo를 입력합니다.", example = "위플래시 재개봉 보러가기", required = true)
+    @field:NotBlank
+    val todo: String,
+    @param:Schema(description = "todo 완료 정보를 알려줍니다.", example = "위플래시 재개봉 보러가기", required = true)
+    @field:NotNull
     val isDone: Boolean?,
     @field:Min(value = 0L)
-    @Schema(description = "todo의 가격을 입력합니다.", example = "0L", required = false)
+    @param:Schema(description = "todo의 가격을 입력합니다.", example = "0L", required = true)
+    @field:NotNull
     val price: Long?,
-    @Schema(description = "category를 list로 입력합니다", implementation = CategoryDTO::class)
-    val categories: List<CategoryDTO> = listOf(),
+    @param:Schema(description = "category를 list로 입력합니다", required = true)
+    @param:NotEmpty
+    val categories: List<String>,
 )
 
 fun TodoUpdateRequest.toUpdateRequest() = TodoUpdateServiceRequestDTO(
     todo = todo,
     isDone = isDone,
-    categoryNames = categories.map { it.name },
+    categoryNames = categories.map { name -> name },
     price = price,
 )

@@ -4,10 +4,12 @@ import com.seokjoo.todo.common.jwt.getBearerToken
 import com.seokjoo.todo.domain.service.auth.TodoAuthService
 import com.seokjoo.todo.domain.service.todo.TodoService
 import com.seokjoo.todo.presentation.todo.dto.request.TodoPageRequest
+import com.seokjoo.todo.presentation.todo.dto.request.TodoPatchRequest
 import com.seokjoo.todo.presentation.todo.dto.request.TodoRequest
 import com.seokjoo.todo.presentation.todo.dto.request.TodoUpdateRequest
 import com.seokjoo.todo.presentation.todo.dto.request.toCreateRequest
 import com.seokjoo.todo.presentation.todo.dto.request.toPageServiceDTO
+import com.seokjoo.todo.presentation.todo.dto.request.toPatchRequest
 import com.seokjoo.todo.presentation.todo.dto.request.toUpdateRequest
 import com.seokjoo.todo.presentation.todo.dto.response.TodoPageResponse
 import com.seokjoo.todo.presentation.todo.dto.response.TodoResponse
@@ -25,6 +27,7 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -36,7 +39,7 @@ import java.net.URI
  * 2. 사용자는 카테고리를 1개 이상으로 저장할 수 있다.
  * 3. 이때, 기존에 없던 카테고리라면 카테고리를 저장하고 추가한다
  * 4. 기존에 있던 카테고리라면 새로 저장하지 않고 투두에 추가한다
- * 5. 기존에 카테고리가 있고, 업데이트를 해준다면 업데이트 되는 부분만 추가해준다
+ * 5. 기존에 카테고리가 있고, 카테고리만 업데이트를 해준다면 업데이트를 덮어쓴다
  * 6. 이때 카테고리는 중복이 없어야 한다.
  * 7. 각 Todo는 Owner 정보를 가지고 있고, 자신의 Todo만 볼 수 있다.
  */
@@ -94,6 +97,19 @@ class TodoApiController(
 
     @PatchMapping("/todos/{id}")
     @Operation(summary = "특정 id todo 업데이트", description = "id를 이용해 todo 한개를 업데이트 합니다.")
+    fun patchTodo(
+        servletRequest: HttpServletRequest,
+        @PathVariable id: Long,
+        @RequestBody @Valid request: TodoPatchRequest,
+    ): ResponseEntity<TodoResponse> {
+        val user = authService.findUser(servletRequest.getBearerToken())
+        val todo =
+            todoService.updateTodo(todoId = id, userId = user.userId, request = request.toPatchRequest()).toResponse()
+        return ResponseEntity.ok(todo)
+    }
+
+    @PutMapping("/todos/{id}")
+    @Operation(summary = "특정 id todo 업데이트", description = "id를 이용해 todo 한개를 덮어쓰기 합니다.")
     fun updateTodo(
         servletRequest: HttpServletRequest,
         @PathVariable id: Long,

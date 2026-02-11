@@ -10,9 +10,9 @@ import com.seokjoo.todo.domain.service.auth.TodoAuthServiceLoginResponse
 import com.seokjoo.todo.domain.service.todo.TodoCreateServiceRequestDTO
 import com.seokjoo.todo.domain.service.todo.TodoService
 import com.seokjoo.todo.domain.service.todo.TodoServiceResponseDTO
-import com.seokjoo.todo.presentation.category.dto.CategoryDTO
+import com.seokjoo.todo.presentation.error.ApiErrorResponse
+import com.seokjoo.todo.presentation.todo.dto.request.TodoPatchRequest
 import com.seokjoo.todo.presentation.todo.dto.request.TodoRequest
-import com.seokjoo.todo.presentation.todo.dto.request.TodoUpdateRequest
 import com.seokjoo.todo.presentation.todo.dto.response.TodoPageResponse
 import com.seokjoo.todo.presentation.todo.dto.response.TodoResponse
 import org.assertj.core.api.Assertions.assertThat
@@ -33,7 +33,7 @@ import org.springframework.http.HttpMethod
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory
-import org.springframework.test.context.ActiveProfiles
+import org.springframework.web.client.RestClient
 import org.springframework.web.client.RestTemplate
 import org.springframework.web.client.exchange
 import java.net.URI
@@ -128,7 +128,7 @@ class TodoE2ETest @Autowired constructor(
             price = 10L,
         )
         val request =
-            TodoRequest(todo = "Android", isDone = true, categories = listOf(CategoryDTO("drama")), price = 10L)
+            TodoRequest(todo = "Android", isDone = true, categories = listOf("drama"), price = 10L)
 
         val response: ResponseEntity<String> = restTemplate.exchange(
             url,
@@ -174,7 +174,7 @@ class TodoE2ETest @Autowired constructor(
             price = 10L,
         )
         val request =
-            TodoUpdateRequest(todo = "node", isDone = true, categories = listOf(CategoryDTO("drama")), price = null)
+            TodoPatchRequest(todo = "node", isDone = true, categories = listOf("drama"), price = null)
 
         val responseEntity: ResponseEntity<String> =
             restTemplate.exchange(url, HttpMethod.PATCH, HttpEntity(request, header), String::class)
@@ -184,6 +184,77 @@ class TodoE2ETest @Autowired constructor(
         assertThat(result)
             .usingRecursiveComparison()
             .isEqualTo(expected)
+    }
+
+    @Test
+    fun `PUT Todo update e2e 테스트`() {
+        val restTemplate = RestTemplate().apply {
+            requestFactory = HttpComponentsClientHttpRequestFactory()
+        }
+        val url = "http://localhost:$port/api/v1/todos/${todoResponse.id}"
+        val expected = TodoResponse(
+            id = todoResponse.id,
+            todo = "node",
+            isDone = true,
+            categories = listOf("drama"),
+            owner = "pita",
+            price = 10L,
+        )
+        val request =
+            TodoPatchRequest(todo = "node", isDone = true, categories = listOf("drama"), price = 10)
+
+        val responseEntity: ResponseEntity<String> =
+            restTemplate.exchange(url, HttpMethod.PUT, HttpEntity(request, header), String::class)
+        val result = objectMapper.readValue<TodoResponse>(responseEntity.body.orEmpty())
+
+        assertThat(responseEntity.statusCode.value()).isEqualTo(200)
+        assertThat(result)
+            .usingRecursiveComparison()
+            .isEqualTo(expected)
+    }
+
+    @Test
+    fun `PUT Todo update 에러 테스트 - 음수`() {
+        val url = "http://localhost:$port/api/v1/todos/${todoResponse.id}"
+        val request = TodoPatchRequest(todo = "node", isDone = true, categories = listOf("drama"), price = -20)
+
+        val result: Pair<Int, String>? =
+            RestClient.create()
+                .put()
+                .uri(url)
+                .headers { it.addAll(header) }
+                .body(request)
+                .exchange { _, res ->
+                    val status = res.statusCode.value()
+                    val body = res.bodyTo(String::class.java).orEmpty()
+                    status to body
+                }
+        assertThat(result?.first).isEqualTo(400)
+
+        val err = objectMapper.readValue<ApiErrorResponse>(result?.second.orEmpty())
+        assertThat(err.errorCode).isEqualTo("M001_CAN_NOT_BE_NEGATIVE")
+    }
+
+    @Test
+    fun `PUT Todo update 에러 테스트 - 값 안넣기 (안넣으면 null로 채워짐)`() {
+        val url = "http://localhost:$port/api/v1/todos/${todoResponse.id}"
+        val request = TodoPatchRequest(todo = "node", isDone = null, categories = listOf("drama"), price = 20)
+
+        val result: Pair<Int, String>? =
+            RestClient.create()
+                .put()
+                .uri(url)
+                .headers { it.addAll(header) }
+                .body(request)
+                .exchange { _, res ->
+                    val status = res.statusCode.value()
+                    val body = res.bodyTo(String::class.java).orEmpty()
+                    status to body
+                }
+        assertThat(result?.first).isEqualTo(400)
+
+        val err = objectMapper.readValue<ApiErrorResponse>(result?.second.orEmpty())
+        assertThat(err.errorCode).isEqualTo("C001_VALIDATION_BAD_REQUEST")
     }
 
     @BeforeEach

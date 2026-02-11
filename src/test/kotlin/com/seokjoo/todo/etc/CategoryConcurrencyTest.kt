@@ -6,7 +6,6 @@ import com.seokjoo.todo.domain.repository.categorytodo.TodoCategoryRepository
 import com.seokjoo.todo.domain.repository.todo.TodoRepository
 import com.seokjoo.todo.domain.service.auth.TodoAuthService
 import com.seokjoo.todo.domain.service.todo.TodoService
-import com.seokjoo.todo.presentation.category.dto.CategoryDTO
 import com.seokjoo.todo.presentation.todo.dto.request.TodoRequest
 import com.seokjoo.todo.presentation.todo.dto.request.toCreateRequest
 import org.junit.jupiter.api.BeforeEach
@@ -34,7 +33,7 @@ class CategoryConcurrencyTest @Autowired constructor(
     fun `동시에 같은 카테고리를 추가해도 중복으로 생성되지 않아야 한다 - Thread 버전`() {
         val token = todoAuthService.login("pita", "pita").accessToken
         val user = todoAuthService.findUser(token)
-        val categoryName = listOf(CategoryDTO("Spring"), CategoryDTO("Android"))
+        val categoryName = listOf("Spring", "Android")
 
         val request = TodoRequest(
             todo = "Spring 동시성 이슈 실제로 보기",

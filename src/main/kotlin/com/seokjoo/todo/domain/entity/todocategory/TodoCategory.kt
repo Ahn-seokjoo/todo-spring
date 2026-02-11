@@ -30,4 +30,9 @@ class TodoCategory(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "todo_category_id")
     val id: Long = 0L,
-) : BaseEntity()
+) : BaseEntity() {
+    fun removeCategory(category: Category) {
+        category.todoCategories.removeIf { it.category?.id == category.id }
+        todo.todoCategories.removeIf { it.category?.id == category.id }
+    }
+}
