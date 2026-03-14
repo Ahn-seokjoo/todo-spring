@@ -63,7 +63,7 @@ class TodoService(
     @CachePut(cacheNames = ["todo"], key = "#todoId")
     fun updateTodo(todoId: Long, userId: String, request: TodoUpdateServiceRequestDTO): TodoServiceResponseDTO {
         val todo = todoRepository.findByIdOrNull(todoId) ?: throw TodoException.of(TodoExceptionType.NOT_EXISTED_TODO)
-        if (isMe(todo.owner.userId, userId)) throw TodoException.of(TodoExceptionType.UNAUTHORIZED_TODO_ACCESS)
+        if (isNotOwner(todo.owner.userId, userId)) throw TodoException.of(TodoExceptionType.UNAUTHORIZED_TODO_ACCESS)
         todo.todoUpdateApply(request)
         // 더티 체킹으로 save 할 필요 없지만 그냥 명시적으로 해줌
         todoRepository.save(todo)
@@ -81,7 +81,7 @@ class TodoService(
     )
     fun deleteTodo(todoId: Long, userId: String) {
         val todo = todoRepository.findByIdOrNull(todoId) ?: throw TodoException.of(TodoExceptionType.NOT_EXISTED_TODO)
-        if (isMe(todo.owner.userId, userId)) throw TodoException.of(TodoExceptionType.UNAUTHORIZED_TODO_ACCESS)
+        if (isNotOwner(todo.owner.userId, userId)) throw TodoException.of(TodoExceptionType.UNAUTHORIZED_TODO_ACCESS)
 
         todoDeleteService.deleteTodo(todo)
     }
@@ -121,5 +121,5 @@ class TodoService(
         }
     }
 
-    private fun isMe(todoOwnerId: String, userId: String) = todoOwnerId != userId
+    private fun isNotOwner(todoOwnerId: String, userId: String) = todoOwnerId != userId
 }
