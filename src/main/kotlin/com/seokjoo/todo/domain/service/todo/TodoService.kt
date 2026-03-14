@@ -28,7 +28,7 @@ class TodoService(
     @Cacheable(
         cacheNames = ["todos"],
         unless = "#result.responseList.isEmpty()",
-        key = "'todos:page:' + #pageServiceDTO.pageNumber + ':size:' + #pageServiceDTO.pageSize",
+        key = "#userId + ':page:' + #pageServiceDTO.pageNumber + ':size:' + #pageServiceDTO.pageSize",
         cacheManager = "todoCacheManager"
     )
     fun getPagedTodos(userId: String, pageServiceDTO: TodoPageServiceDTO): TodoPageServiceResponseDTO {
@@ -49,7 +49,7 @@ class TodoService(
     }
 
     @Transactional
-    @CacheEvict(value = ["todos"])
+    @CacheEvict(value = ["todos"], allEntries = true)
     fun createTodo(request: TodoCreateServiceRequestDTO, owner: User): TodoServiceResponseDTO {
         val todo = Todo(todo = request.todo, isDone = request.isDone, owner = owner, price = request.price)
         todoRepository.save(todo)
@@ -59,7 +59,7 @@ class TodoService(
     }
 
     @Transactional
-    @CacheEvict(value = ["todos"])
+    @CacheEvict(value = ["todos"], allEntries = true)
     @CachePut(cacheNames = ["todo"], key = "#todoId")
     fun updateTodo(todoId: Long, userId: String, request: TodoUpdateServiceRequestDTO): TodoServiceResponseDTO {
         val todo = todoRepository.findByIdOrNull(todoId) ?: throw TodoException.of(TodoExceptionType.NOT_EXISTED_TODO)
@@ -75,7 +75,7 @@ class TodoService(
     @Transactional
     @Caching(
         evict = [
-            CacheEvict(value = ["todos"]),
+            CacheEvict(value = ["todos"], allEntries = true),
             CacheEvict(value = ["todo"], key = "#todoId"),
         ]
     )
@@ -88,6 +88,7 @@ class TodoService(
 
     @Transactional
     @CachePut(cacheNames = ["todo"], key = "#todoId")
+    @CacheEvict(value = ["todos"], allEntries = true)
     fun updateOwner(todoId: Long, owner: User): TodoServiceResponseDTO {
         val todo = todoRepository.findByIdOrNull(todoId) ?: throw TodoException.of(TodoExceptionType.NOT_EXISTED_TODO)
         todo.updateOwner(owner)
