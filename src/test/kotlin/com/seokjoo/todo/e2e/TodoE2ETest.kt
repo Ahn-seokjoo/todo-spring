@@ -287,7 +287,7 @@ class TodoE2ETest @Autowired constructor(
 
     private fun createHeader(login: TodoAuthServiceLoginResponse) {
         header = HttpHeaders().apply {
-            set("Authorization", "Bearer ${login.refreshToken}")
+            set("Authorization", "Bearer ${login.accessToken}")
             contentType = MediaType.APPLICATION_JSON
         }
     }

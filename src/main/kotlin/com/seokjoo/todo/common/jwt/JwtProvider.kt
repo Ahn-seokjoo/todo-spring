@@ -1,6 +1,8 @@
 package com.seokjoo.todo.common.jwt
 
-import io.jsonwebtoken.ExpiredJwtException
+import com.seokjoo.todo.common.exception.TodoException
+import com.seokjoo.todo.common.exception.TodoExceptionType
+import io.jsonwebtoken.Claims
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.security.Keys
 import org.springframework.beans.factory.annotation.Value
@@ -13,9 +15,9 @@ import java.util.Date
 
 @Component
 class JwtProvider(
-    @Value("\${jwt.secret:zKiWKx6Cv9wDMeVE63GgbWPRDIpLEhpJb67_DRPqeAE}") private val secret: String,
-    @Value("\${jwt.accessTokenExpiration:1000}") private val accessTokenExpirationMs: Long,
-    @Value("\${jwt.refreshTokenExpiration:10000}") private val refreshTokenExpirationMs: Long,
+    @param:Value("\${jwt.secret}") private val secret: String,
+    @param:Value("\${jwt.accessTokenExpiration}") private val accessTokenExpirationMs: Long,
+    @param:Value("\${jwt.refreshTokenExpiration}") private val refreshTokenExpirationMs: Long,
 ) {
 
     private val secretKey by lazy {
@@ -36,41 +38,43 @@ class JwtProvider(
 
         return Jwts.builder()
             .subject(userId)
-            .issuer("pita")
+            .issuer(ISSUER)
             .issuedAt(nowDate)
             .notBefore(nowDate)
             .expiration(expiredTime)
+            .claim(TYPE, tokenType.name)
             .signWith(secretKey)
             .compact()
     }
 
-    fun validateToken(token: String): Boolean {
+    fun getTokenPayload(token: String): Claims {
         return runCatching {
             Jwts.parser()
                 .verifyWith(secretKey)
                 .build()
                 .parseSignedClaims(token)
                 .payload
-            true
-        }.getOrDefault(false)
+        }.getOrElse {
+            throw TodoException.of(TodoExceptionType.AUTH_REFRESH_TOKEN_NOT_VALID)
+        }
     }
 
-    fun checkValidSignature(userId: String, accessToken: String): Boolean {
-        val subject = getSubject(accessToken)
+    fun isSubjectMatching(userId: String, token: String): Boolean {
+        val subject = getSubject(token)
         return subject == userId
     }
 
-    fun getSubject(accessToken: String): String {
-        return runCatching {
-            Jwts.parser()
-                .verifyWith(secretKey)
-                .build()
-                .parseSignedClaims(accessToken)
-                .payload
-                .subject
-        }.getOrElse {
-            if (it is ExpiredJwtException) it.claims.subject
-            else ""
-        }
+    fun getSubject(token: String): String {
+        return getTokenPayload(token).subject
+    }
+
+    fun getTokenType(token: String): JwtTokenType {
+        val tokenType = getTokenPayload(token).get(TYPE, String::class.java)
+        return JwtTokenType.valueOf(tokenType)
+    }
+
+    companion object {
+        private const val ISSUER = "pita"
+        private const val TYPE = "TOKEN_TYPE"
     }
 }

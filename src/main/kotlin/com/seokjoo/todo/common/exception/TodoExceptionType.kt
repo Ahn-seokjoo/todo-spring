@@ -45,6 +45,7 @@ enum class TodoExceptionType(
     ),
     AUTH_REFRESH_TOKEN_NOT_VALID(message = "유효하지 않은 토큰입니다.", errorCode = "A003_TOKEN_NOT_VALID", httpStatusCode = 401),
     AUTH_SIGN_UP_ERROR(message = "이미 존재하는 ID 입니다", errorCode = "A004_USER_ALREADY_EXIST", httpStatusCode = 400),
+    AUTH_INVALID_TOKEN_TYPE(message = "잘못된 토큰 타입입니다", errorCode = "A005_TOKEN_INVALID_TYPE", httpStatusCode = 401),
 
     // MONEY
     BALANCE_NOT_ENOUGH(message = "잔액 부족입니다.", errorCode = "M000_BALANCE_NOT_ENOUGH", httpStatusCode = 400),

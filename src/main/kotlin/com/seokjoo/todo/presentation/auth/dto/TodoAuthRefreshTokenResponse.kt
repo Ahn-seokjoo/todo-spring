@@ -1,5 +1,5 @@
 package com.seokjoo.todo.presentation.auth.dto
 
 data class TodoAuthRefreshTokenResponse(
-    val refreshToken: String,
+    val accessToken: String,
 )

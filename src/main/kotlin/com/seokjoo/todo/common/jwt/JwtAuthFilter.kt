@@ -3,6 +3,7 @@ package com.seokjoo.todo.common.jwt
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.seokjoo.todo.common.exception.TodoException
 import com.seokjoo.todo.common.exception.TodoExceptionType
+import com.seokjoo.todo.common.jwt.JwtTokenType.Companion.isRefreshToken
 import com.seokjoo.todo.presentation.error.ApiErrorResponse
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
@@ -37,8 +38,10 @@ class JwtAuthFilter(
         try {
             val token = request.getBearerToken()
 
-            val isNotValid = jwtProvider.validateToken(token).not()
-            if (isNotValid) throw TodoException.of(TodoExceptionType.AUTH_REFRESH_TOKEN_NOT_VALID)
+            // 내부에서 서명검증 또한 진행중
+            if (jwtProvider.getTokenType(token).isRefreshToken()) {
+                throw TodoException.of(TodoExceptionType.AUTH_INVALID_TOKEN_TYPE)
+            }
 
             filterChain.doFilter(request, response)
         } catch (e: TodoException) {
