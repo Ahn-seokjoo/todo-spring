@@ -51,7 +51,14 @@ class TodoAuthService(
         else throw TodoException.of(TodoExceptionType.AUTH_NOT_MATCHED_PASSWORD)
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
+    fun findUser(accessToken: String): User {
+        val subject = getSubject(accessToken)
+        return todoAuthRepository.findUserByUserId(subject)
+            ?: throw TodoException.of(TodoExceptionType.AUTH_USER_NOT_EXIST)
+    }
+
+    @Transactional(readOnly = true)
     fun findUserByUserId(userId: String): User {
         return todoAuthRepository.findUserByUserId(userId)
             ?: throw TodoException.of(TodoExceptionType.AUTH_USER_NOT_EXIST)
@@ -68,13 +75,6 @@ class TodoAuthService(
 
     fun refreshToken(userId: String): String {
         return jwtProvider.generateToken(userId, JwtTokenType.ACCESS)
-    }
-
-    @Transactional
-    fun findUser(accessToken: String): User {
-        val subject = getSubject(accessToken)
-        return todoAuthRepository.findUserByUserId(subject)
-            ?: throw TodoException.of(TodoExceptionType.AUTH_USER_NOT_EXIST)
     }
 
     fun getSubject(accessToken: String) = jwtProvider.getSubject(accessToken)
