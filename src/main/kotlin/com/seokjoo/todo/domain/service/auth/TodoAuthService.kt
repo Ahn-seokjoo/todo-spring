@@ -5,7 +5,7 @@ import com.seokjoo.todo.common.exception.TodoException
 import com.seokjoo.todo.common.exception.TodoExceptionType
 import com.seokjoo.todo.common.jwt.JwtProvider
 import com.seokjoo.todo.common.jwt.JwtTokenType
-import com.seokjoo.todo.common.jwt.JwtTokenType.Companion.isRefreshToken
+import com.seokjoo.todo.common.jwt.JwtTokenType.Companion.isAccessToken
 import com.seokjoo.todo.domain.entity.todouser.User
 import com.seokjoo.todo.domain.repository.todouser.TodoAuthRepository
 import org.springframework.stereotype.Service
@@ -58,7 +58,7 @@ class TodoAuthService(
     }
 
     fun checkTokenIsValid(userId: String, token: String) {
-        if (jwtProvider.getTokenType(token).isRefreshToken().not()) {
+        if (jwtProvider.getTokenType(token).isAccessToken()) {
             throw TodoException.of(TodoExceptionType.AUTH_INVALID_TOKEN_TYPE)
         }
         if (jwtProvider.checkValidSignature(userId, token).not()) {

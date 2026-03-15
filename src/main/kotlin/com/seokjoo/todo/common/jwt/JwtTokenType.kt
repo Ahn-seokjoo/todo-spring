@@ -5,7 +5,11 @@ enum class JwtTokenType {
 
     companion object {
         fun JwtTokenType.isRefreshToken(): Boolean {
-            return this == JwtTokenType.REFRESH
+            return this == REFRESH
+        }
+
+        fun JwtTokenType.isAccessToken(): Boolean {
+            return this == ACCESS
         }
     }
 }
