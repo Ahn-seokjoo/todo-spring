@@ -5,6 +5,7 @@ import com.seokjoo.todo.common.exception.TodoException
 import com.seokjoo.todo.common.exception.TodoExceptionType
 import com.seokjoo.todo.common.jwt.JwtProvider
 import com.seokjoo.todo.common.jwt.JwtTokenType
+import com.seokjoo.todo.common.jwt.JwtTokenType.Companion.isRefreshToken
 import com.seokjoo.todo.domain.entity.todouser.User
 import com.seokjoo.todo.domain.repository.todouser.TodoAuthRepository
 import org.springframework.stereotype.Service
@@ -56,13 +57,17 @@ class TodoAuthService(
             ?: throw TodoException.of(TodoExceptionType.AUTH_USER_NOT_EXIST)
     }
 
-    fun checkTokenSignature(userId: String, accessToken: String) {
-        val isNotValidSignature = jwtProvider.checkValidSignature(userId, accessToken).not()
-        if (isNotValidSignature) throw TodoException.of(TodoExceptionType.AUTH_REFRESH_TOKEN_NOT_VALID)
+    fun checkTokenIsValid(userId: String, token: String) {
+        if (jwtProvider.getTokenType(token).isRefreshToken().not()) {
+            throw TodoException.of(TodoExceptionType.AUTH_INVALID_TOKEN_TYPE)
+        }
+        if (jwtProvider.checkValidSignature(userId, token).not()) {
+            throw TodoException.of(TodoExceptionType.AUTH_REFRESH_TOKEN_NOT_VALID)
+        }
     }
 
     fun refreshToken(userId: String): String {
-        return jwtProvider.generateToken(userId, JwtTokenType.REFRESH)
+        return jwtProvider.generateToken(userId, JwtTokenType.ACCESS)
     }
 
     @Transactional

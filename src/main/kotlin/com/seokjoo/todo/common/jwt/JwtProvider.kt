@@ -2,7 +2,6 @@ package com.seokjoo.todo.common.jwt
 
 import com.seokjoo.todo.common.exception.TodoException
 import com.seokjoo.todo.common.exception.TodoExceptionType
-import io.jsonwebtoken.ExpiredJwtException
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.security.Keys
 import org.springframework.beans.factory.annotation.Value
@@ -58,17 +57,17 @@ class JwtProvider(
         }.getOrDefault(false)
     }
 
-    fun checkValidSignature(userId: String, accessToken: String): Boolean {
-        val subject = getSubject(accessToken)
+    fun checkValidSignature(userId: String, token: String): Boolean {
+        val subject = getSubject(token)
         return subject == userId
     }
 
-    fun getSubject(accessToken: String): String {
+    fun getSubject(token: String): String {
         return runCatching {
             Jwts.parser()
                 .verifyWith(secretKey)
                 .build()
-                .parseSignedClaims(accessToken)
+                .parseSignedClaims(token)
                 .payload
                 .subject
         }.getOrElse {

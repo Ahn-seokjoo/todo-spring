@@ -51,13 +51,12 @@ class TodoAuthApiController(
         @RequestBody @Valid tokenRequest: TodoAuthRefreshTokenRequest,
     ): ResponseEntity<TodoAuthRefreshTokenResponse> {
         val token = httpRequest.getBearerToken()
+        authService.checkTokenIsValid(tokenRequest.userId, token)
 
-        authService.checkTokenSignature(tokenRequest.userId, token)
-
-        val newRefreshToken = authService.refreshToken(tokenRequest.userId)
+        val newAccessToken = authService.refreshToken(tokenRequest.userId)
         return ResponseEntity.ok(
             TodoAuthRefreshTokenResponse(
-                refreshToken = newRefreshToken,
+                accessToken = newAccessToken,
             )
         )
     }
