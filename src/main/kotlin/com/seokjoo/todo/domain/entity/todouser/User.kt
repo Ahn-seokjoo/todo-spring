@@ -12,9 +12,10 @@ import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
+import jakarta.persistence.UniqueConstraint
 
 @Entity
-@Table(name = "todo_user")
+@Table(name = "todo_user", uniqueConstraints = [UniqueConstraint(name = "UC_user_id", columnNames = ["user_id"])])
 class User(
     @Column(name = "user_id", nullable = false)
     val userId: String,

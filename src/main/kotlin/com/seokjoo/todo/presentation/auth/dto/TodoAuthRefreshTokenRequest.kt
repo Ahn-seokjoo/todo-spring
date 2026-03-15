@@ -1,8 +1,10 @@
 package com.seokjoo.todo.presentation.auth.dto
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import jakarta.validation.constraints.NotBlank
 
 data class TodoAuthRefreshTokenRequest(
     @field:NotBlank(message = "id는 필수 값입니다.")
+    @field:JsonProperty("user_id")
     val userId: String,
 )
