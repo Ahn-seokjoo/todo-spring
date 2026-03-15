@@ -2,6 +2,7 @@ package com.seokjoo.todo.common.jwt
 
 import com.seokjoo.todo.common.exception.TodoException
 import com.seokjoo.todo.common.exception.TodoExceptionType
+import io.jsonwebtoken.Claims
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.security.Keys
 import org.springframework.beans.factory.annotation.Value
@@ -46,48 +47,30 @@ class JwtProvider(
             .compact()
     }
 
-    fun validateToken(token: String): Boolean {
+    fun getTokenPayload(token: String): Claims {
         return runCatching {
             Jwts.parser()
                 .verifyWith(secretKey)
                 .build()
                 .parseSignedClaims(token)
                 .payload
-            true
-        }.getOrDefault(false)
+        }.getOrElse {
+            throw TodoException.of(TodoExceptionType.AUTH_REFRESH_TOKEN_NOT_VALID)
+        }
     }
 
-    fun checkValidSignature(userId: String, token: String): Boolean {
+    fun isSubjectMatching(userId: String, token: String): Boolean {
         val subject = getSubject(token)
         return subject == userId
     }
 
     fun getSubject(token: String): String {
-        return runCatching {
-            Jwts.parser()
-                .verifyWith(secretKey)
-                .build()
-                .parseSignedClaims(token)
-                .payload
-                .subject
-        }.getOrElse {
-            throw TodoException.of(TodoExceptionType.AUTH_REFRESH_TOKEN_NOT_VALID)
-        }
+        return getTokenPayload(token).subject
     }
 
     fun getTokenType(token: String): JwtTokenType {
-        return runCatching {
-            val tokenType: String = Jwts.parser()
-                .verifyWith(secretKey)
-                .build()
-                .parseSignedClaims(token)
-                .payload
-                .get(TYPE, String::class.java)
-
-            JwtTokenType.valueOf(tokenType)
-        }.getOrElse {
-            throw TodoException.of(TodoExceptionType.AUTH_REFRESH_TOKEN_NOT_VALID)
-        }
+        val tokenType = getTokenPayload(token).get(TYPE, String::class.java)
+        return JwtTokenType.valueOf(tokenType)
     }
 
     companion object {

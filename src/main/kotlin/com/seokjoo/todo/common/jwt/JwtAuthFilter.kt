@@ -38,11 +38,10 @@ class JwtAuthFilter(
         try {
             val token = request.getBearerToken()
 
+            // 내부에서 서명검증 또한 진행중
             if (jwtProvider.getTokenType(token).isRefreshToken()) {
                 throw TodoException.of(TodoExceptionType.AUTH_INVALID_TOKEN_TYPE)
             }
-            val isNotValid = jwtProvider.validateToken(token).not()
-            if (isNotValid) throw TodoException.of(TodoExceptionType.AUTH_REFRESH_TOKEN_NOT_VALID)
 
             filterChain.doFilter(request, response)
         } catch (e: TodoException) {

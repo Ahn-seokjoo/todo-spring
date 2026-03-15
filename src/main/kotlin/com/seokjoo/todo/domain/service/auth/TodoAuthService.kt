@@ -68,7 +68,7 @@ class TodoAuthService(
         if (jwtProvider.getTokenType(token).isAccessToken()) {
             throw TodoException.of(TodoExceptionType.AUTH_INVALID_TOKEN_TYPE)
         }
-        if (jwtProvider.checkValidSignature(userId, token).not()) {
+        if (jwtProvider.isSubjectMatching(userId, token).not()) {
             throw TodoException.of(TodoExceptionType.AUTH_REFRESH_TOKEN_NOT_VALID)
         }
     }
