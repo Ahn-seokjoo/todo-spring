@@ -1,5 +1,7 @@
 package com.seokjoo.todo.common.jwt
 
+import com.seokjoo.todo.common.exception.TodoException
+import com.seokjoo.todo.common.exception.TodoExceptionType
 import io.jsonwebtoken.ExpiredJwtException
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.security.Keys
@@ -36,10 +38,11 @@ class JwtProvider(
 
         return Jwts.builder()
             .subject(userId)
-            .issuer("pita")
+            .issuer(ISSUER)
             .issuedAt(nowDate)
             .notBefore(nowDate)
             .expiration(expiredTime)
+            .claim(TYPE, tokenType.name)
             .signWith(secretKey)
             .compact()
     }
@@ -69,8 +72,27 @@ class JwtProvider(
                 .payload
                 .subject
         }.getOrElse {
-            if (it is ExpiredJwtException) it.claims.subject
-            else ""
+            throw TodoException.of(TodoExceptionType.AUTH_REFRESH_TOKEN_NOT_VALID)
         }
+    }
+
+    fun getTokenType(token: String): JwtTokenType {
+        return runCatching {
+            val tokenType: String = Jwts.parser()
+                .verifyWith(secretKey)
+                .build()
+                .parseSignedClaims(token)
+                .payload
+                .get(TYPE, String::class.java)
+
+            JwtTokenType.valueOf(tokenType)
+        }.getOrElse {
+            throw TodoException.of(TodoExceptionType.AUTH_REFRESH_TOKEN_NOT_VALID)
+        }
+    }
+
+    companion object {
+        private const val ISSUER = "pita"
+        private const val TYPE = "TOKEN_TYPE"
     }
 }
