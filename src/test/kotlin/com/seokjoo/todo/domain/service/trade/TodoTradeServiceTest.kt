@@ -53,7 +53,7 @@ class TodoTradeServiceTest @Autowired constructor(
         assert(exception is TodoException)
         with(exception as? TodoException) {
             assert(this?.message == "자신의 Todo를 팔 수 없습니다.")
-            assert(this?.errorCode == "T000_CAN_NOT_TRADE_TODO")
+            assert(this?.errorCode == "TR000_CAN_NOT_TRADE_TODO")
             assert(this?.httpStatusCode == 400)
         }
     }
