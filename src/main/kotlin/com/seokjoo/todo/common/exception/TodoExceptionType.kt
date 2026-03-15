@@ -20,7 +20,7 @@ enum class TodoExceptionType(
     ),
 
     // CATEGORY
-    CATEGORY_NOT_EXIST(message = "존재하지 않은 Category 입니다", errorCode = "CAOOO_CATEGORY_NOT_EXIT", 404),
+    CATEGORY_NOT_EXIST(message = "존재하지 않은 Category 입니다", errorCode = "CAOOO_CATEGORY_NOT_EXIST", 404),
     CATEGORY_VALIDATION_BAD_REQUEST(
         message = "Category 이름은 빈 값일 수 없습니다",
         errorCode = "CA001_CATEGORY_VALIDATION_BAD_REQUEST",
@@ -65,7 +65,7 @@ enum class TodoExceptionType(
     // TRADE
     CAN_NOT_TRADE_OWN_TODO(
         message = "자신의 Todo를 팔 수 없습니다.",
-        errorCode = "T000_CAN_NOT_TRADE_TODO",
+        errorCode = "TR000_CAN_NOT_TRADE_TODO",
         httpStatusCode = 400
     ),
 }
