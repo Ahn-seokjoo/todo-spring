@@ -17,7 +17,7 @@ class TodoChargeServiceTest @Autowired constructor(
         todoAuthService.signUp("pita", "pita")
         val user = todoAuthService.login("pita", "pita")
 
-        todoChargeService.charge(1000L, user.refreshToken)
+        todoChargeService.charge(1000L, user.accessToken)
 
         val resultUser = todoAuthService.findUserByUserId("pita")
 
