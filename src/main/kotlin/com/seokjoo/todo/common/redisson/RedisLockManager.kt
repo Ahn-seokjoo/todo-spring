@@ -14,8 +14,8 @@ class RedisLockManager(
         return run retryLoop@{
             repeat(retryCount) {
                 try {
-                    // 5초간 락 시도, 3초간 락을 유지
-                    if (lock.tryLock(5, 3, TimeUnit.SECONDS)) {
+                    // 5초간 락 시도,
+                    if (lock.tryLock(5, TimeUnit.SECONDS)) {
                         return@retryLoop block.invoke()
                     } else {
                         Thread.sleep(50L)
