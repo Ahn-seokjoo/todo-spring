@@ -1,6 +1,7 @@
 package com.seokjoo.todo.domain.service.trade
 
 import com.seokjoo.todo.annotation.TodoTest
+import com.seokjoo.todo.common.redisson.RedisLockManager
 import com.seokjoo.todo.domain.entity.todouser.User
 import com.seokjoo.todo.domain.repository.todo.TodoRepository
 import com.seokjoo.todo.domain.repository.todouser.TodoAuthRepository
@@ -19,6 +20,7 @@ import java.util.concurrent.Callable
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
 @TodoTest
@@ -30,6 +32,7 @@ class TodoTradeConcurrencyTest @Autowired constructor(
     private val todoTradeService: TodoTradeService,
     private val todoRepository: TodoRepository,
     private val redisTemplate: RedisTemplate<String, Any>,
+    private val redisLockManager: RedisLockManager,
 ) {
     lateinit var todo: TodoServiceResponseDTO
 
@@ -103,29 +106,6 @@ class TodoTradeConcurrencyTest @Autowired constructor(
         assertThat(user.money.currentBalance()).isEqualTo(500L)
         assertThat(allNewUserBalance.count { it == 500L }).isEqualTo(9)
         assertThat(allNewUserBalance.count { it == 0L }).isEqualTo(1)
-    }
-
-    @BeforeEach
-    fun before() {
-        val keys = redisTemplate.keys("*")
-        redisTemplate.delete(keys)
-
-        val user1 = User("pita1", "pita1")
-        val user2 = User("pita2", "pita2")
-        todoAuthService.signUp(user1.userId, user1.password)
-        todoAuthService.signUp(user2.userId, user2.password)
-
-        // 유저2 500원 충전
-        val token = todoAuthService.login(user2.userId, user2.password)
-        todoChargeService.charge(500L, token.accessToken)
-
-        // 유저 1 todo 500원짜리로 한개 생성
-        val user = todoAuthService.findUserByUserId("pita1")
-        val request = TodoCreateServiceRequestDTO(
-            todo = "테스트 500원 짜리 투두",
-            price = 500L
-        )
-        todo = todoService.createTodo(request, user)
     }
 
     @Test
@@ -206,6 +186,65 @@ class TodoTradeConcurrencyTest @Autowired constructor(
 
         // 최종 owner는 나중에 락을 잡은 쪽이어야 한다 (buyer1 또는 buyer2 중 하나)
         assertThat(finalTodo.ownerId).isIn("buyer1", "buyer2")
+    }
+
+    @Test
+    fun `leaseTime을 초과하면 처리 중에도 락이 풀려 다른 스레드가 진입할 수 있다`() {
+        val user1Started = CountDownLatch(1)
+        val user1Finished = AtomicBoolean(false)
+        val user2AcquiredWhileUser1StillRunning = AtomicBoolean(false)
+        val executor = Executors.newFixedThreadPool(2)
+
+        // user1: 락을 잡고 일부러 4초 동안 안 놓음 (leaseTime 3초 초과)
+        executor.submit {
+            redisLockManager.tryLock(key = todo.id.toString()) {
+                user1Started.countDown()
+                Thread.sleep(4000)
+            }
+            user1Finished.set(true)
+        }
+
+        user1Started.await() // user1이 락을 잡은 시점부터 시작
+
+        // user2: 3.2초 뒤 같은 key로 재시도 (leaseTime은 지났지만 user1은 아직 안 끝남)
+        executor.submit {
+            Thread.sleep(3200)
+            redisLockManager.tryLock(key = todo.id.toString()) {
+                if (!user1Finished.get()) {
+                    user2AcquiredWhileUser1StillRunning.set(true) // user1이 안 끝났는데 잡혔다!
+                }
+            }
+        }
+
+        executor.shutdown()
+        executor.awaitTermination(10, TimeUnit.SECONDS)
+
+        // 이게 true면 = leaseTime 만료로 인한 동시 진입이 실제로 재현됨
+        // false 면 진입하지 못함
+        assertThat(user2AcquiredWhileUser1StillRunning.get()).isFalse()
+    }
+
+    @BeforeEach
+    fun before() {
+        val keys = redisTemplate.keys("*")
+        redisTemplate.delete(keys)
+
+        val user1 = User("pita1", "pita1")
+        val user2 = User("pita2", "pita2")
+        todoAuthService.signUp(user1.userId, user1.password)
+        todoAuthService.signUp(user2.userId, user2.password)
+
+        // 유저2 500원 충전
+        val token = todoAuthService.login(user2.userId, user2.password)
+        todoChargeService.charge(500L, token.accessToken)
+
+        // 유저 1 todo 500원짜리로 한개 생성
+        val user = todoAuthService.findUserByUserId("pita1")
+        val request = TodoCreateServiceRequestDTO(
+            todo = "테스트 500원 짜리 투두",
+            price = 500L
+        )
+        todo = todoService.createTodo(request, user)
     }
 
     @AfterEach
