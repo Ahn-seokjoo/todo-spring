@@ -112,7 +112,6 @@ class TodoService(
     }
 
     private fun checkExistAndAddCategory(
-
         request: TodoServiceRequestDTO,
         todo: Todo,
     ) {
