@@ -198,4 +198,8 @@ gradle-app.setting
 *.hprof
 
 .env
+
+# oh-my-claudecode
+.omc/
+
 # End of https://www.toptal.com/developers/gitignore/api/maven,gradle,intellij+all,macos,kotlin,redis
