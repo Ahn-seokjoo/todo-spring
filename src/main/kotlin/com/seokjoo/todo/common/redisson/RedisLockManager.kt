@@ -32,7 +32,6 @@ class RedisLockManager(
             val lock = redisson.getLock(key)
             try {
                 val acquired = lock.tryLock(5, TimeUnit.SECONDS)
-                println("[LOCK] thread=${Thread.currentThread().name} key=$key acquired=$acquired at=${System.currentTimeMillis()}")
                 if (acquired.not()) {
                     throw LockNotAcquiredException(key = key)
                 }
@@ -40,7 +39,6 @@ class RedisLockManager(
             } finally {
                 if (lock.isLocked && lock.isHeldByCurrentThread) {
                     lock.unlock()
-                    println("[LOCK] thread=${Thread.currentThread().name} key=$key released at=${System.currentTimeMillis()}")
                 }
             }
         }
