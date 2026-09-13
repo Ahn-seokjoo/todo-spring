@@ -74,7 +74,7 @@ class TodoTradeConcurrencyTest @Autowired constructor(
             val user = User("pita$it", "pita$it")
             todoAuthService.signUp(user.userId, user.password)
             val token = todoAuthService.login(user.userId, user.password)
-            todoChargeService.charge(500L, token.accessToken)
+            todoChargeService.charge(500L, user.userId)
             todoAuthService.findUser(token.accessToken)
         }
 
@@ -113,10 +113,10 @@ class TodoTradeConcurrencyTest @Autowired constructor(
         // buyer1, buyer2 생성 - 둘 다 500원 보유
         todoAuthService.signUp("buyer1", "buyer1")
         todoAuthService.signUp("buyer2", "buyer2")
-        val token1 = todoAuthService.login("buyer1", "buyer1")
-        val token2 = todoAuthService.login("buyer2", "buyer2")
-        todoChargeService.charge(500L, token1.accessToken)
-        todoChargeService.charge(500L, token2.accessToken)
+        val user1 = todoAuthService.findUserByUserId("buyer1")
+        val user2 = todoAuthService.findUserByUserId("buyer2")
+        todoChargeService.charge(500L, user1.userId)
+        todoChargeService.charge(500L, user2.userId)
 
         // pita1 소유의 500원짜리 todo를 buyer1, buyer2가 동시에 구매 시도
         val latch = CountDownLatch(2)
@@ -229,14 +229,14 @@ class TodoTradeConcurrencyTest @Autowired constructor(
         val keys = redisTemplate.keys("*")
         redisTemplate.delete(keys)
 
-        val user1 = User("pita1", "pita1")
-        val user2 = User("pita2", "pita2")
-        todoAuthService.signUp(user1.userId, user1.password)
-        todoAuthService.signUp(user2.userId, user2.password)
+        val signUpUser1 = User("pita1", "pita1")
+        val signUpUser2 = User("pita2", "pita2")
+        todoAuthService.signUp(signUpUser1.userId, signUpUser1.password)
+        todoAuthService.signUp(signUpUser2.userId, signUpUser2.password)
 
         // 유저2 500원 충전
-        val token = todoAuthService.login(user2.userId, user2.password)
-        todoChargeService.charge(500L, token.accessToken)
+        val user2 = todoAuthService.findUserByUserId(signUpUser2.userId)
+        todoChargeService.charge(500L, user2.userId)
 
         // 유저 1 todo 500원짜리로 한개 생성
         val user = todoAuthService.findUserByUserId("pita1")

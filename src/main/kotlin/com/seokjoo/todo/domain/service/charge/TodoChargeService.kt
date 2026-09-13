@@ -11,8 +11,8 @@ class TodoChargeService(
 ) {
 
     @Transactional
-    fun charge(amount: Long, accessToken: String): User {
-        val owner = todoAuthService.findUser(accessToken)
+    fun charge(amount: Long, userId: String): User {
+        val owner = todoAuthService.findUserByUserId(userId)
         owner.increaseBalance(amount)
         return owner
     }

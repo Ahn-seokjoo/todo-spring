@@ -92,8 +92,8 @@ class TodoTradeServiceTest @Autowired constructor(
         todoAuthService.signUp(user2.userId, user2.password)
 
         // 유저2 1000원 충전
-        val token = todoAuthService.login(user2.userId, user2.password)
-        todoChargeService.charge(1000L, token.accessToken)
+        val token = todoAuthService.findUserByUserId(user2.userId)
+        todoChargeService.charge(1000L, token.userId)
 
         // 유저 1 todo 500원짜리로 한개 생성
         val user = todoAuthService.findUserByUserId("pita1")
