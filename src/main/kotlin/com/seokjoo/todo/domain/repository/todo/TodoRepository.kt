@@ -15,4 +15,7 @@ interface TodoRepository : JpaRepository<Todo, Long> {
 
     @Query("select distinct t from Todo t left join fetch t.todoCategories tc left join fetch tc.category where t in :todos")
     fun getFetchJoinedTodoList(@Param("todos") todos: List<Todo>): List<Todo>
+
+    @Query("select count(*) from Todo t where t.owner.userId = :ownerId")
+    fun countByOwnerId(ownerId: String): Long
 }

@@ -101,7 +101,14 @@ class TodoService(
         return TodoServiceResponseDTO.from(todo)
     }
 
+    @Transactional(readOnly = true)
+    fun getTodoCounts(owner: User): Long {
+        val count = todoRepository.countByOwnerId(ownerId = owner.userId)
+        return count
+    }
+
     private fun checkExistAndAddCategory(
+
         request: TodoServiceRequestDTO,
         todo: Todo,
     ) {
