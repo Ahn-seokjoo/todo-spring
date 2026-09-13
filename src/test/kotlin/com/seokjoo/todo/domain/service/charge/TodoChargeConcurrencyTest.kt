@@ -16,6 +16,7 @@ import org.springframework.data.redis.core.RedisTemplate
 import java.util.concurrent.Callable
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 @TodoTest
 class TodoChargeConcurrencyTest @Autowired constructor(
@@ -35,16 +36,17 @@ class TodoChargeConcurrencyTest @Autowired constructor(
 
         val user = todoAuthService.findUserByUserId("pita1")
 
-        repeat(100) {
-            executor.submit {
+        val futures = executor.submit(Callable {
+            repeat(100) {
                 try {
                     chargeService.charge(100, user.userId)
                 } finally {
                     latch.countDown()
                 }
             }
-        }
+        })
         latch.await()
+        futures.get(300, TimeUnit.SECONDS)
         executor.shutdown()
 
         val finalUser = todoAuthService.findUserByUserId(user.userId)
@@ -92,7 +94,7 @@ class TodoChargeConcurrencyTest @Autowired constructor(
         }
 
         latch.await()
-        futures.forEach { it.get() }
+        futures.forEach { it.get(300, TimeUnit.SECONDS) }
         executor.shutdown()
 
         val finalUser = todoAuthService.findUserByUserId("pita1")

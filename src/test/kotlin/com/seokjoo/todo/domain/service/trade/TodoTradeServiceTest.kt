@@ -9,6 +9,7 @@ import com.seokjoo.todo.domain.service.charge.TodoChargeService
 import com.seokjoo.todo.domain.service.todo.TodoCreateServiceRequestDTO
 import com.seokjoo.todo.domain.service.todo.TodoService
 import com.seokjoo.todo.domain.service.todo.TodoServiceResponseDTO
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -34,7 +35,7 @@ class TodoTradeServiceTest @Autowired constructor(
         val todo = todoService.getTodoById(todo.id)
         assert(todo.todo == "테스트 500원 짜리 투두")
         assert(todo.price == 500L)
-        assert(todo.ownerId == user2.userId)
+        assertThat(todo.ownerId).isEqualTo(user2.userId)
         assert(user2.currentBalance() == 500L)
 
         val user1 = todoAuthService.findUserByUserId("pita1")

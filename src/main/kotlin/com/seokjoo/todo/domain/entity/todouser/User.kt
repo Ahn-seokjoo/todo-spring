@@ -34,6 +34,10 @@ class User(
     @Column(name = "todo_list", nullable = false)
     @OneToMany(cascade = [CascadeType.ALL], mappedBy = "owner", orphanRemoval = true)
     val todoList: MutableList<Todo> = mutableListOf(),
+
+    @Version
+    @Column(nullable = false)
+    val version: Long = 0L
 ) : BaseEntity() {
     fun removeTodo(todo: Todo) {
         todoList.remove(todo)
