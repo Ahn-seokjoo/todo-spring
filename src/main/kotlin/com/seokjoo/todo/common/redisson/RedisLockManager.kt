@@ -2,6 +2,7 @@ package com.seokjoo.todo.common.redisson
 
 import com.seokjoo.todo.common.exception.LockNotAcquiredException
 import org.redisson.api.RedissonClient
+import org.springframework.dao.CannotAcquireLockException
 import org.springframework.orm.ObjectOptimisticLockingFailureException
 import org.springframework.retry.support.RetryTemplate
 import org.springframework.stereotype.Component
@@ -25,7 +26,7 @@ class RedisLockManager(
             .exponentialBackoff(delay, 2.0, maxDelay, true)
             .withListener(retryListener)
             .retryOn { t ->
-                t is ObjectOptimisticLockingFailureException || t is LockNotAcquiredException
+                t is ObjectOptimisticLockingFailureException || t is LockNotAcquiredException || t is CannotAcquireLockException
             }.build()
 
         return retryTemplate.execute<T, Throwable> {
