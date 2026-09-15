@@ -76,6 +76,10 @@ export function setup() {
 
 let buyerToken = null;
 let buyerId = null;
+// 자금 충전이 실패한 VU는 이후 iteration에서도 구매를 계속 시도하게 되는데,
+// 이 실패가 buyConflictExhausted/buyUnexpectedFailure에 섞여 들어가 결과를 오염시킬 수 있다.
+// 한 번 실패하면 이 VU는 구매를 스킵한다(setup을 다시 태우지 않고 그냥 그 VU만 결과 집계에서 제외).
+let buyerFundingFailed = false;
 
 export function buyFlow(data) {
   if (!buyerToken) {
@@ -88,8 +92,14 @@ export function buyFlow(data) {
       { headers: { Authorization: `Bearer ${buyerToken}`, 'Content-Type': 'application/json' } }
     );
     if (fundRes.status !== 200) {
-      console.error(`[buyer 자금충전 실패] vu=${__VU} status=${fundRes.status} body=${fundRes.body}`);
+      buyerFundingFailed = true;
+      console.error(`[buyer 자금충전 실패, 이 VU는 이후 구매를 스킵함] vu=${__VU} status=${fundRes.status} body=${fundRes.body}`);
     }
+  }
+
+  if (buyerFundingFailed) {
+    if (BUYER_SLEEP > 0) sleep(BUYER_SLEEP);
+    return;
   }
 
   // 서로 다른 todo로 분산 (같은 todo면 Redisson 락이 직렬화시켜 충돌이 안 만들어짐)
