@@ -7,6 +7,7 @@ import com.seokjoo.todo.domain.repository.todouser.TodoAuthRepository
 import com.seokjoo.todo.domain.service.auth.TodoAuthService
 import com.seokjoo.todo.domain.service.charge.TodoChargeService
 import com.seokjoo.todo.domain.service.todo.TodoCreateServiceRequestDTO
+import com.seokjoo.todo.domain.service.todo.TodoPageServiceDTO
 import com.seokjoo.todo.domain.service.todo.TodoService
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
@@ -40,10 +41,14 @@ class TodoTradeDeadLockTest @Autowired constructor(
 
         val executor = Executors.newFixedThreadPool(32)
         val latch = CountDownLatch(user1Todos.size + user2Todos.size)
+        // 모든 작업이 실제 거래 로직을 동시에 시작하도록 맞춰주는 출발 게이트.
+        // 이게 없으면 먼저 제출된 방향이 먼저 끝나가는 동안 나중 방향이 늦게 시작될 수 있어, 두 방향이 실제로 겹치는 시간 창이 줄어들어 회귀가 있어도 우연히 통과할 수 있다.
+        val startGate = CountDownLatch(1)
 
         val user1Futures = user1Todos.map { id ->
             executor.submit(Callable {
                 try {
+                    startGate.await()
                     todoTradeService.buyTodo(id, user2.userId)
                 } finally {
                     latch.countDown()
@@ -54,12 +59,14 @@ class TodoTradeDeadLockTest @Autowired constructor(
         val user2Futures = user2Todos.map { id ->
             executor.submit(Callable {
                 try {
+                    startGate.await()
                     todoTradeService.buyTodo(id, user1.userId)
                 } finally {
                     latch.countDown()
                 }
             })
         }
+        startGate.countDown()
         latch.await(60, TimeUnit.SECONDS)
         val results = (user1Futures + user2Futures).map { runCatching { it.get(300, TimeUnit.SECONDS) } }
         executor.shutdown()
@@ -82,6 +89,13 @@ class TodoTradeDeadLockTest @Autowired constructor(
         val finalUser1Todos = todoAuthService.findUserWithTodosByUserId("pita1")
         val finalUser2Todos = todoAuthService.findUserWithTodosByUserId("pita2")
         assertThat(finalUser1Todos.todoList.size + finalUser2Todos.todoList.size).isEqualTo(40)
+
+        // 모든 40개의 todo가 정확히 owner가 잘 변경됐는지 체크
+        val pita1Todos = todoService.getPagedTodos("pita1", TodoPageServiceDTO(0, 20))
+        val pita2Todos = todoService.getPagedTodos("pita2", TodoPageServiceDTO(0, 20))
+
+        assertThat(pita1Todos.responseList.map { it.id }.toSet()).isEqualTo(user2Todos.toSet())
+        assertThat(pita2Todos.responseList.map { it.id }.toSet()).isEqualTo(user1Todos.toSet())
     }
 
     @BeforeEach
