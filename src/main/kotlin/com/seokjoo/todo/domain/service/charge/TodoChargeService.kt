@@ -13,8 +13,8 @@ class TodoChargeService(
 ) {
     @Retryable(
         retryFor = [ObjectOptimisticLockingFailureException::class],
-        maxAttempts = 5,
-        backoff = Backoff(delay = 100L, maxDelay = 3000L, random = true, multiplier = 2.0)
+        maxAttempts = 8,
+        backoff = Backoff(delay = 100L, maxDelay = 3200L, random = true, multiplier = 2.0)
     )
     fun charge(amount: Long, userId: String): User {
         return todoBalanceService.increaseBalance(amount, userId)
