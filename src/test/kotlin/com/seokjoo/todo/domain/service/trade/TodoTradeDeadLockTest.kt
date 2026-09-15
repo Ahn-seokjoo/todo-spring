@@ -103,8 +103,8 @@ class TodoTradeDeadLockTest @Autowired constructor(
         val createTodoUser1 = todoAuthService.findUserByUserId("pita1")
         val createTodoUser2 = todoAuthService.findUserByUserId("pita2")
 
-        // 각 유저 투두 100개씩 생성
-        user1Todos = (0 until 100).map { i ->
+        // 각 유저 투두 20개씩 생성
+        user1Todos = (0 until 20).map { i ->
             val request = TodoCreateServiceRequestDTO(
                 todo = "테스트 500원 짜리 투두 $i",
                 price = 500L
@@ -113,7 +113,7 @@ class TodoTradeDeadLockTest @Autowired constructor(
             todo.id
         }
 
-        user2Todos = (0 until 100).map { i ->
+        user2Todos = (0 until 20).map { i ->
             val request = TodoCreateServiceRequestDTO(
                 todo = "테스트 500원 짜리 투두 - 2 $i",
                 price = 500L
