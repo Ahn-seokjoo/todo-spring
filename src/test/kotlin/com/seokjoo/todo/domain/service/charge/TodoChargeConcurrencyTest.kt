@@ -36,17 +36,17 @@ class TodoChargeConcurrencyTest @Autowired constructor(
 
         val user = todoAuthService.findUserByUserId("pita1")
 
-        val futures = executor.submit(Callable {
-            repeat(100) {
+        val futures = (1..threadCount).map {
+            executor.submit(Callable {
                 try {
                     chargeService.charge(100, user.userId)
                 } finally {
                     latch.countDown()
                 }
-            }
-        })
+            })
+        }
         latch.await()
-        futures.get(300, TimeUnit.SECONDS)
+        futures.forEach { it.get(300, TimeUnit.SECONDS) }
         executor.shutdown()
 
         val finalUser = todoAuthService.findUserByUserId(user.userId)
@@ -70,18 +70,18 @@ class TodoChargeConcurrencyTest @Autowired constructor(
             todoService.createTodo(request, user1).id
         }
 
-        // 유저 충전 50번
-        executor.submit {
-            repeat(threadCount / 2) {
+        // 유저 충전 50번 - 각 반복을 별도 task로 submit해야 실제로 병렬 실행된다
+        val chargeFutures = (1..(threadCount / 2)).map {
+            executor.submit(Callable {
                 try {
                     chargeService.charge(100, user1.userId)
                 } finally {
                     latch.countDown()
                 }
-            }
+            })
         }
 
-        val futures = todoIds.map { todoId ->
+        val buyFutures = todoIds.map { todoId ->
             executor.submit(Callable {
                 try {
                     todoTradeService.buyTodo(todoId = todoId, userId = user2.userId)
@@ -94,7 +94,7 @@ class TodoChargeConcurrencyTest @Autowired constructor(
         }
 
         latch.await()
-        futures.forEach { it.get(300, TimeUnit.SECONDS) }
+        (chargeFutures + buyFutures).forEach { it.get(300, TimeUnit.SECONDS) }
         executor.shutdown()
 
         val finalUser = todoAuthService.findUserByUserId("pita1")
