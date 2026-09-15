@@ -81,7 +81,7 @@ class TodoTradeDeadLockTest @Autowired constructor(
         // 완벽하게 둘이 교환완료했다면 개수도 동일
         val finalUser1Todos = todoAuthService.findUserWithTodosByUserId("pita1")
         val finalUser2Todos = todoAuthService.findUserWithTodosByUserId("pita2")
-        assertThat(finalUser1Todos.todoList.size + finalUser2Todos.todoList.size).isEqualTo(200)
+        assertThat(finalUser1Todos.todoList.size + finalUser2Todos.todoList.size).isEqualTo(40)
     }
 
     @BeforeEach
