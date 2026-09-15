@@ -18,4 +18,7 @@ interface TodoRepository : JpaRepository<Todo, Long> {
 
     @Query("select count(*) from Todo t where t.owner.userId = :ownerId")
     fun countByOwnerId(ownerId: String): Long
+
+    @Query("select t.owner.userId from Todo t where t.id = :todoId")
+    fun findTodoOwnerByTodoId(todoId: Long): String?
 }

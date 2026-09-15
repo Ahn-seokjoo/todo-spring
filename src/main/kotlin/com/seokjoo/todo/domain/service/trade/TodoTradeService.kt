@@ -9,9 +9,9 @@ class TodoTradeService(
     private val todoTxService: TodoTxService,
     private val redisLockManager: LockManager,
 ) {
-    fun buyTodo(todoId: Long, userId: String): TodoServiceResponseDTO {
+    fun buyTodo(todoId: Long, buyerUserId: String): TodoServiceResponseDTO {
         return redisLockManager.tryLock(key = todoId.toString()) { // 거래 하려는 todoId로 락을 잡음
-            todoTxService.buyTodo(todoId = todoId, buyerUserId = userId)
+            todoTxService.buyTodo(todoId = todoId, buyerUserId = buyerUserId)
         }
     }
 }
