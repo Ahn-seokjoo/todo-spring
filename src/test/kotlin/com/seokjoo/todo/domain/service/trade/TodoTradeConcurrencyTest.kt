@@ -1,7 +1,6 @@
 package com.seokjoo.todo.domain.service.trade
 
 import com.seokjoo.todo.annotation.TodoTest
-import com.seokjoo.todo.common.redisson.RedisLockManager
 import com.seokjoo.todo.domain.entity.todouser.User
 import com.seokjoo.todo.domain.repository.todo.TodoRepository
 import com.seokjoo.todo.domain.repository.todouser.TodoAuthRepository
@@ -31,7 +30,6 @@ class TodoTradeConcurrencyTest @Autowired constructor(
     private val todoTradeService: TodoTradeService,
     private val todoRepository: TodoRepository,
     private val redisTemplate: RedisTemplate<String, Any>,
-    private val redisLockManager: RedisLockManager,
 ) {
     lateinit var todo: TodoServiceResponseDTO
 
