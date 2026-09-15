@@ -17,18 +17,30 @@ class TodoTxService(
     fun buyTodo(todoId: Long, buyerUserId: String): TodoServiceResponseDTO {
         // 1. 자기 todo 인지 확인
         val todo = todoService.getTodoById(todoId)
+        val sellerId = todo.ownerId
 
-        check(todo.ownerId != buyerUserId) { throw TodoException.of(TodoExceptionType.CAN_NOT_TRADE_OWN_TODO) }
-        // 2. 아니라면 구매자의 금액이 충분한지 확인
-        val buyer = todoAuthService.findUserByUserId(buyerUserId)
+        check(sellerId != buyerUserId) { throw TodoException.of(TodoExceptionType.CAN_NOT_TRADE_OWN_TODO) }
+        // 2. 미리 id 가 낮은 순서로 정렬
+        val (lockFirstUserId, lockSecondUserId) = listOf(todo.ownerId, buyerUserId).sorted()
+
+        // jpa가 업데이트 쿼리를 조회 순서로 날리기 때문에 미리 조회
+        val firstUser = todoAuthService.findUserByUserId(lockFirstUserId)
+        val secondUser = todoAuthService.findUserByUserId(lockSecondUserId)
+
+        val (buyer, seller) = if (lockFirstUserId == buyerUserId) {
+            firstUser to secondUser
+        } else {
+            secondUser to firstUser
+        }
+
+        // 3. 금액이 충분한지 확인
         buyer.isAffordable(todo.price)
-        // 3. 판매처리하기
-        // 3-1 구매자 금액 차감
+
+        // 4. 구매자 금액 차감 및 판매자 금액 추가
         buyer.decreaseBalance(todo.price)
-        // 3-2 판매자 금액 증가
-        val seller = todoAuthService.findUserByUserId(todo.ownerId)
         seller.increaseBalance(todo.price)
-        // 3-2 owner"만" 변경
+
+        // 5. owner"만" 변경
         return todoService.updateOwner(todoId = todo.id, owner = buyer)
     }
 }
