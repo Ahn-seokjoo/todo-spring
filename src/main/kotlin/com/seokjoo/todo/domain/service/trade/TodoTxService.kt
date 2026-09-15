@@ -30,8 +30,8 @@ class TodoTxService(
         val (lockFirstUserId, lockSecondUserId) = listOf(sellerId, buyerUserId).sorted()
 
         // jpa가 업데이트 쿼리를 조회 순서로 날리기 때문에 미리 조회
-        val firstUser = todoAuthService.findUserByUserId(lockFirstUserId)
-        val secondUser = todoAuthService.findUserByUserId(lockSecondUserId)
+        val firstUser = todoAuthService.getUserByUserIdForUpdate(lockFirstUserId)
+        val secondUser = todoAuthService.getUserByUserIdForUpdate(lockSecondUserId)
 
         val (buyer, seller) = if (lockFirstUserId == buyerUserId) {
             firstUser to secondUser
