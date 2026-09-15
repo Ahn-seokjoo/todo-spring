@@ -26,7 +26,7 @@ class RedisLockManager(
             .exponentialBackoff(delay, 2.0, maxDelay, true)
             .withListener(retryListener)
             .retryOn { t ->
-                t is ObjectOptimisticLockingFailureException || t is LockNotAcquiredException || t is CannotAcquireLockException
+                t is ObjectOptimisticLockingFailureException || t is LockNotAcquiredException
             }.build()
 
         return retryTemplate.execute<T, Throwable> {
