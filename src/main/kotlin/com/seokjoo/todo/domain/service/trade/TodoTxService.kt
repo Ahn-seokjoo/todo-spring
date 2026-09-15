@@ -24,6 +24,8 @@ class TodoTxService(
         // 1. todo id로 seller id만 미리 가져옴
         val sellerId = todoRepository.findTodoOwnerByTodoId(todoId)
             ?: throw TodoException.of(TodoExceptionType.NOT_EXISTED_TODO)
+        val todoPrice = todoRepository.findTodoPriceByTodoId(todoId)
+            ?: throw TodoException.of(TodoExceptionType.NOT_EXISTED_TODO)
 
         check(sellerId != buyerUserId) { throw TodoException.of(TodoExceptionType.CAN_NOT_TRADE_OWN_TODO) }
         // 2. 미리 id 가 낮은 순서로 정렬
@@ -40,14 +42,13 @@ class TodoTxService(
         }
 
         // 3. 금액이 충분한지 확인
-        val todo = todoService.getTodoById(todoId)
-        buyer.isAffordable(todo.price)
+        buyer.isAffordable(todoPrice)
 
         // 4. 구매자 금액 차감 및 판매자 금액 추가
-        buyer.decreaseBalance(todo.price)
-        seller.increaseBalance(todo.price)
+        buyer.decreaseBalance(todoPrice)
+        seller.increaseBalance(todoPrice)
 
         // 5. owner"만" 변경
-        return todoService.updateOwner(todoId = todo.id, owner = buyer)
+        return todoService.updateOwner(todoId = todoId, owner = buyer)
     }
 }
