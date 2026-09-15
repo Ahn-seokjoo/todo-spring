@@ -64,6 +64,12 @@ class TodoAuthService(
             ?: throw TodoException.of(TodoExceptionType.AUTH_USER_NOT_EXIST)
     }
 
+    @Transactional(readOnly = true)
+    fun findUserWithTodosByUserId(userId: String): User {
+        return todoAuthRepository.findUserWithTodosByUserId(userId)
+            ?: throw TodoException.of(TodoExceptionType.AUTH_USER_NOT_EXIST)
+    }
+
     fun checkTokenIsValid(userId: String, token: String) {
         if (jwtProvider.getTokenType(token).isAccessToken()) {
             throw TodoException.of(TodoExceptionType.AUTH_INVALID_TOKEN_TYPE)

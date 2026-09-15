@@ -1,19 +1,22 @@
 package com.seokjoo.todo.domain.service.charge
 
 import com.seokjoo.todo.domain.entity.todouser.User
-import com.seokjoo.todo.domain.service.auth.TodoAuthService
+import com.seokjoo.todo.domain.service.balance.TodoBalanceService
+import org.springframework.orm.ObjectOptimisticLockingFailureException
+import org.springframework.retry.annotation.Backoff
+import org.springframework.retry.annotation.Retryable
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
 
 @Service
 class TodoChargeService(
-    private val todoAuthService: TodoAuthService,
+    private val todoBalanceService: TodoBalanceService,
 ) {
-
-    @Transactional
-    fun charge(amount: Long, accessToken: String): User {
-        val owner = todoAuthService.findUser(accessToken)
-        owner.increaseBalance(amount)
-        return owner
+    @Retryable(
+        retryFor = [ObjectOptimisticLockingFailureException::class],
+        maxAttempts = 5,
+        backoff = Backoff(delay = 100L, maxDelay = 3000L, random = true, multiplier = 2.0)
+    )
+    fun charge(amount: Long, userId: String): User {
+        return todoBalanceService.increaseBalance(amount, userId)
     }
 }

@@ -15,9 +15,9 @@ class TodoChargeServiceTest @Autowired constructor(
     @Transactional
     fun `금액 충전을 하면 잘 된다`() {
         todoAuthService.signUp("pita", "pita")
-        val user = todoAuthService.login("pita", "pita")
 
-        todoChargeService.charge(1000L, user.accessToken)
+        val user = todoAuthService.findUserByUserId("pita")
+        todoChargeService.charge(1000L, user.userId)
 
         val resultUser = todoAuthService.findUserByUserId("pita")
 

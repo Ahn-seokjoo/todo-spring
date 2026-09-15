@@ -1,39 +1,47 @@
 package com.seokjoo.todo.common.redisson
 
-import com.seokjoo.todo.common.exception.TodoException
+import com.seokjoo.todo.common.exception.LockNotAcquiredException
 import org.redisson.api.RedissonClient
+import org.springframework.dao.CannotAcquireLockException
+import org.springframework.orm.ObjectOptimisticLockingFailureException
+import org.springframework.retry.support.RetryTemplate
 import org.springframework.stereotype.Component
 import java.util.concurrent.TimeUnit
 
 @Component
 class RedisLockManager(
     private val redisson: RedissonClient,
+    private val retryListener: LoggingRetryListener,
 ) : LockManager {
-    override fun <T> tryLock(key: String, retryCount: Int, block: () -> T): T {
-        val lock = redisson.getLock(key)
-        return run retryLoop@{
-            repeat(retryCount) {
-                try {
-                    // 5초간 락 시도,
-                    if (lock.tryLock(5, TimeUnit.SECONDS)) {
-                        return@retryLoop block.invoke()
-                    } else {
-                        Thread.sleep(50L)
-                    }
-                } catch (e: InterruptedException) {
-                    Thread.currentThread().interrupt()
-                    error("InterruptedException")
-                } catch (e: TodoException) {
-                    throw e
-                } catch (e: Exception) {
-                    error("Just exception $key, ${e.message}")
-                } finally {
-                    if (lock.isLocked && lock.isHeldByCurrentThread) {
-                        lock.unlock()
-                    }
+
+    override fun <T> tryLock(
+        key: String,
+        retryCount: Int,
+        delay: Long,
+        maxDelay: Long,
+        block: () -> T,
+    ): T {
+        val retryTemplate = RetryTemplate.builder()
+            .maxAttempts(retryCount)
+            .exponentialBackoff(delay, 2.0, maxDelay, true)
+            .withListener(retryListener)
+            .retryOn { t ->
+                t is ObjectOptimisticLockingFailureException || t is LockNotAcquiredException || t is CannotAcquireLockException
+            }.build()
+
+        return retryTemplate.execute<T, Throwable> {
+            val lock = redisson.getLock(key)
+            try {
+                val acquired = lock.tryLock(5, TimeUnit.SECONDS)
+                if (acquired.not()) {
+                    throw LockNotAcquiredException(key = key)
+                }
+                block.invoke()
+            } finally {
+                if (lock.isLocked && lock.isHeldByCurrentThread) {
+                    lock.unlock()
                 }
             }
-            error("TryLock fail after retry")
         }
     }
 }

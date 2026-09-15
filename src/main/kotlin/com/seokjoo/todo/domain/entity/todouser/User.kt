@@ -13,6 +13,8 @@ import jakarta.persistence.Id
 import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
 import jakarta.persistence.UniqueConstraint
+import jakarta.persistence.Version
+import org.hibernate.annotations.ColumnDefault
 
 @Entity
 @Table(name = "todo_user", uniqueConstraints = [UniqueConstraint(name = "UC_user_id", columnNames = ["user_id"])])
@@ -33,6 +35,11 @@ class User(
     @Column(name = "todo_list", nullable = false)
     @OneToMany(cascade = [CascadeType.ALL], mappedBy = "owner", orphanRemoval = true)
     val todoList: MutableList<Todo> = mutableListOf(),
+
+    @Version
+    @Column(nullable = false)
+    @ColumnDefault(value = "0")
+    val version: Long = 0L
 ) : BaseEntity() {
     fun removeTodo(todo: Todo) {
         todoList.remove(todo)

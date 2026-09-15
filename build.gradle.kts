@@ -29,6 +29,7 @@ dependencies {
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.5")
     implementation("org.springframework.security:spring-security-crypto:6.4.4")
     implementation("org.redisson:redisson-spring-boot-starter:3.27.0")
+    implementation("org.springframework.retry:spring-retry")
 
     runtimeOnly("com.mysql:mysql-connector-j")
     runtimeOnly("com.h2database:h2")

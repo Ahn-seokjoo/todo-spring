@@ -11,7 +11,7 @@ class TodoTradeService(
 ) {
     fun buyTodo(todoId: Long, userId: String): TodoServiceResponseDTO {
         return redisLockManager.tryLock(key = todoId.toString()) { // 거래 하려는 todoId로 락을 잡음
-            todoTxService.buyTodo(todoId = todoId, userId = userId)
+            todoTxService.buyTodo(todoId = todoId, buyerUserId = userId)
         }
     }
 }

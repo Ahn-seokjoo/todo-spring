@@ -15,6 +15,8 @@ import jakarta.persistence.Id
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
+import jakarta.persistence.Version
+import org.hibernate.annotations.ColumnDefault
 
 @Entity
 @Table(name = "todo")
@@ -35,6 +37,11 @@ class Todo(
 
     @ManyToOne(fetch = FetchType.LAZY)
     var owner: User,
+
+    @Version
+    @Column(nullable = false)
+    @ColumnDefault(value = "0")
+    var version: Long = 0L,
 ) : BaseEntity() {
     fun hasCategory(categoryName: String): Boolean {
         return todoCategories.any { it.category?.name == categoryName }

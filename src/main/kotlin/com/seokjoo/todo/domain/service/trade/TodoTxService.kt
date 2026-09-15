@@ -14,13 +14,13 @@ class TodoTxService(
     private val todoAuthService: TodoAuthService,
 ) {
     @Transactional
-    fun buyTodo(todoId: Long, userId: String): TodoServiceResponseDTO {
+    fun buyTodo(todoId: Long, buyerUserId: String): TodoServiceResponseDTO {
         // 1. 자기 todo 인지 확인
         val todo = todoService.getTodoById(todoId)
 
-        check(todo.ownerId != userId) { throw TodoException.of(TodoExceptionType.CAN_NOT_TRADE_OWN_TODO) }
+        check(todo.ownerId != buyerUserId) { throw TodoException.of(TodoExceptionType.CAN_NOT_TRADE_OWN_TODO) }
         // 2. 아니라면 구매자의 금액이 충분한지 확인
-        val buyer = todoAuthService.findUserByUserId(userId)
+        val buyer = todoAuthService.findUserByUserId(buyerUserId)
         buyer.isAffordable(todo.price)
         // 3. 판매처리하기
         // 3-1 구매자 금액 차감
