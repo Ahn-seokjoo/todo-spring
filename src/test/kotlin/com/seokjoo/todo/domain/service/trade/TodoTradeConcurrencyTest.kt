@@ -5,6 +5,7 @@ import com.seokjoo.todo.domain.entity.todouser.User
 import com.seokjoo.todo.domain.repository.todo.TodoRepository
 import com.seokjoo.todo.domain.repository.todouser.TodoAuthRepository
 import com.seokjoo.todo.domain.service.auth.TodoAuthService
+import com.seokjoo.todo.domain.service.balance.TodoBalanceService
 import com.seokjoo.todo.domain.service.charge.TodoChargeService
 import com.seokjoo.todo.domain.service.todo.TodoCreateServiceRequestDTO
 import com.seokjoo.todo.domain.service.todo.TodoService
@@ -30,6 +31,7 @@ class TodoTradeConcurrencyTest @Autowired constructor(
     private val todoTradeService: TodoTradeService,
     private val todoRepository: TodoRepository,
     private val redisTemplate: RedisTemplate<String, Any>,
+    private val todoBalanceService: TodoBalanceService,
 ) {
     lateinit var todo: TodoServiceResponseDTO
 
@@ -58,11 +60,11 @@ class TodoTradeConcurrencyTest @Autowired constructor(
         assert(todo.price == 500L)
 
         val user1 = todoAuthService.findUserByUserId("pita1")
-        assert(user1.currentBalance() == 500L)
+        assert(todoBalanceService.getBalance(user1.userId) == 500L)
 
         val dbUser2 = todoAuthService.findUserByUserId("pita2")
         assert(todo.ownerId == dbUser2.userId)
-        assert(dbUser2.currentBalance() == 0L)
+        assert(todoBalanceService.getBalance(dbUser2.userId) == 0L)
     }
 
     @Test
@@ -93,14 +95,14 @@ class TodoTradeConcurrencyTest @Autowired constructor(
         futures.forEach { it.get() }
         executor.shutdown()
 
-        val allNewUserBalance = userList.map { todoAuthService.findUserByUserId(it.userId).currentBalance() }
+        val allNewUserBalance = userList.map { todoBalanceService.getBalance(it.userId) }
 
         /**
          * 20명의 유저가 한 투두를 사고팔면 첫 owner 인 유저1 을 제외하고 20명끼리 사고팔고 진행함.
          * 이때, 19명은 각각 사고 팔아서 500원을 가지고 있고, 마지막 구매한 유저만 잔액이 0원이게됨
          */
         val user = todoAuthService.findUserByUserId("pita1")
-        assertThat(user.money.currentBalance()).isEqualTo(500L)
+        assertThat(todoBalanceService.getBalance(user.userId)).isEqualTo(500L)
         assertThat(allNewUserBalance.count { it == 500L }).isEqualTo(9)
         assertThat(allNewUserBalance.count { it == 0L }).isEqualTo(1)
     }
@@ -155,9 +157,9 @@ class TodoTradeConcurrencyTest @Autowired constructor(
 
         println("=== 결과 ===")
         println("성공: ${successCount.get()}, 실패: ${failCount.get()}")
-        println("seller(pita1) 잔액: ${finalSeller.currentBalance()}")
-        println("buyer1 잔액: ${finalBuyer1.currentBalance()}")
-        println("buyer2 잔액: ${finalBuyer2.currentBalance()}")
+        println("seller(pita1) 잔액: ${todoBalanceService.getBalance(finalSeller.userId)}")
+        println("buyer1 잔액: ${todoBalanceService.getBalance(finalBuyer1.userId)}")
+        println("buyer2 잔액: ${todoBalanceService.getBalance(finalBuyer2.userId)}")
         println("최종 owner: ${finalTodo.ownerId}")
 
         /**
@@ -175,10 +177,11 @@ class TodoTradeConcurrencyTest @Autowired constructor(
         assertThat(failCount.get()).isEqualTo(0)
 
         // pita1은 정확히 한 번(500원)만 지급받아야 한다 — 이중지급 방지 검증
-        assertThat(finalSeller.currentBalance()).isEqualTo(500L)
+        assertThat(todoBalanceService.getBalance(finalSeller.userId)).isEqualTo(500L)
 
         // 두 buyer가 잃은 돈의 총합은 정확히 500원(pita1이 받은 금액)이어야 한다 — 총액 보존 검증
-        val totalDeducted = (500L - finalBuyer1.currentBalance()) + (500L - finalBuyer2.currentBalance())
+        val totalDeducted = (500L - todoBalanceService.getBalance(finalBuyer1.userId)) +
+            (500L - todoBalanceService.getBalance(finalBuyer2.userId))
         assertThat(totalDeducted).isEqualTo(500L)
 
         // 최종 owner는 나중에 락을 잡은 쪽이어야 한다 (buyer1 또는 buyer2 중 하나)

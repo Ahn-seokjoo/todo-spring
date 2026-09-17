@@ -1,6 +1,6 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
-import { Rate } from 'k6/metrics';
+import { Rate, Trend } from 'k6/metrics';
 
 // charge()의 maxAttempts vs LockManager의 retryCount 경쟁 테스트.
 // seller 1명의 todo를 buyer 여러 명이 동시 구매(-> seller 잔액 증가) + seller 본인 self-charge.
@@ -31,9 +31,15 @@ export const chargeUnexpectedFailure = new Rate('charge_unexpected_failure');
 // pool이 작고 실행이 길어지면 buyer가 자기가 이미 산 todo를 또 사려는 시도가 생긴다.
 // 이건 앱 버그가 아니라 테스트 설계상의 harmless한 현상이라 별도로 분리해서 센다.
 export const buyOwnTodoCollision = new Rate('buy_own_todo_collision');
+// http_req_duration은 buy(요청 수가 훨씬 많음)와 charge(수가 적음) 응답시간이 한데 섞여서,
+// charge 쪽만의 tail latency(재시도로 인한 지연)가 percentile에 묻혀 안 보인다.
+// 그래서 각 흐름의 응답시간을 별도 Trend로 분리해서 기록한다.
+export const buyDuration = new Trend('buy_duration');
+export const chargeDuration = new Trend('charge_duration');
 
 export const options = {
   setupTimeout: '120s', // pool 생성이 오래 걸릴 때 기본 60초 제한에 안 걸리게 여유를 둔다
+  summaryTrendStats: ['avg', 'min', 'med', 'max', 'p(90)', 'p(95)', 'p(99)'],
   scenarios: {
     buyers: { executor: 'constant-vus', exec: 'buyFlow', vus: BUYER_VUS, duration: DURATION },
     selfCharger: { executor: 'constant-vus', exec: 'selfChargeFlow', vus: CHARGER_VUS, duration: DURATION },
@@ -111,6 +117,7 @@ export function buyFlow(data) {
     JSON.stringify({ todo_id: todoId }),
     { headers: { Authorization: `Bearer ${buyerToken}`, 'Content-Type': 'application/json' } }
   );
+  buyDuration.add(res.timings.duration);
 
   const exhausted = res.status === 500;
   buyConflictExhausted.add(exhausted);
@@ -135,6 +142,7 @@ export function selfChargeFlow(data) {
     JSON.stringify({ amount: 10 }),
     { headers: { Authorization: `Bearer ${data.sellerToken}`, 'Content-Type': 'application/json' } }
   );
+  chargeDuration.add(res.timings.duration);
 
   const exhausted = res.status === 500;
   chargeConflictExhausted.add(exhausted);

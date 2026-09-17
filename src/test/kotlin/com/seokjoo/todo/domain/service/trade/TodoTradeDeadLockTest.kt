@@ -5,6 +5,7 @@ import com.seokjoo.todo.domain.entity.todouser.User
 import com.seokjoo.todo.domain.repository.todo.TodoRepository
 import com.seokjoo.todo.domain.repository.todouser.TodoAuthRepository
 import com.seokjoo.todo.domain.service.auth.TodoAuthService
+import com.seokjoo.todo.domain.service.balance.TodoBalanceService
 import com.seokjoo.todo.domain.service.charge.TodoChargeService
 import com.seokjoo.todo.domain.service.todo.TodoCreateServiceRequestDTO
 import com.seokjoo.todo.domain.service.todo.TodoPageServiceDTO
@@ -30,12 +31,13 @@ class TodoTradeDeadLockTest @Autowired constructor(
     private val todoTradeService: TodoTradeService,
     private val todoRepository: TodoRepository,
     private val redisTemplate: RedisTemplate<String, Any>,
+    private val todoBalanceService: TodoBalanceService,
 ) {
     lateinit var user1Todos: List<Long>
     lateinit var user2Todos: List<Long>
 
     @Test
-    fun `유저가 서로의 Todo를 사려고 할 때 데드락이 발생한다`() {
+    fun `유저가 서로의 Todo를 사려고 할 때 데드락이 발생하지 않는다`() {
         val user1 = todoAuthService.findUserByUserId("pita1")
         val user2 = todoAuthService.findUserByUserId("pita2")
 
@@ -83,7 +85,10 @@ class TodoTradeDeadLockTest @Autowired constructor(
         // 금액 정합성 체크
         val finalUser1 = todoAuthService.findUserByUserId("pita1")
         val finalUser2 = todoAuthService.findUserByUserId("pita2")
-        assertThat(finalUser1.currentBalance() + finalUser2.currentBalance()).isEqualTo(1_000_000L)
+        assertThat(
+            todoBalanceService.getBalance(finalUser1.userId) +
+                todoBalanceService.getBalance(finalUser2.userId)
+        ).isEqualTo(1_000_000L)
 
         // 완벽하게 둘이 교환완료했다면 개수도 동일
         val finalUser1Todos = todoAuthService.findUserWithTodosByUserId("pita1")

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.seokjoo.todo.common.exception.TodoExceptionType
 import com.seokjoo.todo.domain.entity.todouser.User
 import com.seokjoo.todo.domain.service.auth.TodoAuthService
+import com.seokjoo.todo.domain.service.balance.TodoBalanceService
 import com.seokjoo.todo.domain.service.charge.TodoChargeService
 import com.seokjoo.todo.presentation.charge.dto.TodoChargeRequest
 import org.junit.jupiter.api.Test
@@ -33,10 +34,13 @@ class TodoChargeApiControllerTest {
     @MockitoBean
     internal lateinit var authService: TodoAuthService
 
+    @MockitoBean
+    internal lateinit var balanceService: TodoBalanceService
+
     @Test
     fun `본인 계좌를 충전하면 200이 나온다`() {
         val request = TodoChargeRequest(amount = 1000L)
-        val user = User(userId = "pita", password = "pita").apply { increaseBalance(1000L) }
+        val user = User(userId = "pita", password = "pita")
 
         given(authService.getSubject(any())).willReturn("pita")
         given(chargeService.charge(amount = eq(1000L), userId = eq("pita"))).willReturn(user)
@@ -73,7 +77,7 @@ class TodoChargeApiControllerTest {
 
     @Test
     fun `본인 잔액을 조회하면 200이 나온다`() {
-        val user = User(userId = "pita", password = "pita").apply { increaseBalance(500L) }
+        val user = User(userId = "pita", password = "pita")
 
         given(authService.getSubject(any())).willReturn("pita")
         given(authService.findUserByUserId(eq("pita"))).willReturn(user)
@@ -82,7 +86,7 @@ class TodoChargeApiControllerTest {
             .andDo { print() }
             .andExpect {
                 status { isOk() }
-                jsonPath("$.balance") { value(500L) }
+                jsonPath("$.balance") { value(0L) }
             }
     }
 

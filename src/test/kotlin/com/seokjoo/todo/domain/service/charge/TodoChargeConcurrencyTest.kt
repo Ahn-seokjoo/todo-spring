@@ -4,6 +4,7 @@ import com.seokjoo.todo.annotation.TodoTest
 import com.seokjoo.todo.domain.entity.todouser.User
 import com.seokjoo.todo.domain.repository.todouser.TodoAuthRepository
 import com.seokjoo.todo.domain.service.auth.TodoAuthService
+import com.seokjoo.todo.domain.service.balance.TodoBalanceService
 import com.seokjoo.todo.domain.service.todo.TodoCreateServiceRequestDTO
 import com.seokjoo.todo.domain.service.todo.TodoService
 import com.seokjoo.todo.domain.service.trade.TodoTradeService
@@ -26,6 +27,7 @@ class TodoChargeConcurrencyTest @Autowired constructor(
     private val chargeService: TodoChargeService,
     private val todoService: TodoService,
     private val todoTradeService: TodoTradeService,
+    private val todoBalanceService: TodoBalanceService,
 ) {
 
     @Test
@@ -50,7 +52,7 @@ class TodoChargeConcurrencyTest @Autowired constructor(
         executor.shutdown()
 
         val finalUser = todoAuthService.findUserByUserId(user.userId)
-        assertThat(finalUser.currentBalance()).isEqualTo(10_000L)
+        assertThat(todoBalanceService.getBalance(finalUser.userId)).isEqualTo(10_000L)
     }
 
     @Test
@@ -110,12 +112,12 @@ class TodoChargeConcurrencyTest @Autowired constructor(
         assertThat(finalUser1TodoCounts).isEqualTo(0)
         assertThat(finalUser1Todos.todoList.size).isEqualTo(0)
         // 충전 + 판매된 금액 합쳐서 총 10000 원
-        assertThat(finalUser.currentBalance()).isEqualTo(10_000L)
+        assertThat(todoBalanceService.getBalance(finalUser.userId)).isEqualTo(10_000L)
         // 투두 전부 구매한 유저 개수 50개
         assertThat(finalUser2TodoCounts).isEqualTo(50)
         assertThat(finalUser2Todos.todoList.size).isEqualTo(50)
         // 구매 완료한 유저 잔액 0원
-        assertThat(finalUser2.currentBalance()).isEqualTo(0L)
+        assertThat(todoBalanceService.getBalance(finalUser2.userId)).isEqualTo(0L)
     }
 
     @BeforeEach

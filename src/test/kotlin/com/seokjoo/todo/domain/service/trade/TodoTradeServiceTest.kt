@@ -5,6 +5,7 @@ import com.seokjoo.todo.common.exception.TodoException
 import com.seokjoo.todo.domain.entity.todouser.User
 import com.seokjoo.todo.domain.repository.todo.TodoRepository
 import com.seokjoo.todo.domain.service.auth.TodoAuthService
+import com.seokjoo.todo.domain.service.balance.TodoBalanceService
 import com.seokjoo.todo.domain.service.charge.TodoChargeService
 import com.seokjoo.todo.domain.service.todo.TodoCreateServiceRequestDTO
 import com.seokjoo.todo.domain.service.todo.TodoService
@@ -23,6 +24,7 @@ class TodoTradeServiceTest @Autowired constructor(
     private val todoAuthService: TodoAuthService,
     private val todoTradeService: TodoTradeService,
     private val todoRepository: TodoRepository,
+    private val todoBalanceService: TodoBalanceService,
 ) {
     lateinit var todo: TodoServiceResponseDTO
 
@@ -36,10 +38,13 @@ class TodoTradeServiceTest @Autowired constructor(
         assert(todo.todo == "테스트 500원 짜리 투두")
         assert(todo.price == 500L)
         assertThat(todo.ownerId).isEqualTo(user2.userId)
-        assert(user2.currentBalance() == 500L)
+
+        val currentBalance = todoBalanceService.getBalance(user2.userId)
+        assert(currentBalance == 500L)
 
         val user1 = todoAuthService.findUserByUserId("pita1")
-        assert(user1.currentBalance() == 500L)
+        val currentBalanceUser1 = todoBalanceService.getBalance(user1.userId)
+        assert(currentBalanceUser1 == 500L)
     }
 
     @Test
