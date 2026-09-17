@@ -2,6 +2,10 @@ import http from 'k6/http';
 import { check, sleep } from 'k6';
 import { Rate, Trend } from 'k6/metrics';
 
+// HikariCP 커넥션 풀 관찰용 폴링 간격(초). 테스트 내내 별도 VU 1개가 이 주기로
+// /actuator/metrics/hikaricp.connections.* 를 찔러서 hikari_pending/active_connections에 기록한다.
+const HIKARI_POLL_INTERVAL = Number(__ENV.HIKARI_POLL_INTERVAL || 0.25);
+
 // charge()의 maxAttempts vs LockManager의 retryCount 경쟁 테스트.
 // seller 1명의 todo를 buyer 여러 명이 동시 구매(-> seller 잔액 증가) + seller 본인 self-charge.
 // 같은 seller row에 두 코드 경로가 동시에 쓰기 -> 낙관락 충돌 재현.
@@ -36,6 +40,11 @@ export const buyOwnTodoCollision = new Rate('buy_own_todo_collision');
 // 그래서 각 흐름의 응답시간을 별도 Trend로 분리해서 기록한다.
 export const buyDuration = new Trend('buy_duration');
 export const chargeDuration = new Trend('charge_duration');
+// HikariCP 풀 상태를 매 폴링마다 기록 -> avg/max로 "테스트 도중 커넥션이 실제로 부족했는지" 확인.
+// Gauge가 아니라 Trend를 쓴 이유: Gauge는 마지막 값만 남기지만, 우리가 보고 싶은 건
+// 테스트 내내의 avg/max(특히 pending이 0보다 얼마나 자주/많이 올라갔는지)이기 때문.
+export const hikariPendingConnections = new Trend('hikari_pending_connections');
+export const hikariActiveConnections = new Trend('hikari_active_connections');
 
 export const options = {
   setupTimeout: '120s', // pool 생성이 오래 걸릴 때 기본 60초 제한에 안 걸리게 여유를 둔다
@@ -43,13 +52,42 @@ export const options = {
   scenarios: {
     buyers: { executor: 'constant-vus', exec: 'buyFlow', vus: BUYER_VUS, duration: DURATION },
     selfCharger: { executor: 'constant-vus', exec: 'selfChargeFlow', vus: CHARGER_VUS, duration: DURATION },
+    hikariMonitor: { executor: 'constant-vus', exec: 'monitorHikari', vus: 1, duration: DURATION },
   },
 };
+
+function readActuatorGaugeValue(metricName) {
+  const res = http.get(`${BASE_URL}/actuator/metrics/${metricName}`);
+  if (res.status !== 200) {
+    console.error(`[hikari 모니터] ${metricName} 조회 실패 status=${res.status} body=${res.body}`);
+    return null;
+  }
+  try {
+    return res.json().measurements[0].value;
+  } catch (e) {
+    console.error(`[hikari 모니터] ${metricName} 파싱 실패 body=${res.body}`);
+    return null;
+  }
+}
+
+// buyers/selfCharger랑 동시에 같은 DURATION 동안 돌면서 커넥션 풀 상태를 계속 샘플링한다.
+export function monitorHikari() {
+  const pending = readActuatorGaugeValue('hikaricp.connections.pending');
+  if (pending !== null) hikariPendingConnections.add(pending);
+
+  const active = readActuatorGaugeValue('hikaricp.connections.active');
+  if (active !== null) hikariActiveConnections.add(active);
+
+  sleep(HIKARI_POLL_INTERVAL);
+}
 
 function signupAndLogin(userId, password) {
   const payload = JSON.stringify({ user_id: userId, password });
   const headers = { 'Content-Type': 'application/json' };
-  http.post(`${BASE_URL}/api/v1/auth/signup`, payload, { headers });
+  const signupRes = http.post(`${BASE_URL}/api/v1/auth/signup`, payload, { headers });
+  if (signupRes.status !== 200 && signupRes.status !== 201) {
+    throw new Error(`signup failed for ${userId}: ${signupRes.status} ${signupRes.body}`);
+  }
   const loginRes = http.post(`${BASE_URL}/api/v1/auth/login`, payload, { headers });
   if (loginRes.status !== 200) {
     throw new Error(`login failed for ${userId}: ${loginRes.status} ${loginRes.body}`);

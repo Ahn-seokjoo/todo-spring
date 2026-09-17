@@ -26,6 +26,7 @@ class JwtAuthFilter(
                 "/api/v1/auth/delete",
                 "/swagger-ui",
                 "/v3/api-docs",
+                "/actuator",
             )
         return excludePatterns.any { request.requestURI.startsWith(it) }
     }
