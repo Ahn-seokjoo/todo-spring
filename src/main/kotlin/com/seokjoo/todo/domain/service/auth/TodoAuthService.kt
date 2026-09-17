@@ -64,12 +64,6 @@ class TodoAuthService(
             ?: throw TodoException.of(TodoExceptionType.AUTH_USER_NOT_EXIST)
     }
 
-    @Transactional
-    fun getUserByUserIdForUpdate(userId: String): User {
-        return todoAuthRepository.findUserByUserIdForUpdate(userId)
-            ?: throw TodoException.of(TodoExceptionType.AUTH_USER_NOT_EXIST)
-    }
-
     @Transactional(readOnly = true)
     fun findUserWithTodosByUserId(userId: String): User {
         return todoAuthRepository.findUserWithTodosByUserId(userId)
