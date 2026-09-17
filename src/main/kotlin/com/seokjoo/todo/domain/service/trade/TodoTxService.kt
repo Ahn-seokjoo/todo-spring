@@ -4,6 +4,7 @@ import com.seokjoo.todo.common.exception.TodoException
 import com.seokjoo.todo.common.exception.TodoExceptionType
 import com.seokjoo.todo.domain.repository.todo.TodoRepository
 import com.seokjoo.todo.domain.service.auth.TodoAuthService
+import com.seokjoo.todo.domain.service.balance.TodoBalanceService
 import com.seokjoo.todo.domain.service.todo.TodoService
 import com.seokjoo.todo.domain.service.todo.TodoServiceResponseDTO
 import org.springframework.stereotype.Service
@@ -14,6 +15,7 @@ class TodoTxService(
     private val todoService: TodoService,
     private val todoAuthService: TodoAuthService,
     private val todoRepository: TodoRepository,
+    private val todoBalanceService: TodoBalanceService,
 ) {
     @Transactional
     fun buyTodo(todoId: Long, buyerUserId: String): TodoServiceResponseDTO {
@@ -21,7 +23,7 @@ class TodoTxService(
          * 또 다른 데드락으로, 기존과 같이 Todo 를 조회시에 TodoServiceResponseDTO.from 에서 owner를 조회해버림.
          * 이때 seller A,B가 데드락을 만듦. 즉, 조회를 seller먼저 해버리니 아래 id 정렬이 의미가 없어짐
          */
-        // 1. todo id로 seller id만 미리 가져옴
+        // 1. todo id로 seller id 와 todo 금액만 미리 가져옴
         val sellerId = todoRepository.findTodoOwnerByTodoId(todoId)
             ?: throw TodoException.of(TodoExceptionType.NOT_EXISTED_TODO)
         val todoPrice = todoRepository.findTodoPriceByTodoId(todoId)
@@ -41,14 +43,11 @@ class TodoTxService(
             secondUser to firstUser
         }
 
-        // 3. 금액이 충분한지 확인
-        buyer.isAffordable(todoPrice)
+        // 3. 구매자 금액 차감 및 판매자 금액 추가
+        todoBalanceService.decreaseBalance(amount = todoPrice, userId = buyer.userId)
+        todoBalanceService.increaseBalance(amount = todoPrice, userId = seller.userId)
 
-        // 4. 구매자 금액 차감 및 판매자 금액 추가
-        buyer.decreaseBalance(todoPrice)
-        seller.increaseBalance(todoPrice)
-
-        // 5. owner"만" 변경
+        // 4. owner"만" 변경
         return todoService.updateOwner(todoId = todoId, owner = buyer)
     }
 }

@@ -4,6 +4,7 @@ import com.seokjoo.todo.common.exception.TodoException
 import com.seokjoo.todo.common.exception.TodoExceptionType
 import com.seokjoo.todo.common.jwt.getBearerToken
 import com.seokjoo.todo.domain.service.auth.TodoAuthService
+import com.seokjoo.todo.domain.service.balance.TodoBalanceService
 import com.seokjoo.todo.domain.service.charge.TodoChargeService
 import com.seokjoo.todo.presentation.charge.dto.TodoChargeRequest
 import com.seokjoo.todo.presentation.charge.dto.TodoChargeResponse
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController
 class TodoChargeApiController(
     private val authService: TodoAuthService,
     private val chargeService: TodoChargeService,
+    private val todoBalanceService: TodoBalanceService,
 ) {
 
     @PostMapping("/charge/{userId}")
@@ -35,7 +37,8 @@ class TodoChargeApiController(
         assertSelfAccess(servletRequest, userId)
 
         val user = chargeService.charge(amount = request.amount, userId = userId)
-        return TodoChargeResponse(userId = user.userId, amount = user.currentBalance())
+        val currentBalance = todoBalanceService.getBalance(userId)
+        return TodoChargeResponse(userId = user.userId, amount = currentBalance)
     }
 
     @GetMapping("/current/{userId}")
@@ -45,8 +48,8 @@ class TodoChargeApiController(
     ): TodoCurrentBalanceResponse {
         assertSelfAccess(servletRequest, userId)
 
-        val user = authService.findUserByUserId(userId)
-        return TodoCurrentBalanceResponse(balance = user.currentBalance())
+        val currentBalance = todoBalanceService.getBalance(userId)
+        return TodoCurrentBalanceResponse(balance = currentBalance)
     }
 
     private fun assertSelfAccess(servletRequest: HttpServletRequest, userId: String) {
