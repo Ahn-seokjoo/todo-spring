@@ -84,7 +84,7 @@ class TodoChargeConcurrencyTest @Autowired constructor(
         val buyFutures = todoIds.map { todoId ->
             executor.submit(Callable {
                 try {
-                    todoTradeService.buyTodo(todoId = todoId, userId = user2.userId)
+                    todoTradeService.buyTodo(todoId = todoId, buyerUserId = user2.userId)
                 } catch (e: Exception) {
                     throw e
                 } finally {
