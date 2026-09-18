@@ -1,6 +1,6 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
-import { Rate, Trend } from 'k6/metrics';
+import { Counter, Rate, Trend } from 'k6/metrics';
 
 // HikariCP 커넥션 풀 관찰용 폴링 간격(초). 테스트 내내 별도 VU 1개가 이 주기로
 // /actuator/metrics/hikaricp.connections.* 를 찔러서 hikari_pending/active_connections에 기록한다.
@@ -48,10 +48,18 @@ export const chargeDuration = new Trend('charge_duration');
 // 테스트 내내의 avg/max(특히 pending이 0보다 얼마나 자주/많이 올라갔는지)이기 때문.
 export const hikariPendingConnections = new Trend('hikari_pending_connections');
 export const hikariActiveConnections = new Trend('hikari_active_connections');
+// Trend에는 count 기반 threshold를 걸 수 없어서(값이 하나도 없으면 threshold 자체가 평가 안 됨),
+// actuator 폴링이 계속 실패해도 조용히 넘어가지 않도록 성공 횟수를 별도 Counter로 센다.
+export const hikariPendingSampleCount = new Counter('hikari_pending_sample_count');
+export const hikariActiveSampleCount = new Counter('hikari_active_sample_count');
 
 export const options = {
   setupTimeout: '120s', // pool 생성이 오래 걸릴 때 기본 60초 제한에 안 걸리게 여유를 둔다
   summaryTrendStats: ['avg', 'min', 'med', 'max', 'p(90)', 'p(95)', 'p(99)'],
+  thresholds: {
+    hikari_pending_sample_count: ['count>0'],
+    hikari_active_sample_count: ['count>0'],
+  },
   scenarios: {
     buyers: { executor: 'constant-vus', exec: 'buyFlow', vus: BUYER_VUS, duration: DURATION },
     selfCharger: { executor: 'constant-vus', exec: 'selfChargeFlow', vus: CHARGER_VUS, duration: DURATION },
@@ -76,10 +84,16 @@ function readActuatorGaugeValue(metricName) {
 // buyers/selfCharger랑 동시에 같은 DURATION 동안 돌면서 커넥션 풀 상태를 계속 샘플링한다.
 export function monitorHikari() {
   const pending = readActuatorGaugeValue('hikaricp.connections.pending');
-  if (pending !== null) hikariPendingConnections.add(pending);
+  if (pending !== null) {
+    hikariPendingConnections.add(pending);
+    hikariPendingSampleCount.add(1);
+  }
 
   const active = readActuatorGaugeValue('hikaricp.connections.active');
-  if (active !== null) hikariActiveConnections.add(active);
+  if (active !== null) {
+    hikariActiveConnections.add(active);
+    hikariActiveSampleCount.add(1);
+  }
 
   sleep(HIKARI_POLL_INTERVAL);
 }
