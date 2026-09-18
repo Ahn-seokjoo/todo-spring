@@ -16,7 +16,8 @@ class TodoBalanceService(
     @Transactional
     fun increaseBalance(amount: Long, userId: String): User {
         val owner = todoAuthService.findUserByUserId(userId)
-        todoBalanceRepository.increaseBalanceIfSufficient(userId, amount)
+        val increased = todoBalanceRepository.increaseBalanceIfSufficient(userId, amount) > 0
+        if (!increased) throw TodoException.of(TodoExceptionType.AUTH_USER_NOT_EXIST)
         return owner
     }
 
