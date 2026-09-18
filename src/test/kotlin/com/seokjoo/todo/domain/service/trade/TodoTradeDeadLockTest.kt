@@ -11,6 +11,7 @@ import com.seokjoo.todo.domain.service.todo.TodoCreateServiceRequestDTO
 import com.seokjoo.todo.domain.service.todo.TodoPageServiceDTO
 import com.seokjoo.todo.domain.service.todo.TodoService
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.fail
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -69,9 +70,15 @@ class TodoTradeDeadLockTest @Autowired constructor(
             })
         }
         startGate.countDown()
-        latch.await(60, TimeUnit.SECONDS)
-        val results = (user1Futures + user2Futures).map { runCatching { it.get(300, TimeUnit.SECONDS) } }
+        // CI 행 방지: 60초 내 미완료 시 즉시 실패 처리
+        val completedInTime = latch.await(60, TimeUnit.SECONDS)
+        if (!completedInTime) {
+            executor.shutdownNow()
+            fail<Unit>("60초 내에 모든 거래 스레드가 끝나지 않았습니다 (데드락 의심)")
+        }
+        val results = (user1Futures + user2Futures).map { runCatching { it.get(5, TimeUnit.SECONDS) } }
         executor.shutdown()
+        executor.awaitTermination(5, TimeUnit.SECONDS)
 
         val failures = results.mapNotNull { it.exceptionOrNull() }
 

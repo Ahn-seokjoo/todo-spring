@@ -11,6 +11,7 @@ import com.seokjoo.todo.domain.service.todo.TodoCreateServiceRequestDTO
 import com.seokjoo.todo.domain.service.todo.TodoService
 import com.seokjoo.todo.domain.service.todo.TodoServiceResponseDTO
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.fail
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -52,8 +53,13 @@ class TodoTradeConcurrencyTest @Autowired constructor(
                 }
             }
         }
-        latch.await()
+        val completedInTime = latch.await(60, TimeUnit.SECONDS)
+        if (!completedInTime) {
+            executor.shutdownNow()
+            fail<Unit>("60초 내에 모든 buyTodo 스레드가 끝나지 않았습니다 (동시성 회귀 의심 - CI 행 방지를 위해 즉시 실패 처리)")
+        }
         executor.shutdown()
+        executor.awaitTermination(5, TimeUnit.SECONDS)
 
         val todo = todoService.getTodoById(todo.id)
         assert(todo.todo == "테스트 500원 짜리 투두")
@@ -91,9 +97,14 @@ class TodoTradeConcurrencyTest @Autowired constructor(
                 }
             })
         }
-        latch.await()
-        futures.forEach { it.get() }
+        val completedInTime = latch.await(60, TimeUnit.SECONDS)
+        if (!completedInTime) {
+            executor.shutdownNow()
+            fail<Unit>("60초 내에 모든 buyTodo 스레드가 끝나지 않았습니다 (동시성 회귀 의심 - CI 행 방지를 위해 즉시 실패 처리)")
+        }
+        futures.forEach { it.get(5, TimeUnit.SECONDS) }
         executor.shutdown()
+        executor.awaitTermination(5, TimeUnit.SECONDS)
 
         val allNewUserBalance = userList.map { todoBalanceService.getBalance(it.userId) }
 
@@ -147,8 +158,13 @@ class TodoTradeConcurrencyTest @Autowired constructor(
             }
         }
 
-        latch.await(10, TimeUnit.SECONDS)
+        val completedInTime = latch.await(10, TimeUnit.SECONDS)
+        if (!completedInTime) {
+            executor.shutdownNow()
+            fail<Unit>("10초 내에 buyer1/buyer2 스레드가 끝나지 않았습니다 (동시성 회귀 의심 - CI 행 방지를 위해 즉시 실패 처리)")
+        }
         executor.shutdown()
+        executor.awaitTermination(5, TimeUnit.SECONDS)
 
         val finalSeller = todoAuthService.findUserByUserId("pita1")
         val finalBuyer1 = todoAuthService.findUserByUserId("buyer1")

@@ -9,6 +9,7 @@ import com.seokjoo.todo.domain.service.todo.TodoCreateServiceRequestDTO
 import com.seokjoo.todo.domain.service.todo.TodoService
 import com.seokjoo.todo.domain.service.trade.TodoTradeService
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.fail
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -47,9 +48,15 @@ class TodoChargeConcurrencyTest @Autowired constructor(
                 }
             })
         }
-        latch.await()
-        futures.forEach { it.get(300, TimeUnit.SECONDS) }
+        // CI 행 방지: 60초 내 미완료 시 즉시 실패 처리
+        val completedInTime = latch.await(60, TimeUnit.SECONDS)
+        if (!completedInTime) {
+            executor.shutdownNow()
+            fail<Unit>("60초 내에 모든 charge 스레드가 끝나지 않았습니다 (동시성 회귀 의심 - CI 행 방지를 위해 즉시 실패 처리)")
+        }
+        futures.forEach { it.get(5, TimeUnit.SECONDS) }
         executor.shutdown()
+        executor.awaitTermination(5, TimeUnit.SECONDS)
 
         val finalUser = todoAuthService.findUserByUserId(user.userId)
         assertThat(todoBalanceService.getBalance(finalUser.userId)).isEqualTo(10_000L)
@@ -95,9 +102,14 @@ class TodoChargeConcurrencyTest @Autowired constructor(
             })
         }
 
-        latch.await()
-        (chargeFutures + buyFutures).forEach { it.get(300, TimeUnit.SECONDS) }
+        val completedInTime = latch.await(60, TimeUnit.SECONDS)
+        if (!completedInTime) {
+            executor.shutdownNow()
+            fail<Unit>("60초 내에 모든 charge/buy 스레드가 끝나지 않았습니다 (동시성 회귀 의심 - CI 행 방지를 위해 즉시 실패 처리)")
+        }
+        (chargeFutures + buyFutures).forEach { it.get(5, TimeUnit.SECONDS) }
         executor.shutdown()
+        executor.awaitTermination(5, TimeUnit.SECONDS)
 
         val finalUser = todoAuthService.findUserByUserId("pita1")
         val finalUser2 = todoAuthService.findUserByUserId("pita2")
