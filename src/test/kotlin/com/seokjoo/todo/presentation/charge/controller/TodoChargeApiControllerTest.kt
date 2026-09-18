@@ -77,16 +77,14 @@ class TodoChargeApiControllerTest {
 
     @Test
     fun `본인 잔액을 조회하면 200이 나온다`() {
-        val user = User(userId = "pita", password = "pita")
-
         given(authService.getSubject(any())).willReturn("pita")
-        given(authService.findUserByUserId(eq("pita"))).willReturn(user)
+        given(balanceService.getBalance(eq("pita"))).willReturn(5000L)
 
         mockMvc.get("/api/v1/current/pita") { header("Authorization", "Bearer a") }
             .andDo { print() }
             .andExpect {
                 status { isOk() }
-                jsonPath("$.balance") { value(0L) }
+                jsonPath("$.balance") { value(5000L) }
             }
     }
 
