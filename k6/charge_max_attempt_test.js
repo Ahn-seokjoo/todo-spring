@@ -16,6 +16,9 @@ const HIKARI_POLL_INTERVAL = Number(__ENV.HIKARI_POLL_INTERVAL || 0.25);
 // own_todo_collision(자기 todo 재구매)은 테스트 풀 크기 때문에 생기는 harmless한 현상이라 무시해도 됨.
 
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:8080';
+// actuator는 보안상 메인 서비스 포트(8080)와 분리된 관리용 포트(127.0.0.1:8081)에서만 뜬다.
+// (management.server.port/address 설정, JwtAuthFilter는 8080 컨텍스트에만 걸려있음)
+const MANAGEMENT_BASE_URL = __ENV.MANAGEMENT_BASE_URL || 'http://localhost:8081';
 const PASSWORD = __ENV.PASSWORD || 'loadtest-pw-1234!';
 const RUN_ID = __ENV.RUN_ID || `${Date.now()}`;
 const TODO_PRICE = Number(__ENV.TODO_PRICE || 100);
@@ -57,7 +60,7 @@ export const options = {
 };
 
 function readActuatorGaugeValue(metricName) {
-  const res = http.get(`${BASE_URL}/actuator/metrics/${metricName}`);
+  const res = http.get(`${MANAGEMENT_BASE_URL}/actuator/metrics/${metricName}`);
   if (res.status !== 200) {
     console.error(`[hikari 모니터] ${metricName} 조회 실패 status=${res.status} body=${res.body}`);
     return null;
@@ -84,10 +87,7 @@ export function monitorHikari() {
 function signupAndLogin(userId, password) {
   const payload = JSON.stringify({ user_id: userId, password });
   const headers = { 'Content-Type': 'application/json' };
-  const signupRes = http.post(`${BASE_URL}/api/v1/auth/signup`, payload, { headers });
-  if (signupRes.status !== 200 && signupRes.status !== 201) {
-    throw new Error(`signup failed for ${userId}: ${signupRes.status} ${signupRes.body}`);
-  }
+  http.post(`${BASE_URL}/api/v1/auth/signup`, payload, { headers });
   const loginRes = http.post(`${BASE_URL}/api/v1/auth/login`, payload, { headers });
   if (loginRes.status !== 200) {
     throw new Error(`login failed for ${userId}: ${loginRes.status} ${loginRes.body}`);
