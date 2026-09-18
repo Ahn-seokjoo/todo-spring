@@ -1,6 +1,10 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
-import { Rate } from 'k6/metrics';
+import { Counter, Rate, Trend } from 'k6/metrics';
+
+// HikariCP 커넥션 풀 관찰용 폴링 간격(초). 테스트 내내 별도 VU 1개가 이 주기로
+// /actuator/metrics/hikaricp.connections.* 를 찔러서 hikari_pending/active_connections에 기록한다.
+const HIKARI_POLL_INTERVAL = Number(__ENV.HIKARI_POLL_INTERVAL || 0.25);
 
 // charge()의 maxAttempts vs LockManager의 retryCount 경쟁 테스트.
 // seller 1명의 todo를 buyer 여러 명이 동시 구매(-> seller 잔액 증가) + seller 본인 self-charge.
@@ -12,6 +16,9 @@ import { Rate } from 'k6/metrics';
 // own_todo_collision(자기 todo 재구매)은 테스트 풀 크기 때문에 생기는 harmless한 현상이라 무시해도 됨.
 
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:8080';
+// actuator는 보안상 메인 서비스 포트(8080)와 분리된 관리용 포트(127.0.0.1:8081)에서만 뜬다.
+// (management.server.port/address 설정, JwtAuthFilter는 8080 컨텍스트에만 걸려있음)
+const MANAGEMENT_BASE_URL = __ENV.MANAGEMENT_BASE_URL || 'http://localhost:8081';
 const PASSWORD = __ENV.PASSWORD || 'loadtest-pw-1234!';
 const RUN_ID = __ENV.RUN_ID || `${Date.now()}`;
 const TODO_PRICE = Number(__ENV.TODO_PRICE || 100);
@@ -31,14 +38,65 @@ export const chargeUnexpectedFailure = new Rate('charge_unexpected_failure');
 // pool이 작고 실행이 길어지면 buyer가 자기가 이미 산 todo를 또 사려는 시도가 생긴다.
 // 이건 앱 버그가 아니라 테스트 설계상의 harmless한 현상이라 별도로 분리해서 센다.
 export const buyOwnTodoCollision = new Rate('buy_own_todo_collision');
+// http_req_duration은 buy(요청 수가 훨씬 많음)와 charge(수가 적음) 응답시간이 한데 섞여서,
+// charge 쪽만의 tail latency(재시도로 인한 지연)가 percentile에 묻혀 안 보인다.
+// 그래서 각 흐름의 응답시간을 별도 Trend로 분리해서 기록한다.
+export const buyDuration = new Trend('buy_duration');
+export const chargeDuration = new Trend('charge_duration');
+// HikariCP 풀 상태를 매 폴링마다 기록 -> avg/max로 "테스트 도중 커넥션이 실제로 부족했는지" 확인.
+// Gauge가 아니라 Trend를 쓴 이유: Gauge는 마지막 값만 남기지만, 우리가 보고 싶은 건
+// 테스트 내내의 avg/max(특히 pending이 0보다 얼마나 자주/많이 올라갔는지)이기 때문.
+export const hikariPendingConnections = new Trend('hikari_pending_connections');
+export const hikariActiveConnections = new Trend('hikari_active_connections');
+// Trend에는 count 기반 threshold를 걸 수 없어서(값이 하나도 없으면 threshold 자체가 평가 안 됨),
+// actuator 폴링이 계속 실패해도 조용히 넘어가지 않도록 성공 횟수를 별도 Counter로 센다.
+export const hikariPendingSampleCount = new Counter('hikari_pending_sample_count');
+export const hikariActiveSampleCount = new Counter('hikari_active_sample_count');
 
 export const options = {
   setupTimeout: '120s', // pool 생성이 오래 걸릴 때 기본 60초 제한에 안 걸리게 여유를 둔다
+  summaryTrendStats: ['avg', 'min', 'med', 'max', 'p(90)', 'p(95)', 'p(99)'],
+  thresholds: {
+    hikari_pending_sample_count: ['count>0'],
+    hikari_active_sample_count: ['count>0'],
+  },
   scenarios: {
     buyers: { executor: 'constant-vus', exec: 'buyFlow', vus: BUYER_VUS, duration: DURATION },
     selfCharger: { executor: 'constant-vus', exec: 'selfChargeFlow', vus: CHARGER_VUS, duration: DURATION },
+    hikariMonitor: { executor: 'constant-vus', exec: 'monitorHikari', vus: 1, duration: DURATION },
   },
 };
+
+function readActuatorGaugeValue(metricName) {
+  const res = http.get(`${MANAGEMENT_BASE_URL}/actuator/metrics/${metricName}`);
+  if (res.status !== 200) {
+    console.error(`[hikari 모니터] ${metricName} 조회 실패 status=${res.status} body=${res.body}`);
+    return null;
+  }
+  try {
+    return res.json().measurements[0].value;
+  } catch (e) {
+    console.error(`[hikari 모니터] ${metricName} 파싱 실패 body=${res.body}`);
+    return null;
+  }
+}
+
+// buyers/selfCharger랑 동시에 같은 DURATION 동안 돌면서 커넥션 풀 상태를 계속 샘플링한다.
+export function monitorHikari() {
+  const pending = readActuatorGaugeValue('hikaricp.connections.pending');
+  if (pending !== null) {
+    hikariPendingConnections.add(pending);
+    hikariPendingSampleCount.add(1);
+  }
+
+  const active = readActuatorGaugeValue('hikaricp.connections.active');
+  if (active !== null) {
+    hikariActiveConnections.add(active);
+    hikariActiveSampleCount.add(1);
+  }
+
+  sleep(HIKARI_POLL_INTERVAL);
+}
 
 function signupAndLogin(userId, password) {
   const payload = JSON.stringify({ user_id: userId, password });
@@ -111,6 +169,7 @@ export function buyFlow(data) {
     JSON.stringify({ todo_id: todoId }),
     { headers: { Authorization: `Bearer ${buyerToken}`, 'Content-Type': 'application/json' } }
   );
+  buyDuration.add(res.timings.duration);
 
   const exhausted = res.status === 500;
   buyConflictExhausted.add(exhausted);
@@ -135,6 +194,7 @@ export function selfChargeFlow(data) {
     JSON.stringify({ amount: 10 }),
     { headers: { Authorization: `Bearer ${data.sellerToken}`, 'Content-Type': 'application/json' } }
   );
+  chargeDuration.add(res.timings.duration);
 
   const exhausted = res.status === 500;
   chargeConflictExhausted.add(exhausted);

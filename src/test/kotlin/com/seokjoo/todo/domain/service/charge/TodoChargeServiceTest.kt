@@ -2,6 +2,7 @@ package com.seokjoo.todo.domain.service.charge
 
 import com.seokjoo.todo.annotation.TodoTest
 import com.seokjoo.todo.domain.service.auth.TodoAuthService
+import com.seokjoo.todo.domain.service.balance.TodoBalanceService
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.transaction.annotation.Transactional
@@ -10,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional
 class TodoChargeServiceTest @Autowired constructor(
     private val todoAuthService: TodoAuthService,
     private val todoChargeService: TodoChargeService,
+    private val todoBalanceService: TodoBalanceService,
 ) {
     @Test
     @Transactional
@@ -21,6 +23,6 @@ class TodoChargeServiceTest @Autowired constructor(
 
         val resultUser = todoAuthService.findUserByUserId("pita")
 
-        assert(resultUser.currentBalance() == 1000L)
+        assert(todoBalanceService.getBalance(resultUser.userId) == 1000L)
     }
 }

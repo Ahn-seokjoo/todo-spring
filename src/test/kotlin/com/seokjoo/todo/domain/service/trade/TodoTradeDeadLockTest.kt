@@ -5,11 +5,13 @@ import com.seokjoo.todo.domain.entity.todouser.User
 import com.seokjoo.todo.domain.repository.todo.TodoRepository
 import com.seokjoo.todo.domain.repository.todouser.TodoAuthRepository
 import com.seokjoo.todo.domain.service.auth.TodoAuthService
+import com.seokjoo.todo.domain.service.balance.TodoBalanceService
 import com.seokjoo.todo.domain.service.charge.TodoChargeService
 import com.seokjoo.todo.domain.service.todo.TodoCreateServiceRequestDTO
 import com.seokjoo.todo.domain.service.todo.TodoPageServiceDTO
 import com.seokjoo.todo.domain.service.todo.TodoService
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.fail
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -30,12 +32,13 @@ class TodoTradeDeadLockTest @Autowired constructor(
     private val todoTradeService: TodoTradeService,
     private val todoRepository: TodoRepository,
     private val redisTemplate: RedisTemplate<String, Any>,
+    private val todoBalanceService: TodoBalanceService,
 ) {
     lateinit var user1Todos: List<Long>
     lateinit var user2Todos: List<Long>
 
     @Test
-    fun `유저가 서로의 Todo를 사려고 할 때 데드락이 발생한다`() {
+    fun `유저가 서로의 Todo를 사려고 할 때 데드락이 발생하지 않는다`() {
         val user1 = todoAuthService.findUserByUserId("pita1")
         val user2 = todoAuthService.findUserByUserId("pita2")
 
@@ -67,9 +70,15 @@ class TodoTradeDeadLockTest @Autowired constructor(
             })
         }
         startGate.countDown()
-        latch.await(60, TimeUnit.SECONDS)
-        val results = (user1Futures + user2Futures).map { runCatching { it.get(300, TimeUnit.SECONDS) } }
+        // CI 행 방지: 60초 내 미완료 시 즉시 실패 처리
+        val completedInTime = latch.await(60, TimeUnit.SECONDS)
+        if (!completedInTime) {
+            executor.shutdownNow()
+            fail<Unit>("60초 내에 모든 거래 스레드가 끝나지 않았습니다 (데드락 의심)")
+        }
+        val results = (user1Futures + user2Futures).map { runCatching { it.get(5, TimeUnit.SECONDS) } }
         executor.shutdown()
+        executor.awaitTermination(5, TimeUnit.SECONDS)
 
         val failures = results.mapNotNull { it.exceptionOrNull() }
 
@@ -83,7 +92,10 @@ class TodoTradeDeadLockTest @Autowired constructor(
         // 금액 정합성 체크
         val finalUser1 = todoAuthService.findUserByUserId("pita1")
         val finalUser2 = todoAuthService.findUserByUserId("pita2")
-        assertThat(finalUser1.currentBalance() + finalUser2.currentBalance()).isEqualTo(1_000_000L)
+        assertThat(
+            todoBalanceService.getBalance(finalUser1.userId) +
+                todoBalanceService.getBalance(finalUser2.userId)
+        ).isEqualTo(1_000_000L)
 
         // 완벽하게 둘이 교환완료했다면 개수도 동일
         val finalUser1Todos = todoAuthService.findUserWithTodosByUserId("pita1")

@@ -12,10 +12,6 @@ import org.springframework.stereotype.Repository
 interface TodoAuthRepository : JpaRepository<User, Long> {
     fun findUserByUserId(userId: String): User?
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("select u from User u where u.userId = :userId")
-    fun findUserByUserIdForUpdate(userId: String): User?
-
     @Query("select u from User u left join fetch u.todoList where u.userId = :userId")
     fun findUserWithTodosByUserId(@Param("userId") userId: String): User?
 }

@@ -1,7 +1,5 @@
 package com.seokjoo.todo.domain.entity.todouser
 
-import com.seokjoo.todo.common.exception.TodoException
-import com.seokjoo.todo.common.exception.TodoExceptionType
 import com.seokjoo.todo.domain.entity.BaseEntity
 import com.seokjoo.todo.domain.entity.todo.Todo
 import jakarta.persistence.CascadeType
@@ -13,8 +11,6 @@ import jakarta.persistence.Id
 import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
 import jakarta.persistence.UniqueConstraint
-import jakarta.persistence.Version
-import org.hibernate.annotations.ColumnDefault
 
 @Entity
 @Table(name = "todo_user", uniqueConstraints = [UniqueConstraint(name = "UC_user_id", columnNames = ["user_id"])])
@@ -35,29 +31,4 @@ class User(
     @Column(name = "todo_list", nullable = false)
     @OneToMany(cascade = [CascadeType.ALL], mappedBy = "owner", orphanRemoval = true)
     val todoList: MutableList<Todo> = mutableListOf(),
-
-    @Version
-    @Column(nullable = false)
-    @ColumnDefault(value = "0")
-    val version: Long = 0L
-) : BaseEntity() {
-    fun removeTodo(todo: Todo) {
-        todoList.remove(todo)
-    }
-
-    fun increaseBalance(balance: Long) {
-        money = money.increase(balance)
-    }
-
-    fun decreaseBalance(balance: Long) {
-        money = money.decrease(balance)
-    }
-
-    fun isAffordable(price: Long) {
-        check(currentBalance() >= price) { throw TodoException.of(TodoExceptionType.BALANCE_NOT_ENOUGH) }
-    }
-
-    fun needToCharge() = money.needToCharge()
-
-    fun currentBalance() = money.currentBalance()
-}
+) : BaseEntity()
