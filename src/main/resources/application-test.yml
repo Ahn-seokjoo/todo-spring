@@ -18,6 +18,8 @@ spring:
       use_sql_comments: true
     database: h2
     database-platform: org.hibernate.dialect.H2Dialect
+  flyway:
+    enabled: false # 테스트는 H2 인메모리 + ddl-auto(create-drop)로 스키마를 즉석 생성, 마이그레이션 검증 대상 아님
 
 logging:
   level:
