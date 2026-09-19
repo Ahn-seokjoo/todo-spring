@@ -1,9 +1,3 @@
-x-environment: &common_environment
-  TZ: Asia/Seoul
-  MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-  MYSQL_REPLICATION_USER: ${MYSQL_REPLICATION_USER}
-  MYSQL_REPLICATION_PASSWORD: ${MYSQL_REPLICATION_PASSWORD}
-
 services:
   redis:
     image: redis
@@ -13,33 +7,14 @@ services:
     image: bitnami/mysql
     container_name: mysql-master
     volumes:
-      - ./my_custom_master.cnf:/opt/bitnami/mysql/conf/my_custom.cnf:ro
       - mysql_primary_data:/bitnami/mysql/data
     restart: always
     environment:
-      <<: *common_environment
-      MYSQL_REPLICATION_MODE: master
+      TZ: Asia/Seoul
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_USER: $MYSQL_USERNAME
       MYSQL_PASSWORD: $MYSQL_PASSWORD
       MYSQL_DATABASE: $MYSQL_DATABASE
 
-  mysql-slave:
-    image: bitnami/mysql
-    container_name: mysql-slave
-    volumes:
-      - ./my_custom_slave.cnf:/opt/bitnami/mysql/conf/my_custom.cnf:ro
-      - mysql_standby_data:/bitnami/mysql/data
-    restart: always
-    expose:
-      - '3306'
-    depends_on:
-      - mysql-master
-    environment:
-      <<: *common_environment
-      MYSQL_REPLICATION_MODE: slave
-      MYSQL_MASTER_HOST: mysql-master
-      MYSQL_MASTER_ROOT_PASSWORD: $MYSQL_ROOT_PASSWORD
-
 volumes:
   mysql_primary_data:
-  mysql_standby_data:

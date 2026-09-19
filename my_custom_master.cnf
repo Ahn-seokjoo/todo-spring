@@ -1,5 +1,0 @@
-[mysqld]
-server-id=1
-log-bin=mysql-bin
-binlog-do-db=todo
-socket=/opt/bitnami/mysql/tmp/mysql.sock
