@@ -51,11 +51,14 @@ class TodoPurchaseTxService(
         // 상태 다시 AVAILABLE 하게 수정
         todoService.changeStatus(todoId = todo.id, status = TodoStatus.AVAILABLE)
 
-        // 주문 내역서 가지고옴
+        // 내역서 확인
         val purchase = todoPurchaseRepository.findByTodoIdAndPurchaseStatus(todoId, PurchaseStatus.PENDING)
             ?: throw TodoException.of(TodoExceptionType.CAN_NOT_FOUND_PURCHASE)
         val buyer = todoAuthService.findUserByUserId(purchase.buyerId)
-        purchase.purchaseStatus = PurchaseStatus.APPROVED
+
+        // 주문 내역서 업데이트
+        val updateSuccessCount = todoPurchaseRepository.updatePurchaseStatus(todoId, PurchaseStatus.APPROVED)
+        check(updateSuccessCount == 1L) { throw TodoException.of(TodoExceptionType.NOT_PENDING) }
 
         // todo owner 변경
         todoService.updateOwner(todoId = todoId, owner = buyer)
@@ -76,10 +79,12 @@ class TodoPurchaseTxService(
         // 상태 다시 AVAILABLE 하게 수정
         todoService.changeStatus(todoId = todo.id, status = TodoStatus.AVAILABLE)
 
-        // 주문 내역서 가지고옴
         val purchase = todoPurchaseRepository.findByTodoIdAndPurchaseStatus(todoId, PurchaseStatus.PENDING)
             ?: throw TodoException.of(TodoExceptionType.CAN_NOT_FOUND_PURCHASE)
-        purchase.purchaseStatus = PurchaseStatus.REJECTED
+
+        // 주문 내역서 업데이트
+        val updateSuccessCount = todoPurchaseRepository.updatePurchaseStatus(todoId, PurchaseStatus.REJECTED)
+        check(updateSuccessCount == 1L) { throw TodoException.of(TodoExceptionType.NOT_PENDING) }
 
         // buyer 잔액 다시 증가
         balanceService.increaseBalance(amount = todo.price, userId = purchase.buyerId)
@@ -94,14 +99,15 @@ class TodoPurchaseTxService(
         // AVAILABLE 이라면 굳이 아래 로직을 탈필요 없음
         check(todo.status != TodoStatus.AVAILABLE) { throw TodoException.of(TodoExceptionType.NOT_PENDING) }
 
-        // 주문 내역서 가지고옴
-        val purchase = todoPurchaseRepository.findByTodoIdAndPurchaseStatus(todoId, PurchaseStatus.PENDING)
-            ?: throw TodoException.of(TodoExceptionType.CAN_NOT_FOUND_PURCHASE)
-        check(purchase.buyerId == buyerId) { throw TodoException.of(TodoExceptionType.UNAUTHORIZED_TODO_ACCESS) }
-        purchase.purchaseStatus = PurchaseStatus.CANCELLED
-
         // 상태 다시 AVAILABLE 하게 수정
         todoService.changeStatus(todoId = todo.id, status = TodoStatus.AVAILABLE)
+
+        val purchase = todoPurchaseRepository.findByTodoIdAndPurchaseStatus(todoId, PurchaseStatus.PENDING)
+            ?: throw TodoException.of(TodoExceptionType.CAN_NOT_FOUND_PURCHASE)
+
+        // 주문 내역서 업데이트
+        val updateSuccessCount = todoPurchaseRepository.updatePurchaseStatus(todoId, PurchaseStatus.CANCELLED)
+        check(updateSuccessCount == 1L) { throw TodoException.of(TodoExceptionType.NOT_PENDING) }
 
         // buyer 잔액 다시 증가
         balanceService.increaseBalance(amount = todo.price, userId = purchase.buyerId)
