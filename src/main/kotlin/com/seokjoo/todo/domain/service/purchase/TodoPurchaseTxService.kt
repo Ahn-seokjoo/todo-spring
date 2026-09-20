@@ -48,13 +48,16 @@ class TodoPurchaseTxService(
         // AVAILABLE 이라면 굳이 아래 로직을 탈필요 없음
         check(todo.status != TodoStatus.AVAILABLE) { throw TodoException.of(TodoExceptionType.NOT_PENDING) }
 
-        // 상태 다시 AVAILABLE 하게 수정
-        todoService.changeStatus(todoId = todo.id, status = TodoStatus.AVAILABLE)
-
         // 내역서 확인
         val purchase = todoPurchaseRepository.findByTodoIdAndPurchaseStatus(todoId, PurchaseStatus.PENDING)
             ?: throw TodoException.of(TodoExceptionType.CAN_NOT_FOUND_PURCHASE)
+        check(purchase.sellerId == sellerId) {
+            throw TodoException.of(TodoExceptionType.UNAUTHORIZED_TODO_ACCESS)
+        }
         val buyer = todoAuthService.findUserByUserId(purchase.buyerId)
+
+        // 상태 다시 AVAILABLE 하게 수정
+        todoService.changeStatus(todoId = todo.id, status = TodoStatus.AVAILABLE)
 
         // 주문 내역서 업데이트
         val updateSuccessCount = todoPurchaseRepository.updatePurchaseStatus(todoId, PurchaseStatus.APPROVED)
@@ -100,12 +103,15 @@ class TodoPurchaseTxService(
         // AVAILABLE 이라면 굳이 아래 로직을 탈필요 없음
         check(todo.status != TodoStatus.AVAILABLE) { throw TodoException.of(TodoExceptionType.NOT_PENDING) }
 
-        // 상태 다시 AVAILABLE 하게 수정
-        todoService.changeStatus(todoId = todo.id, status = TodoStatus.AVAILABLE)
-
         // 업데이트 이전에 pending된 구매요청서 찾아옴
         val purchase = todoPurchaseRepository.findByTodoIdAndPurchaseStatus(todoId, PurchaseStatus.PENDING)
             ?: throw TodoException.of(TodoExceptionType.CAN_NOT_FOUND_PURCHASE)
+        check(purchase.buyerId == buyerId) {
+            throw TodoException.of(TodoExceptionType.YOU_ARE_NOT_BUYER)
+        }
+
+        // 상태 다시 AVAILABLE 하게 수정
+        todoService.changeStatus(todoId = todo.id, status = TodoStatus.AVAILABLE)
 
         // 주문 내역서 업데이트
         val updateSuccessCount = todoPurchaseRepository.updatePurchaseStatus(todoId, PurchaseStatus.CANCELLED)

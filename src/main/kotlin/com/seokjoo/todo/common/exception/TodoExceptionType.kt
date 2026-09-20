@@ -97,5 +97,10 @@ enum class TodoExceptionType(
         message = "판매중인 Todo로 수정할 수 없습니다.",
         errorCode = "TR005_PENDING",
         httpStatusCode = 400,
+    ),
+    YOU_ARE_NOT_BUYER(
+        message = "요청자만 취소할 수 있습니다",
+        errorCode = "TR006_YOU_ARE_NOT_BUYER",
+        httpStatusCode = 400,
     )
 }
