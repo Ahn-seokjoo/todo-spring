@@ -3,8 +3,10 @@ package com.seokjoo.todo.domain.service.purchase
 import com.seokjoo.todo.common.exception.TodoException
 import com.seokjoo.todo.common.exception.TodoExceptionType
 import com.seokjoo.todo.domain.entity.purchase.Purchase
+import com.seokjoo.todo.domain.entity.purchase.PurchaseStatus
 import com.seokjoo.todo.domain.entity.todo.TodoStatus
 import com.seokjoo.todo.domain.repository.purchase.TodoPurchaseRepository
+import com.seokjoo.todo.domain.service.auth.TodoAuthService
 import com.seokjoo.todo.domain.service.balance.TodoBalanceService
 import com.seokjoo.todo.domain.service.todo.TodoService
 import org.springframework.stereotype.Service
@@ -15,6 +17,7 @@ class TodoPurchaseTxService(
     private val todoService: TodoService,
     private val todoPurchaseRepository: TodoPurchaseRepository,
     private val balanceService: TodoBalanceService,
+    private val todoAuthService: TodoAuthService,
 ) {
     @Transactional
     fun purchaseTodo(todoId: Long, buyerId: String) {
@@ -34,5 +37,27 @@ class TodoPurchaseTxService(
 
         // buyer 잔액 선 차감
         balanceService.decreaseBalance(amount = todo.price, userId = buyerId)
+    }
+
+    @Transactional
+    fun approvePurchaseTodo(todoId: Long, sellerId: String) {
+        // 자신의 Todo 인지 체크
+        val todo = todoService.getTodoById(todoId)
+        check(todo.ownerId == sellerId) { throw TodoException.of(TodoExceptionType.UNAUTHORIZED_TODO_ACCESS) }
+
+        // 주문 내역서 가지고옴
+        val purchase = todoPurchaseRepository.findByTodoIdAndPurchaseStatus(todoId, PurchaseStatus.PENDING)
+            ?: throw TodoException.of(TodoExceptionType.CAN_NOT_FOUND_PURCHASE)
+        val buyer = todoAuthService.findUserByUserId(purchase.buyerId)
+        purchase.purchaseStatus = PurchaseStatus.APPROVED
+
+        // 상태 다시 AVAILABLE 하게 수정
+        todoService.changeStatus(todoId = todo.id, status = TodoStatus.AVAILABLE)
+
+        // todo owner 변경
+        todoService.updateOwner(todoId = todoId, owner = buyer)
+
+        // seller 금액 증가
+        balanceService.increaseBalance(amount = todo.price, userId = sellerId)
     }
 }

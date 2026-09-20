@@ -23,4 +23,13 @@ class TodoPurchaseController(
         val buyerId = authService.getSubject(servletRequest.getBearerToken())
         todoPurchaseService.purchaseTodo(todoId = todoId, buyerId = buyerId)
     }
+
+    @PostMapping("/purchase/{todoId}/approve")
+    fun approve(
+        servletRequest: HttpServletRequest,
+        @PathVariable("todoId") todoId: Long,
+    ) {
+        val sellerId = authService.getSubject(servletRequest.getBearerToken())
+        todoPurchaseService.approvePurchaseTodo(todoId = todoId, sellerId = sellerId)
+    }
 }

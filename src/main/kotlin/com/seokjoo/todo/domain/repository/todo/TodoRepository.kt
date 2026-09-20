@@ -4,6 +4,7 @@ import com.seokjoo.todo.domain.entity.todo.Todo
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Slice
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
@@ -24,4 +25,12 @@ interface TodoRepository : JpaRepository<Todo, Long> {
 
     @Query("select t.price from Todo t where t.id = :todoId")
     fun findTodoPriceByTodoId(todoId: Long): Long?
+
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("update Todo t set t.status = 'PENDING_APPROVAL' where t.id = :todoId And t.status == 'AVAILABLE'")
+    fun updateTodoStatusPendingIfAvailable(todoId: Long): Long
+
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("update Todo t set t.status = 'AVAILABLE' where t.id = :todoId And t.status == 'PENDING_APPROVAL'")
+    fun updateTodoStatusAvailableIfPending(todoId: Long): Long
 }

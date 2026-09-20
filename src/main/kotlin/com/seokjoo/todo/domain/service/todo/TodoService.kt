@@ -116,7 +116,11 @@ class TodoService(
     @CacheEvict(value = ["todo"], key = "#todoId")
     fun changeStatus(todoId: Long, status: TodoStatus) {
         val todo = todoRepository.findByIdOrNull(todoId) ?: throw TodoException.of(TodoExceptionType.NOT_EXISTED_TODO)
-        todo.updateStatus(status)
+        val successCount = when (status) {
+            TodoStatus.PENDING_APPROVAL -> todoRepository.updateTodoStatusPendingIfAvailable(todo.id)
+            TodoStatus.AVAILABLE -> todoRepository.updateTodoStatusAvailableIfPending(todo.id)
+        }
+        if (successCount == 0L) throw TodoException.of(TodoExceptionType.CAN_NOT_PERFORM_UPDATE_STATUS)
     }
 
     private fun checkExistAndAddCategory(

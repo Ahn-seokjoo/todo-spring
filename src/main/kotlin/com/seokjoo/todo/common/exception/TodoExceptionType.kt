@@ -77,5 +77,15 @@ enum class TodoExceptionType(
         message = "이미 구매 대기중인 Todo 입니다.",
         errorCode = "TR001_CAN_NOT_PURCHASE",
         httpStatusCode = 400
+    ),
+    CAN_NOT_FOUND_PURCHASE(
+        message = "주문 내역이 없습니다",
+        errorCode = "TR002_CAN_NOT_FOUND_PURCHASE",
+        httpStatusCode = 400,
+    ),
+    CAN_NOT_PERFORM_UPDATE_STATUS(
+        message = "상태 업데이트 실패",
+        errorCode = "TR003_CAN_NOT_PERFORM_UPDATE_STATUS",
+        httpStatusCode = 500,
     )
 }

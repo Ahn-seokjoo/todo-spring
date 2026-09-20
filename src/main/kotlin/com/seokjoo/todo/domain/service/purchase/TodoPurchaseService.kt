@@ -13,4 +13,10 @@ class TodoPurchaseService(
             todoPurchaseTxService.purchaseTodo(todoId, buyerId)
         }
     }
+
+    fun approvePurchaseTodo(todoId: Long, sellerId: String) {
+        redisLockManager.tryLock(key = todoId.toString()) {
+            todoPurchaseTxService.approvePurchaseTodo(todoId, sellerId)
+        }
+    }
 }
