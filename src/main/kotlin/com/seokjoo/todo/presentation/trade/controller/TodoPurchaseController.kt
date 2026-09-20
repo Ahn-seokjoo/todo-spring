@@ -41,4 +41,13 @@ class TodoPurchaseController(
         val sellerId = authService.getSubject(servletRequest.getBearerToken())
         todoPurchaseService.rejectPurchaseTodo(todoId = todoId, sellerId = sellerId)
     }
+
+    @PostMapping("/purchase/{todoId}/cancel")
+    fun cancel(
+        servletRequest: HttpServletRequest,
+        @PathVariable("todoId") todoId: Long,
+    ) {
+        val buyerId = authService.getSubject(servletRequest.getBearerToken())
+        todoPurchaseService.cancelPurchaseTodo(todoId = todoId, buyerId = buyerId)
+    }
 }

@@ -84,4 +84,26 @@ class TodoPurchaseTxService(
         // buyer 잔액 다시 증가
         balanceService.increaseBalance(amount = todo.price, userId = purchase.buyerId)
     }
+
+    @Transactional
+    fun cancelPurchaseTodo(todoId: Long, buyerId: String) {
+        // 자신의 Todo 인지 체크
+        val todo = todoService.getTodoById(todoId)
+        check(todo.ownerId != buyerId) { throw TodoException.of(TodoExceptionType.CAN_NOT_CANCEL_OWN_TODO) }
+
+        // AVAILABLE 이라면 굳이 아래 로직을 탈필요 없음
+        check(todo.status != TodoStatus.AVAILABLE) { throw TodoException.of(TodoExceptionType.NOT_PENDING) }
+
+        // 주문 내역서 가지고옴
+        val purchase = todoPurchaseRepository.findByTodoIdAndPurchaseStatus(todoId, PurchaseStatus.PENDING)
+            ?: throw TodoException.of(TodoExceptionType.CAN_NOT_FOUND_PURCHASE)
+        check(purchase.buyerId == buyerId) { throw TodoException.of(TodoExceptionType.UNAUTHORIZED_TODO_ACCESS) }
+        purchase.purchaseStatus = PurchaseStatus.CANCELLED
+
+        // 상태 다시 AVAILABLE 하게 수정
+        todoService.changeStatus(todoId = todo.id, status = TodoStatus.AVAILABLE)
+
+        // buyer 잔액 다시 증가
+        balanceService.increaseBalance(amount = todo.price, userId = purchase.buyerId)
+    }
 }
