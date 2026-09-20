@@ -92,5 +92,10 @@ enum class TodoExceptionType(
         message = "자신의 Todo 판매를 취소할 수 없습니다.",
         errorCode = "TR004_CAN_NOT_CANCEL_OWN_TODO",
         httpStatusCode = 400
+    ),
+    PENDING(
+        message = "판매중인 Todo로 수정할 수 없습니다.",
+        errorCode = "TR005_PENDING",
+        httpStatusCode = 400,
     )
 }

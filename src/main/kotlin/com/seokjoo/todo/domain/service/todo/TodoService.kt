@@ -67,6 +67,9 @@ class TodoService(
         check(isOwner(todo.owner.userId, userId)) {
             throw TodoException.of(TodoExceptionType.UNAUTHORIZED_TODO_ACCESS)
         }
+        check(todo.status == TodoStatus.AVAILABLE) {
+            throw TodoException.of(TodoExceptionType.PENDING)
+        }
         todo.todoUpdateApply(request)
         // 더티 체킹으로 save 할 필요 없지만 그냥 명시적으로 해줌
         todoRepository.save(todo)
@@ -87,6 +90,9 @@ class TodoService(
         check(isOwner(todo.owner.userId, userId)) {
             throw TodoException.of(TodoExceptionType.UNAUTHORIZED_TODO_ACCESS)
         }
+        check(todo.status == TodoStatus.AVAILABLE) {
+            throw TodoException.of(TodoExceptionType.PENDING)
+        }
 
         todoDeleteService.deleteTodo(todo)
     }
@@ -100,6 +106,9 @@ class TodoService(
     )
     fun updateOwner(todoId: Long, owner: User): TodoServiceResponseDTO {
         val todo = todoRepository.findByIdOrNull(todoId) ?: throw TodoException.of(TodoExceptionType.NOT_EXISTED_TODO)
+        check(todo.status == TodoStatus.AVAILABLE) {
+            throw TodoException.of(TodoExceptionType.PENDING)
+        }
         todo.updateOwner(owner)
         todoRepository.save(todo)
 
