@@ -77,7 +77,7 @@ class TodoTradeConcurrencyTest @Autowired constructor(
     fun `10명이 같은 todo를 동시에 구매할 때 모두 다 구매가 잘된다`() {
         val userList = (10..19).map {
             val user = User("pita$it", "pita$it")
-            todoAuthService.signUp(user.userId, user.password)
+            todoAuthService.signUp(user.userId, user.password, email = "abc@nav.com")
             val token = todoAuthService.login(user.userId, user.password)
             todoChargeService.charge(500L, user.userId)
             todoAuthService.findUser(token.accessToken)
@@ -121,8 +121,8 @@ class TodoTradeConcurrencyTest @Autowired constructor(
     @Test
     fun `동시에 같은 todo를 두 구매자가 노려도 이중지급 없이 순차적으로만 처리된다`() {
         // buyer1, buyer2 생성 - 둘 다 500원 보유
-        todoAuthService.signUp("buyer1", "buyer1")
-        todoAuthService.signUp("buyer2", "buyer2")
+        todoAuthService.signUp("buyer1", "buyer1", email = "abc@nav.com")
+        todoAuthService.signUp("buyer2", "buyer2", email = "abc@nav.com")
         val user1 = todoAuthService.findUserByUserId("buyer1")
         val user2 = todoAuthService.findUserByUserId("buyer2")
         todoChargeService.charge(500L, user1.userId)
@@ -211,8 +211,8 @@ class TodoTradeConcurrencyTest @Autowired constructor(
 
         val signUpUser1 = User("pita1", "pita1")
         val signUpUser2 = User("pita2", "pita2")
-        todoAuthService.signUp(signUpUser1.userId, signUpUser1.password)
-        todoAuthService.signUp(signUpUser2.userId, signUpUser2.password)
+        todoAuthService.signUp(signUpUser1.userId, signUpUser1.password, email = "abc@nav.com")
+        todoAuthService.signUp(signUpUser2.userId, signUpUser2.password, email = "abc@nav.com")
 
         // 유저2 500원 충전
         val user2 = todoAuthService.findUserByUserId(signUpUser2.userId)

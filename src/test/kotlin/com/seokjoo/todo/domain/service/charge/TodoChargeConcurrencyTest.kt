@@ -137,10 +137,10 @@ class TodoChargeConcurrencyTest @Autowired constructor(
         val keys = redisTemplate.keys("*")
         redisTemplate.delete(keys)
 
-        val user1 = User("pita1", "pita1")
-        val user2 = User("pita2", "pita2")
-        todoAuthService.signUp(user1.userId, user1.password)
-        todoAuthService.signUp(user2.userId, user2.password)
+        val user1 = User("pita1", "pita1", email = "abc@nav.com")
+        val user2 = User("pita2", "pita2", email = "abc@nav.com")
+        todoAuthService.signUp(user1.userId, user1.password, user1.email!!)
+        todoAuthService.signUp(user2.userId, user2.password, user2.email!!)
         chargeService.charge(5_000L, user2.userId)
     }
 

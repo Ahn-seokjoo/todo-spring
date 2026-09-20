@@ -18,10 +18,10 @@ class TodoAuthService(
     private val todoAuthRepository: TodoAuthRepository,
 ) {
     @Transactional
-    fun signUp(userId: String, password: String) {
+    fun signUp(userId: String, password: String, email: String) {
         todoAuthRepository.findUserByUserId(userId) ?: run {
             val encodedPassword = encryptor.encrypt(password)
-            val user = User(userId = userId, password = encodedPassword)
+            val user = User(userId = userId, password = encodedPassword, email = email)
             todoAuthRepository.save(user)
             return
         }

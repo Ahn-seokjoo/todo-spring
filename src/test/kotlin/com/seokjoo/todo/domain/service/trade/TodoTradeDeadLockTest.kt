@@ -117,8 +117,8 @@ class TodoTradeDeadLockTest @Autowired constructor(
 
         val signUpUser1 = User("pita1", "pita1")
         val signUpUser2 = User("pita2", "pita2")
-        todoAuthService.signUp(signUpUser1.userId, signUpUser1.password)
-        todoAuthService.signUp(signUpUser2.userId, signUpUser2.password)
+        todoAuthService.signUp(signUpUser1.userId, signUpUser1.password, email = "abc@nav.com")
+        todoAuthService.signUp(signUpUser2.userId, signUpUser2.password, email = "abc@nav.com")
 
         // 유저 1,2  충전
         val user1 = todoAuthService.findUserByUserId(signUpUser1.userId)

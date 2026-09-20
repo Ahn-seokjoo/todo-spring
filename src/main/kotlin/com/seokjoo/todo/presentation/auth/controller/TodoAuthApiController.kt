@@ -4,6 +4,7 @@ import com.seokjoo.todo.common.jwt.getBearerToken
 import com.seokjoo.todo.domain.service.auth.TodoAuthService
 import com.seokjoo.todo.presentation.auth.dto.TodoAuthDeleteRequest
 import com.seokjoo.todo.presentation.auth.dto.TodoAuthLoginRequest
+import com.seokjoo.todo.presentation.auth.dto.TodoAuthSignUpRequest
 import com.seokjoo.todo.presentation.auth.dto.TodoAuthLoginResponse
 import com.seokjoo.todo.presentation.auth.dto.TodoAuthRefreshTokenRequest
 import com.seokjoo.todo.presentation.auth.dto.TodoAuthRefreshTokenResponse
@@ -29,8 +30,8 @@ class TodoAuthApiController(
         responseCode = "200",
         description = "회원 가입",
     )
-    fun signup(@RequestBody @Valid request: TodoAuthLoginRequest): ResponseEntity<String> {
-        authService.signUp(request.userId, request.password)
+    fun signup(@RequestBody @Valid request: TodoAuthSignUpRequest): ResponseEntity<String> {
+        authService.signUp(request.userId, request.password, request.email)
         return ResponseEntity.ok("회원가입 성공!")
     }
 
