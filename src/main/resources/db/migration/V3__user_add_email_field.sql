@@ -1,0 +1,2 @@
+ALTER TABLE `todo_user`
+    ADD COLUMN email VARCHAR(255) DEFAULT NULL;

@@ -31,4 +31,7 @@ class User(
     @Column(name = "todo_list", nullable = false)
     @OneToMany(cascade = [CascadeType.ALL], mappedBy = "owner", orphanRemoval = true)
     val todoList: MutableList<Todo> = mutableListOf(),
+
+    @Column(name = "email")
+    var email: String? = null,
 ) : BaseEntity()
