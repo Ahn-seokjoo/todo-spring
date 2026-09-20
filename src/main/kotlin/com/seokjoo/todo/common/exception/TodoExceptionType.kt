@@ -73,4 +73,9 @@ enum class TodoExceptionType(
         errorCode = "TR000_CAN_NOT_TRADE_TODO",
         httpStatusCode = 400
     ),
+    CAN_NOT_PURCHASE(
+        message = "이미 구매 대기중인 Todo 입니다.",
+        errorCode = "TR001_CAN_NOT_PURCHASE",
+        httpStatusCode = 400
+    )
 }

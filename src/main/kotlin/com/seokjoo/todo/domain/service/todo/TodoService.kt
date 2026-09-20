@@ -3,6 +3,7 @@ package com.seokjoo.todo.domain.service.todo
 import com.seokjoo.todo.common.exception.TodoException
 import com.seokjoo.todo.common.exception.TodoExceptionType
 import com.seokjoo.todo.domain.entity.todo.Todo
+import com.seokjoo.todo.domain.entity.todo.TodoStatus
 import com.seokjoo.todo.domain.entity.todouser.User
 import com.seokjoo.todo.domain.repository.todo.TodoRepository
 import com.seokjoo.todo.domain.service.category.CategoryService
@@ -109,6 +110,13 @@ class TodoService(
     fun getTodoCounts(owner: User): Long {
         val count = todoRepository.countByOwnerId(ownerId = owner.userId)
         return count
+    }
+
+    @Transactional
+    @CacheEvict(value = ["todo"], key = "#todoId")
+    fun changeStatus(todoId: Long, status: TodoStatus) {
+        val todo = todoRepository.findByIdOrNull(todoId) ?: throw TodoException.of(TodoExceptionType.NOT_EXISTED_TODO)
+        todo.updateStatus(status)
     }
 
     private fun checkExistAndAddCategory(

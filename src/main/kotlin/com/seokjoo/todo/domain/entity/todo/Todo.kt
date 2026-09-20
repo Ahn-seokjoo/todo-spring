@@ -73,6 +73,10 @@ class Todo(
         this.owner = owner
     }
 
+    fun updateStatus(status: TodoStatus) {
+        this.status = status
+    }
+
     fun copy(
         todo: String? = null,
         isDone: Boolean? = null,

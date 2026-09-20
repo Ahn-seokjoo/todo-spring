@@ -3,6 +3,7 @@ package com.seokjoo.todo.domain.service.todo
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.seokjoo.todo.domain.entity.todo.Todo
+import com.seokjoo.todo.domain.entity.todo.TodoStatus
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "@class")
 data class TodoServiceResponseDTO(
@@ -13,6 +14,7 @@ data class TodoServiceResponseDTO(
     val categories: List<String> = emptyList(),
     val ownerId: String,
     val price: Long,
+    val status: TodoStatus = TodoStatus.AVAILABLE,
 ) {
     companion object {
         fun from(todo: Todo) = TodoServiceResponseDTO(
@@ -22,6 +24,7 @@ data class TodoServiceResponseDTO(
             categories = todo.todoCategories.map { it.category?.name.orEmpty() },
             ownerId = todo.owner.userId,
             price = todo.price,
+            status = todo.status,
         )
     }
 }
