@@ -281,7 +281,7 @@ class TodoE2ETest @Autowired constructor(
 
     @BeforeAll
     fun beforeAll() {
-        loginService.signUp("pita", "pita", email ="abc@nav.com")
+        loginService.signUp("pita", "pita", email = "abc@nav.com")
         createHeader(loginService.login("pita", "pita"))
     }
 
