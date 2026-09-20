@@ -120,7 +120,7 @@ class TodoService(
             TodoStatus.PENDING_APPROVAL -> todoRepository.updateTodoStatusPendingIfAvailable(todo.id)
             TodoStatus.AVAILABLE -> todoRepository.updateTodoStatusAvailableIfPending(todo.id)
         }
-        if (successCount == 0L) throw TodoException.of(TodoExceptionType.CAN_NOT_PERFORM_UPDATE_STATUS)
+        if (successCount == 0L) throw TodoException.of(TodoExceptionType.NOT_PENDING)
     }
 
     private fun checkExistAndAddCategory(

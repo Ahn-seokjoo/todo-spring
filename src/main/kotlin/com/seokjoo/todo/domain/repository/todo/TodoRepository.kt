@@ -27,10 +27,10 @@ interface TodoRepository : JpaRepository<Todo, Long> {
     fun findTodoPriceByTodoId(todoId: Long): Long?
 
     @Modifying(flushAutomatically = true, clearAutomatically = true)
-    @Query("update Todo t set t.status = 'PENDING_APPROVAL' where t.id = :todoId And t.status == 'AVAILABLE'")
+    @Query("update Todo t set t.status = 'PENDING_APPROVAL' where t.id = :todoId And t.status = 'AVAILABLE'")
     fun updateTodoStatusPendingIfAvailable(todoId: Long): Long
 
     @Modifying(flushAutomatically = true, clearAutomatically = true)
-    @Query("update Todo t set t.status = 'AVAILABLE' where t.id = :todoId And t.status == 'PENDING_APPROVAL'")
+    @Query("update Todo t set t.status = 'AVAILABLE' where t.id = :todoId And t.status = 'PENDING_APPROVAL'")
     fun updateTodoStatusAvailableIfPending(todoId: Long): Long
 }

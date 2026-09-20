@@ -45,19 +45,43 @@ class TodoPurchaseTxService(
         val todo = todoService.getTodoById(todoId)
         check(todo.ownerId == sellerId) { throw TodoException.of(TodoExceptionType.UNAUTHORIZED_TODO_ACCESS) }
 
+        // AVAILABLE 이라면 굳이 아래 로직을 탈필요 없음
+        check(todo.status != TodoStatus.AVAILABLE) { throw TodoException.of(TodoExceptionType.NOT_PENDING) }
+
+        // 상태 다시 AVAILABLE 하게 수정
+        todoService.changeStatus(todoId = todo.id, status = TodoStatus.AVAILABLE)
+
         // 주문 내역서 가지고옴
         val purchase = todoPurchaseRepository.findByTodoIdAndPurchaseStatus(todoId, PurchaseStatus.PENDING)
             ?: throw TodoException.of(TodoExceptionType.CAN_NOT_FOUND_PURCHASE)
         val buyer = todoAuthService.findUserByUserId(purchase.buyerId)
         purchase.purchaseStatus = PurchaseStatus.APPROVED
 
-        // 상태 다시 AVAILABLE 하게 수정
-        todoService.changeStatus(todoId = todo.id, status = TodoStatus.AVAILABLE)
-
         // todo owner 변경
         todoService.updateOwner(todoId = todoId, owner = buyer)
 
         // seller 금액 증가
         balanceService.increaseBalance(amount = todo.price, userId = sellerId)
+    }
+
+    @Transactional
+    fun rejectPurchaseTodo(todoId: Long, sellerId: String) {
+        // 자신의 Todo 인지 체크
+        val todo = todoService.getTodoById(todoId)
+        check(todo.ownerId == sellerId) { throw TodoException.of(TodoExceptionType.UNAUTHORIZED_TODO_ACCESS) }
+
+        // AVAILABLE 이라면 굳이 아래 로직을 탈필요 없음
+        check(todo.status != TodoStatus.AVAILABLE) { throw TodoException.of(TodoExceptionType.NOT_PENDING) }
+
+        // 상태 다시 AVAILABLE 하게 수정
+        todoService.changeStatus(todoId = todo.id, status = TodoStatus.AVAILABLE)
+
+        // 주문 내역서 가지고옴
+        val purchase = todoPurchaseRepository.findByTodoIdAndPurchaseStatus(todoId, PurchaseStatus.PENDING)
+            ?: throw TodoException.of(TodoExceptionType.CAN_NOT_FOUND_PURCHASE)
+        purchase.purchaseStatus = PurchaseStatus.REJECTED
+
+        // buyer 잔액 다시 증가
+        balanceService.increaseBalance(amount = todo.price, userId = purchase.buyerId)
     }
 }
