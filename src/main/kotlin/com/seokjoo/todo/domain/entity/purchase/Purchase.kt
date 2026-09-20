@@ -19,7 +19,7 @@ class Purchase(
     @Column(name = "buyer_id", nullable = false)
     val buyerId: String,
 
-    @Column(name = "todo_id", nullable = false, unique = true)
+    @Column(name = "todo_id", nullable = false)
     val todoId: Long,
 
     @Column(name = "price", nullable = false)
