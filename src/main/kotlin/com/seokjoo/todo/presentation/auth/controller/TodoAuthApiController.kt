@@ -30,7 +30,7 @@ class TodoAuthApiController(
         description = "회원 가입",
     )
     fun signup(@RequestBody @Valid request: TodoAuthLoginRequest): ResponseEntity<String> {
-        authService.signUp(request.userId, request.password)
+        authService.signUp(request.userId, request.password, request.email)
         return ResponseEntity.ok("회원가입 성공!")
     }
 

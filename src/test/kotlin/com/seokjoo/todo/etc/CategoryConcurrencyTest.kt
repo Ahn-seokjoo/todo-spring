@@ -26,7 +26,7 @@ class CategoryConcurrencyTest @Autowired constructor(
         categoryRepository.deleteAll()
         todoCategoryRepository.deleteAll()
         todoRepository.deleteAll()
-        todoAuthService.signUp("pita", "pita")
+        todoAuthService.signUp("pita", "pita", email ="abc@nav.com")
     }
 
     @Test
