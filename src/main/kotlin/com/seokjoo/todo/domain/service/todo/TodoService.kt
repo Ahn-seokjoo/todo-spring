@@ -122,13 +122,18 @@ class TodoService(
     }
 
     @Transactional
-    @CacheEvict(value = ["todo"], key = "#todoId")
+    @Caching(
+        evict = [
+            CacheEvict(value = ["todo"], key = "#todoId"),
+            CacheEvict(value = ["todos"], allEntries = true),
+        ]
+    )
     fun changeStatus(todoId: Long, status: TodoStatus) {
         val successCount = when (status) {
             TodoStatus.PENDING_APPROVAL -> todoRepository.updateTodoStatusPendingIfAvailable(todoId)
             TodoStatus.AVAILABLE -> todoRepository.updateTodoStatusAvailableIfPending(todoId)
         }
-        if (successCount == 0L) throw TodoException.of(TodoExceptionType.NOT_PENDING)
+        if (successCount == 0) throw TodoException.of(TodoExceptionType.NOT_PENDING)
     }
 
     private fun checkExistAndAddCategory(

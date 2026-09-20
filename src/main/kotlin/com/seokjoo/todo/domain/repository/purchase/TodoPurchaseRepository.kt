@@ -13,5 +13,5 @@ interface TodoPurchaseRepository : JpaRepository<Purchase, Long> {
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("update Purchase p set p.purchaseStatus = :purchaseStatus where p.todoId = :todoId and p.purchaseStatus = 'PENDING'")
-    fun updatePurchaseStatus(todoId: Long, purchaseStatus: PurchaseStatus): Long
+    fun updatePurchaseStatus(todoId: Long, purchaseStatus: PurchaseStatus): Int
 }

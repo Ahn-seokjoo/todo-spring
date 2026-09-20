@@ -58,7 +58,7 @@ class TodoPurchaseTxService(
 
         // 주문 내역서 업데이트
         val updateSuccessCount = todoPurchaseRepository.updatePurchaseStatus(todoId, PurchaseStatus.APPROVED)
-        check(updateSuccessCount == 1L) { throw TodoException.of(TodoExceptionType.NOT_PENDING) }
+        check(updateSuccessCount == 1) { throw TodoException.of(TodoExceptionType.NOT_PENDING) }
 
         // todo owner 변경
         todoService.updateOwner(todoId = todoId, owner = buyer)
@@ -79,12 +79,13 @@ class TodoPurchaseTxService(
         // 상태 다시 AVAILABLE 하게 수정
         todoService.changeStatus(todoId = todo.id, status = TodoStatus.AVAILABLE)
 
+        // 업데이트 이전에 pending된 구매요청서 찾아옴
         val purchase = todoPurchaseRepository.findByTodoIdAndPurchaseStatus(todoId, PurchaseStatus.PENDING)
             ?: throw TodoException.of(TodoExceptionType.CAN_NOT_FOUND_PURCHASE)
 
         // 주문 내역서 업데이트
         val updateSuccessCount = todoPurchaseRepository.updatePurchaseStatus(todoId, PurchaseStatus.REJECTED)
-        check(updateSuccessCount == 1L) { throw TodoException.of(TodoExceptionType.NOT_PENDING) }
+        check(updateSuccessCount == 1) { throw TodoException.of(TodoExceptionType.NOT_PENDING) }
 
         // buyer 잔액 다시 증가
         balanceService.increaseBalance(amount = todo.price, userId = purchase.buyerId)
@@ -102,12 +103,13 @@ class TodoPurchaseTxService(
         // 상태 다시 AVAILABLE 하게 수정
         todoService.changeStatus(todoId = todo.id, status = TodoStatus.AVAILABLE)
 
+        // 업데이트 이전에 pending된 구매요청서 찾아옴
         val purchase = todoPurchaseRepository.findByTodoIdAndPurchaseStatus(todoId, PurchaseStatus.PENDING)
             ?: throw TodoException.of(TodoExceptionType.CAN_NOT_FOUND_PURCHASE)
 
         // 주문 내역서 업데이트
         val updateSuccessCount = todoPurchaseRepository.updatePurchaseStatus(todoId, PurchaseStatus.CANCELLED)
-        check(updateSuccessCount == 1L) { throw TodoException.of(TodoExceptionType.NOT_PENDING) }
+        check(updateSuccessCount == 1) { throw TodoException.of(TodoExceptionType.NOT_PENDING) }
 
         // buyer 잔액 다시 증가
         balanceService.increaseBalance(amount = todo.price, userId = purchase.buyerId)
