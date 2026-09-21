@@ -2,6 +2,7 @@ package com.seokjoo.todo.presentation.todo.controller
 
 import com.seokjoo.todo.common.jwt.getBearerToken
 import com.seokjoo.todo.domain.service.auth.TodoAuthService
+import com.seokjoo.todo.domain.service.todo.TodoRetryableService
 import com.seokjoo.todo.domain.service.todo.TodoService
 import com.seokjoo.todo.presentation.todo.dto.request.TodoPageRequest
 import com.seokjoo.todo.presentation.todo.dto.request.TodoPatchRequest
@@ -48,6 +49,7 @@ import java.net.URI
 @RequestMapping("/api/v1")
 class TodoApiController(
     private val todoService: TodoService,
+    private val todoRetryableService: TodoRetryableService,
     private val authService: TodoAuthService,
 ) {
 
@@ -104,7 +106,8 @@ class TodoApiController(
     ): ResponseEntity<TodoResponse> {
         val user = authService.findUser(servletRequest.getBearerToken())
         val todo =
-            todoService.updateTodo(todoId = id, userId = user.userId, request = request.toPatchRequest()).toResponse()
+            todoRetryableService.updateTodo(todoId = id, userId = user.userId, request = request.toPatchRequest())
+                .toResponse()
         return ResponseEntity.ok(todo)
     }
 
@@ -117,7 +120,8 @@ class TodoApiController(
     ): ResponseEntity<TodoResponse> {
         val user = authService.findUser(servletRequest.getBearerToken())
         val todo =
-            todoService.updateTodo(todoId = id, userId = user.userId, request = request.toUpdateRequest()).toResponse()
+            todoRetryableService.updateTodo(todoId = id, userId = user.userId, request = request.toUpdateRequest())
+                .toResponse()
         return ResponseEntity.ok(todo)
     }
 
@@ -130,7 +134,7 @@ class TodoApiController(
     )
     fun deleteTodo(servletRequest: HttpServletRequest, @PathVariable id: Long): ResponseEntity<String> {
         val user = authService.findUser(servletRequest.getBearerToken())
-        todoService.deleteTodo(todoId = id, userId = user.userId)
+        todoRetryableService.deleteTodo(todoId = id, userId = user.userId)
         return ResponseEntity.noContent().build()
     }
 }
