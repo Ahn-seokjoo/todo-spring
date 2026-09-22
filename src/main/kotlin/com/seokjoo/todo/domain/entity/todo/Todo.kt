@@ -8,6 +8,8 @@ import com.seokjoo.todo.domain.service.todo.TodoUpdateServiceRequestDTO
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
 import jakarta.persistence.FetchType
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
@@ -37,6 +39,10 @@ class Todo(
 
     @ManyToOne(fetch = FetchType.LAZY)
     var owner: User,
+
+    @Column(name = "todo_status", nullable = false)
+    @Enumerated(EnumType.STRING)
+    var status: TodoStatus = TodoStatus.AVAILABLE,
 
     @Version
     @Column(nullable = false)
@@ -74,6 +80,7 @@ class Todo(
         id: Long? = null,
         owner: User? = null,
         price: Long? = null,
+        status: TodoStatus? = null,
     ) = Todo(
         todo = todo ?: this.todo,
         isDone = isDone ?: this.isDone,
@@ -81,5 +88,6 @@ class Todo(
         id = id ?: this.id,
         owner = owner ?: this.owner,
         price = price ?: this.price,
+        status = status ?: this.status,
     )
 }

@@ -73,4 +73,34 @@ enum class TodoExceptionType(
         errorCode = "TR000_CAN_NOT_TRADE_TODO",
         httpStatusCode = 400
     ),
+    CAN_NOT_PURCHASE(
+        message = "이미 구매 대기중인 Todo 입니다.",
+        errorCode = "TR001_CAN_NOT_PURCHASE",
+        httpStatusCode = 400
+    ),
+    CAN_NOT_FOUND_PURCHASE(
+        message = "주문 내역이 없습니다.",
+        errorCode = "TR002_CAN_NOT_FOUND_PURCHASE",
+        httpStatusCode = 400,
+    ),
+    NOT_PENDING(
+        message = "판매중인 Todo가 아닙니다.",
+        errorCode = "TR003_NOT_PENDING",
+        httpStatusCode = 400,
+    ),
+    CAN_NOT_CANCEL_OWN_TODO(
+        message = "자신의 Todo 판매를 취소할 수 없습니다.",
+        errorCode = "TR004_CAN_NOT_CANCEL_OWN_TODO",
+        httpStatusCode = 400
+    ),
+    PENDING(
+        message = "판매중인 Todo로 수정할 수 없습니다.",
+        errorCode = "TR005_PENDING",
+        httpStatusCode = 400,
+    ),
+    YOU_ARE_NOT_BUYER(
+        message = "요청자만 취소할 수 있습니다",
+        errorCode = "TR006_YOU_ARE_NOT_BUYER",
+        httpStatusCode = 403,
+    )
 }

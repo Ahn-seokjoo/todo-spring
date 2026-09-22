@@ -3,6 +3,7 @@ package com.seokjoo.todo.domain.service.todo
 import com.seokjoo.todo.common.exception.TodoException
 import com.seokjoo.todo.common.exception.TodoExceptionType
 import com.seokjoo.todo.domain.entity.todo.Todo
+import com.seokjoo.todo.domain.entity.todo.TodoStatus
 import com.seokjoo.todo.domain.entity.todouser.User
 import com.seokjoo.todo.domain.repository.todo.TodoRepository
 import com.seokjoo.todo.domain.service.category.CategoryService
@@ -66,6 +67,9 @@ class TodoService(
         check(isOwner(todo.owner.userId, userId)) {
             throw TodoException.of(TodoExceptionType.UNAUTHORIZED_TODO_ACCESS)
         }
+        check(todo.status == TodoStatus.AVAILABLE) {
+            throw TodoException.of(TodoExceptionType.PENDING)
+        }
         todo.todoUpdateApply(request)
         // 더티 체킹으로 save 할 필요 없지만 그냥 명시적으로 해줌
         todoRepository.save(todo)
@@ -86,6 +90,9 @@ class TodoService(
         check(isOwner(todo.owner.userId, userId)) {
             throw TodoException.of(TodoExceptionType.UNAUTHORIZED_TODO_ACCESS)
         }
+        check(todo.status == TodoStatus.AVAILABLE) {
+            throw TodoException.of(TodoExceptionType.PENDING)
+        }
 
         todoDeleteService.deleteTodo(todo)
     }
@@ -99,6 +106,9 @@ class TodoService(
     )
     fun updateOwner(todoId: Long, owner: User): TodoServiceResponseDTO {
         val todo = todoRepository.findByIdOrNull(todoId) ?: throw TodoException.of(TodoExceptionType.NOT_EXISTED_TODO)
+        check(todo.status == TodoStatus.AVAILABLE) {
+            throw TodoException.of(TodoExceptionType.PENDING)
+        }
         todo.updateOwner(owner)
         todoRepository.save(todo)
 
@@ -109,6 +119,21 @@ class TodoService(
     fun getTodoCounts(owner: User): Long {
         val count = todoRepository.countByOwnerId(ownerId = owner.userId)
         return count
+    }
+
+    @Transactional
+    @Caching(
+        evict = [
+            CacheEvict(value = ["todo"], key = "#todoId"),
+            CacheEvict(value = ["todos"], allEntries = true),
+        ]
+    )
+    fun changeStatus(todoId: Long, status: TodoStatus) {
+        val successCount = when (status) {
+            TodoStatus.PENDING_APPROVAL -> todoRepository.updateTodoStatusPendingIfAvailable(todoId)
+            TodoStatus.AVAILABLE -> todoRepository.updateTodoStatusAvailableIfPending(todoId)
+        }
+        if (successCount == 0) throw TodoException.of(TodoExceptionType.NOT_PENDING)
     }
 
     private fun checkExistAndAddCategory(
