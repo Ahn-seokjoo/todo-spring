@@ -5,6 +5,7 @@ import com.seokjoo.todo.common.exception.TodoExceptionType
 import com.seokjoo.todo.domain.entity.todouser.User
 import com.seokjoo.todo.domain.service.auth.TodoAuthService
 import com.seokjoo.todo.domain.service.todo.TodoPageServiceResponseDTO
+import com.seokjoo.todo.domain.service.todo.TodoRetryableService
 import com.seokjoo.todo.domain.service.todo.TodoService
 import com.seokjoo.todo.domain.service.todo.TodoServiceResponseDTO
 import com.seokjoo.todo.presentation.todo.dto.request.TodoRequest
@@ -34,6 +35,9 @@ class TodoApiControllerTest {
 
     @MockitoBean
     internal lateinit var authService: TodoAuthService
+
+    @MockitoBean
+    internal lateinit var todoRetryableService: TodoRetryableService
 
     @Test
     fun `getAllTodo 함수를 호출하면 200 이 나온다`() {
