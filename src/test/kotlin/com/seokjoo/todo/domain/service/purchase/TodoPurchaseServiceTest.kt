@@ -4,7 +4,6 @@ import com.seokjoo.todo.annotation.TodoTest
 import com.seokjoo.todo.domain.entity.purchase.PurchaseStatus
 import com.seokjoo.todo.domain.entity.todo.TodoStatus
 import com.seokjoo.todo.domain.repository.purchase.TodoPurchaseRepository
-import com.seokjoo.todo.domain.repository.todouser.TodoAuthRepository
 import com.seokjoo.todo.domain.service.auth.TodoAuthService
 import com.seokjoo.todo.domain.service.balance.TodoBalanceService
 import com.seokjoo.todo.domain.service.charge.TodoChargeService
@@ -13,16 +12,16 @@ import com.seokjoo.todo.domain.service.todo.TodoPageServiceDTO
 import com.seokjoo.todo.domain.service.todo.TodoService
 import com.seokjoo.todo.domain.service.todo.TodoServiceResponseDTO
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.transaction.annotation.Transactional
 
 @TodoTest
+@Transactional
 class TodoPurchaseServiceTest @Autowired constructor(
     private val todoService: TodoService,
     private val todoAuthService: TodoAuthService,
-    private val todoAuthRepository: TodoAuthRepository,
     private val todoChargeService: TodoChargeService,
     private val userBalanceService: TodoBalanceService,
     private val purchaseTxService: TodoPurchaseTxService,
@@ -48,9 +47,6 @@ class TodoPurchaseServiceTest @Autowired constructor(
         // 구매 요청 이후 상태 조회
         val purchase = purchaseRepository.findByTodoIdAndPurchaseStatus(todo.id, PurchaseStatus.PENDING)
         assertThat(purchase?.purchaseStatus).isEqualTo(PurchaseStatus.PENDING)
-
-        // PENDING_APPROVAL 시에 삭제가 안되어 상태를 다시 approval로 돌려놓음
-        purchaseTxService.cancelPurchaseTodo(todo.id, "pita2")
     }
 
     @Test
@@ -130,12 +126,5 @@ class TodoPurchaseServiceTest @Autowired constructor(
 
         val request = TodoCreateServiceRequestDTO("spring", price = 100L)
         todo = todoService.createTodo(request, user1)
-    }
-
-    @AfterEach
-    fun after() {
-        val owner = todoService.getTodoById(todo.id).ownerId
-        todoService.deleteTodo(todo.id, owner)
-        todoAuthRepository.deleteAll()
     }
 }
