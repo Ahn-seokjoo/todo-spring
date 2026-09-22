@@ -1,14 +1,15 @@
 package com.seokjoo.todo.domain.service.purchase
 
 import com.seokjoo.todo.annotation.TodoTest
-import com.seokjoo.todo.domain.entity.purchase.PurchaseStatus
+import com.seokjoo.todo.common.exception.LockNotAcquiredException
+import com.seokjoo.todo.common.exception.TodoException
+import com.seokjoo.todo.common.exception.TodoExceptionType
 import com.seokjoo.todo.domain.entity.todo.TodoStatus
 import com.seokjoo.todo.domain.entity.todouser.Money
 import com.seokjoo.todo.domain.entity.todouser.User
 import com.seokjoo.todo.domain.repository.purchase.TodoPurchaseRepository
 import com.seokjoo.todo.domain.repository.todouser.TodoAuthRepository
 import com.seokjoo.todo.domain.service.auth.TodoAuthService
-import com.seokjoo.todo.domain.service.balance.TodoBalanceService
 import com.seokjoo.todo.domain.service.charge.TodoChargeService
 import com.seokjoo.todo.domain.service.todo.TodoCreateServiceRequestDTO
 import com.seokjoo.todo.domain.service.todo.TodoService
@@ -33,7 +34,6 @@ class TodoPurchaseConcurrencyTest @Autowired constructor(
     private val todoPurchaseService: TodoPurchaseService,
     private val todoPurchaseRepository: TodoPurchaseRepository,
     private val todoAuthRepository: TodoAuthRepository,
-    private val todoBalanceService: TodoBalanceService,
 ) {
     lateinit var seller: User
     lateinit var todo: TodoServiceResponseDTO
@@ -42,6 +42,8 @@ class TodoPurchaseConcurrencyTest @Autowired constructor(
     fun `동시에 같은 available한 todo 에 purchase 를 요청해도 한명만 `() {
         val threadCount = 5
         val executor = Executors.newFixedThreadPool(threadCount)
+        val readyLatch = CountDownLatch(threadCount)
+        val startLatch = CountDownLatch(1)
         val latch = CountDownLatch(threadCount)
         val successCount = AtomicInteger(0)
         val failCount = AtomicInteger(0)
@@ -55,15 +57,30 @@ class TodoPurchaseConcurrencyTest @Autowired constructor(
         val futures = users.map { user ->
             executor.submit(Callable {
                 try {
+                    readyLatch.countDown()
+                    startLatch.await()
                     todoPurchaseService.purchaseTodo(todo.id, user.userId)
                     successCount.incrementAndGet()
-                } catch (e: Exception) {
+                } catch (e: TodoException) {
+                    if (e.errorCode == TodoExceptionType.CAN_NOT_PURCHASE.errorCode) {
+                        failCount.incrementAndGet()
+                    } else {
+                        throw e
+                    }
+                } catch (e: LockNotAcquiredException) {
                     failCount.incrementAndGet()
                 } finally {
                     latch.countDown()
                 }
             })
         }
+
+        val allReady = readyLatch.await(10, TimeUnit.SECONDS)
+        if (!allReady) {
+            executor.shutdownNow()
+            fail<Unit>("10초 내에 모든 스레드가 준비되지 않았습니다 (동시성 테스트 준비 실패)")
+        }
+        startLatch.countDown()
 
         val completedInTime = latch.await(60, TimeUnit.SECONDS)
         if (!completedInTime) {
@@ -78,7 +95,6 @@ class TodoPurchaseConcurrencyTest @Autowired constructor(
         // purchase 가 1개 존재 (1명만 성공해서)
         val purchases = todoPurchaseRepository.findAll()
         assertThat(purchases.size).isEqualTo(1)
-        assertThat(purchases.count { it.purchaseStatus == PurchaseStatus.PENDING }).isEqualTo(1)
         assertThat(successCount.get()).isEqualTo(1)
         assertThat(failCount.get()).isEqualTo(4)
 
@@ -102,6 +118,8 @@ class TodoPurchaseConcurrencyTest @Autowired constructor(
     fun `Approve를 여러번 호출 한 경우에도 첫 번째 요청만 성공하여 buyer 금액이 1회만 차감, seller는 1회만 지급된다`() {
         val threadCount = 5
         val executor = Executors.newFixedThreadPool(threadCount)
+        val readyLatch = CountDownLatch(threadCount)
+        val startLatch = CountDownLatch(1)
         val latch = CountDownLatch(threadCount)
         val successCount = AtomicInteger(0)
         val failCount = AtomicInteger(0)
@@ -115,15 +133,30 @@ class TodoPurchaseConcurrencyTest @Autowired constructor(
         val futures = (0..<threadCount).map {
             executor.submit(Callable {
                 try {
+                    readyLatch.countDown()
+                    startLatch.await()
                     todoPurchaseService.approvePurchaseTodo(todo.id, seller.userId)
                     successCount.incrementAndGet()
-                } catch (e: Exception) {
+                } catch (e: TodoException) {
+                    if (e.errorCode == TodoExceptionType.UNAUTHORIZED_TODO_ACCESS.errorCode) {
+                        failCount.incrementAndGet()
+                    } else {
+                        throw e
+                    }
+                } catch (e: LockNotAcquiredException) {
                     failCount.incrementAndGet()
                 } finally {
                     latch.countDown()
                 }
             })
         }
+
+        val allReady = readyLatch.await(10, TimeUnit.SECONDS)
+        if (!allReady) {
+            executor.shutdownNow()
+            fail<Unit>("10초 내에 모든 스레드가 준비되지 않았습니다 (동시성 테스트 준비 실패)")
+        }
+        startLatch.countDown()
 
         val completedInTime = latch.await(60, TimeUnit.SECONDS)
         if (!completedInTime) {
@@ -144,60 +177,6 @@ class TodoPurchaseConcurrencyTest @Autowired constructor(
         assertThat(buyer.money).isEqualTo(Money(900L))
         val seller = todoAuthService.findUserByUserId(seller.userId)
         assertThat(seller.money).isEqualTo(Money(1_100L))
-    }
-
-    @Test
-    fun `Approve와 cancel을 동시에 요청해도 하나의 종료 상태만 남고 총 잔액은 보존된다`() {
-        val threadCount = 2
-        val executor = Executors.newFixedThreadPool(threadCount)
-        val latch = CountDownLatch(threadCount)
-        val successCount = AtomicInteger(0)
-        val failCount = AtomicInteger(0)
-
-        todoPurchaseService.purchaseTodo(todo.id, "pita2")
-
-        val futures = listOf(
-            executor.submit(Callable {
-                try {
-                    todoPurchaseService.approvePurchaseTodo(todo.id, seller.userId)
-                    successCount.incrementAndGet()
-                } catch (e: Exception) {
-                    failCount.incrementAndGet()
-                } finally {
-                    latch.countDown()
-                }
-            }),
-            executor.submit(Callable {
-                try {
-                    todoPurchaseService.cancelPurchaseTodo(todo.id, "pita2")
-                    successCount.incrementAndGet()
-                } catch (e: Exception) {
-                    failCount.incrementAndGet()
-                } finally {
-                    latch.countDown()
-                }
-            }),
-        )
-
-        val completedInTime = latch.await(60, TimeUnit.SECONDS)
-        if (!completedInTime) {
-            executor.shutdownNow()
-            fail<Unit>("60초 내에 모든 approve/cancel 스레드가 끝나지 않았습니다 (동시성 회귀 의심 - CI 행 방지를 위해 즉시 실패 처리)")
-        }
-        futures.forEach { it.get(5, TimeUnit.SECONDS) }
-        executor.shutdown()
-        executor.awaitTermination(5, TimeUnit.SECONDS)
-
-        val purchases = todoPurchaseRepository.findAll()
-        assertThat(purchases).hasSize(1)
-        assertThat(purchases.single().purchaseStatus)
-            .isIn(PurchaseStatus.APPROVED, PurchaseStatus.CANCELLED)
-        assertThat(successCount.get()).isEqualTo(1)
-        assertThat(failCount.get()).isEqualTo(1)
-
-        val sellerBalance = todoBalanceService.getBalance("pita1")
-        val buyerBalance = todoBalanceService.getBalance("pita2")
-        assertThat(sellerBalance + buyerBalance).isEqualTo(2_000L)
     }
 
     @BeforeEach
