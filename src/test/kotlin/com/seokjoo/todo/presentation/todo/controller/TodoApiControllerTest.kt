@@ -8,18 +8,27 @@ import com.seokjoo.todo.domain.service.todo.TodoPageServiceResponseDTO
 import com.seokjoo.todo.domain.service.todo.TodoRetryableService
 import com.seokjoo.todo.domain.service.todo.TodoService
 import com.seokjoo.todo.domain.service.todo.TodoServiceResponseDTO
+import com.seokjoo.todo.presentation.todo.dto.request.TodoPatchRequest
 import com.seokjoo.todo.presentation.todo.dto.request.TodoRequest
+import com.seokjoo.todo.presentation.todo.dto.request.TodoUpdateRequest
+import com.seokjoo.todo.presentation.todo.dto.request.toPatchRequest
+import com.seokjoo.todo.presentation.todo.dto.request.toUpdateRequest
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.given
+import org.mockito.kotlin.never
+import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.http.MediaType
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.delete
 import org.springframework.test.web.servlet.get
+import org.springframework.test.web.servlet.patch
 import org.springframework.test.web.servlet.post
+import org.springframework.test.web.servlet.put
 
 @WebMvcTest(controllers = [TodoApiController::class])
 class TodoApiControllerTest {
@@ -148,5 +157,152 @@ class TodoApiControllerTest {
                     )
                 }
             }
+    }
+
+    @Test
+    fun `patchTodo 호출시 TodoRetryableService updateTodo 에 route id, 인증된 사용자 id, 변환된 DTO 를 위임한다`() {
+        val id = 1L
+        val user = User("pita", "pita")
+        val request = TodoPatchRequest(
+            todo = "update todo",
+            isDone = true,
+            price = 200L,
+            categories = listOf("category1"),
+        )
+        val mockResponse = TodoServiceResponseDTO(
+            id = id,
+            todo = "update todo",
+            isDone = true,
+            categories = listOf(),
+            ownerId = user.userId,
+            price = 200L,
+        )
+        given(authService.findUser(any())).willReturn(user)
+        given(
+            todoRetryableService.updateTodo(eq(id), eq(user.userId), eq(request.toPatchRequest()))
+        ).willReturn(mockResponse)
+
+        mockMvc.patch("/api/v1/todos/$id") {
+            content = objectMapper.writeValueAsString(request)
+            contentType = MediaType.APPLICATION_JSON
+            header("Authorization", "Bearer a")
+        }
+            .andDo { print() }
+            .andExpect {
+                status { isOk() }
+            }
+
+        verify(todoRetryableService).updateTodo(eq(id), eq(user.userId), eq(request.toPatchRequest()))
+    }
+
+    @Test
+    fun `patchTodo에 id가 숫자가 아닌 값이 들어오면 bad request 이고 TodoRetryableService 는 호출되지 않는다`() {
+        val request = TodoPatchRequest(
+            todo = "update todo",
+            isDone = true,
+            price = 200L,
+            categories = listOf("category1"),
+        )
+        mockMvc.patch("/api/v1/todos/hi") {
+            content = objectMapper.writeValueAsString(request)
+            contentType = MediaType.APPLICATION_JSON
+            header("Authorization", "Bearer a")
+        }
+            .andDo { print() }
+            .andExpect {
+                status { isBadRequest() }
+                jsonPath("$.errorCode") { value(TodoExceptionType.ID_BAD_REQUEST.errorCode) }
+            }
+
+        verify(todoRetryableService, never()).updateTodo(any(), any(), any())
+    }
+
+    @Test
+    fun `updateTodo(PUT) 호출시 TodoRetryableService updateTodo 에 route id, 인증된 사용자 id, 변환된 DTO 를 위임한다`() {
+        val id = 1L
+        val user = User("pita", "pita")
+        val request = TodoUpdateRequest(
+            todo = "overwrite todo",
+            isDone = false,
+            price = 500L,
+            categories = listOf("category1", "category2"),
+        )
+        val mockResponse = TodoServiceResponseDTO(
+            id = id,
+            todo = "overwrite todo",
+            isDone = false,
+            categories = listOf(),
+            ownerId = user.userId,
+            price = 500L,
+        )
+        given(authService.findUser(any())).willReturn(user)
+        given(
+            todoRetryableService.updateTodo(eq(id), eq(user.userId), eq(request.toUpdateRequest()))
+        ).willReturn(mockResponse)
+
+        mockMvc.put("/api/v1/todos/$id") {
+            content = objectMapper.writeValueAsString(request)
+            contentType = MediaType.APPLICATION_JSON
+            header("Authorization", "Bearer a")
+        }
+            .andDo { print() }
+            .andExpect {
+                status { isOk() }
+            }
+
+        verify(todoRetryableService).updateTodo(eq(id), eq(user.userId), eq(request.toUpdateRequest()))
+    }
+
+    @Test
+    fun `updateTodo(PUT)에 id가 숫자가 아닌 값이 들어오면 bad request 이고 TodoRetryableService 는 호출되지 않는다`() {
+        val request = TodoUpdateRequest(
+            todo = "overwrite todo",
+            isDone = false,
+            price = 500L,
+            categories = listOf("category1"),
+        )
+        mockMvc.put("/api/v1/todos/hi") {
+            content = objectMapper.writeValueAsString(request)
+            contentType = MediaType.APPLICATION_JSON
+            header("Authorization", "Bearer a")
+        }
+            .andDo { print() }
+            .andExpect {
+                status { isBadRequest() }
+                jsonPath("$.errorCode") { value(TodoExceptionType.ID_BAD_REQUEST.errorCode) }
+            }
+
+        verify(todoRetryableService, never()).updateTodo(any(), any(), any())
+    }
+
+    @Test
+    fun `deleteTodo 호출시 TodoRetryableService deleteTodo 에 route id, 인증된 사용자 id 를 위임한다`() {
+        val id = 1L
+        val user = User("pita", "pita")
+        given(authService.findUser(any())).willReturn(user)
+
+        mockMvc.delete("/api/v1/todos/$id") {
+            header("Authorization", "Bearer a")
+        }
+            .andDo { print() }
+            .andExpect {
+                status { isNoContent() }
+            }
+
+        verify(todoRetryableService).deleteTodo(eq(id), eq(user.userId))
+    }
+
+    @Test
+    fun `deleteTodo에 id가 숫자가 아닌 값이 들어오면 bad request 이고 TodoRetryableService 는 호출되지 않는다`() {
+        mockMvc.delete("/api/v1/todos/hi") {
+            header("Authorization", "Bearer a")
+        }
+            .andDo { print() }
+            .andExpect {
+                status { isBadRequest() }
+                jsonPath("$.errorCode") { value(TodoExceptionType.ID_BAD_REQUEST.errorCode) }
+            }
+
+        verify(todoRetryableService, never()).deleteTodo(any(), any())
     }
 }
