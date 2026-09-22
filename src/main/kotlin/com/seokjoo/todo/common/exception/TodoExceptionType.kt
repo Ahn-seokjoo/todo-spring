@@ -101,6 +101,6 @@ enum class TodoExceptionType(
     YOU_ARE_NOT_BUYER(
         message = "요청자만 취소할 수 있습니다",
         errorCode = "TR006_YOU_ARE_NOT_BUYER",
-        httpStatusCode = 400,
+        httpStatusCode = 403,
     )
 }
