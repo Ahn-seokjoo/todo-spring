@@ -8,7 +8,12 @@ import com.seokjoo.todo.domain.entity.todo.TodoStatus
 import com.seokjoo.todo.domain.repository.purchase.TodoPurchaseRepository
 import com.seokjoo.todo.domain.service.auth.TodoAuthService
 import com.seokjoo.todo.domain.service.balance.TodoBalanceService
+import com.seokjoo.todo.domain.service.outbox.OutboxListenerType
+import com.seokjoo.todo.domain.service.outbox.PublishableEvent
+import com.seokjoo.todo.domain.service.outbox.listener.event.TodoPurchaseEvent
+import com.seokjoo.todo.domain.service.outbox.service.OutboxService
 import com.seokjoo.todo.domain.service.todo.TodoService
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -18,6 +23,8 @@ class TodoPurchaseTxService(
     private val todoPurchaseRepository: TodoPurchaseRepository,
     private val balanceService: TodoBalanceService,
     private val todoAuthService: TodoAuthService,
+    private val outboxService: OutboxService,
+    private val eventPublisher: ApplicationEventPublisher,
 ) {
     @Transactional
     fun purchaseTodo(todoId: Long, buyerId: String) {
@@ -37,6 +44,20 @@ class TodoPurchaseTxService(
 
         // buyer 잔액 선 차감
         balanceService.decreaseBalance(amount = todo.price, userId = buyerId)
+
+        val purchaseEvent = PublishableEvent.PurchaseRequestEvent(
+            sellerId = sellerId,
+            buyerId = buyerId,
+            todoId = todoId,
+            price = todo.price,
+            purchaseId = purchase.id,
+        )
+
+        val event = outboxService.createOutboxEvent(event = purchaseEvent, listener = OutboxListenerType.EMAIL_NOTIFICATION)
+        val outboxEvent = outboxService.saveOutbox(event = event)
+        eventPublisher.publishEvent(
+            TodoPurchaseEvent(outboxEventId = outboxEvent.id)
+        )
     }
 
     @Transactional

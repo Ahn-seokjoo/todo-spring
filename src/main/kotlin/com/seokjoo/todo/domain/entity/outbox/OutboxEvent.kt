@@ -1,6 +1,7 @@
 package com.seokjoo.todo.domain.entity.outbox
 
 import com.seokjoo.todo.domain.service.outbox.OutboxEventType
+import com.seokjoo.todo.domain.service.outbox.OutboxListenerType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
@@ -15,8 +16,9 @@ import java.util.UUID
 @Entity
 @Table(name = "outbox_event")
 class OutboxEvent(
+    @Enumerated(EnumType.STRING)
     @Column(name = "listener_type", nullable = false, length = 50)
-    val listenerType: String,
+    val listenerType: OutboxListenerType,
 
     @Enumerated(EnumType.STRING)
     @Column(name = "event_type", nullable = false, length = 50)

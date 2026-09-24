@@ -1,6 +1,7 @@
 package com.seokjoo.todo.domain.entity.outbox
 
 import com.seokjoo.todo.domain.service.outbox.OutboxEventType
+import com.seokjoo.todo.domain.service.outbox.OutboxListenerType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
@@ -16,8 +17,9 @@ class OutboxEventArchive(
     @Id
     val id: String,
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "listener_type", nullable = false, length = 50)
-    val listenerType: String,
+    val listenerType: OutboxListenerType,
 
     @Enumerated(EnumType.STRING)
     @Column(name = "event_type", nullable = false, length = 50)
@@ -43,4 +45,20 @@ class OutboxEventArchive(
 
     @Column(name = "last_resubmission_date")
     val lastResubmissionDate: LocalDateTime? = null,
-)
+) {
+    companion object {
+        fun from(outboxEvent: OutboxEvent): OutboxEventArchive {
+            return OutboxEventArchive(
+                id = outboxEvent.id,
+                listenerType = outboxEvent.listenerType,
+                eventType = outboxEvent.eventType,
+                serializedEvent = outboxEvent.serializedEvent,
+                publicationDate = outboxEvent.publicationDate,
+                completionDate = LocalDateTime.now(),
+                status = OutboxStatus.SUCCESS,
+                completionAttempts = outboxEvent.completionAttempts,
+                lastResubmissionDate = outboxEvent.lastResubmissionDate,
+            )
+        }
+    }
+}

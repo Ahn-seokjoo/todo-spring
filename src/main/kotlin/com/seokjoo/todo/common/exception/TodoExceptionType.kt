@@ -102,5 +102,17 @@ enum class TodoExceptionType(
         message = "요청자만 취소할 수 있습니다",
         errorCode = "TR006_YOU_ARE_NOT_BUYER",
         httpStatusCode = 403,
+    ),
+
+    // Outbox
+    OUTBOX_UPDATE_ERROR(
+        message = "outbox table 상태 업데이트 실패",
+        errorCode = "OB000_OUTBOX_UPDATE_ERROR",
+        httpStatusCode = 500,
+    ),
+    OUTBOX_NOT_FOUND(
+        message = "outbox not found",
+        errorCode = "OB001_NOT_FOUND",
+        httpStatusCode = 500,
     )
 }
