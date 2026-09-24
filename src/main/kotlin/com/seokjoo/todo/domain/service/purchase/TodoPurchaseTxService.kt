@@ -10,7 +10,7 @@ import com.seokjoo.todo.domain.service.auth.TodoAuthService
 import com.seokjoo.todo.domain.service.balance.TodoBalanceService
 import com.seokjoo.todo.domain.service.outbox.OutboxListenerType
 import com.seokjoo.todo.domain.service.outbox.PublishableEvent
-import com.seokjoo.todo.domain.service.outbox.listener.event.TodoPurchaseEvent
+import com.seokjoo.todo.domain.service.outbox.listener.event.TodoPurchaseEmailEvent
 import com.seokjoo.todo.domain.service.outbox.service.OutboxService
 import com.seokjoo.todo.domain.service.todo.TodoService
 import org.springframework.context.ApplicationEventPublisher
@@ -45,6 +45,7 @@ class TodoPurchaseTxService(
         // buyer 잔액 선 차감
         balanceService.decreaseBalance(amount = todo.price, userId = buyerId)
 
+        // 구매 이벤트 발행
         val purchaseEvent = PublishableEvent.PurchaseRequestEvent(
             sellerId = sellerId,
             buyerId = buyerId,
@@ -52,12 +53,7 @@ class TodoPurchaseTxService(
             price = todo.price,
             purchaseId = purchase.id,
         )
-
-        val event = outboxService.createOutboxEvent(event = purchaseEvent, listener = OutboxListenerType.EMAIL_NOTIFICATION)
-        val outboxEvent = outboxService.saveOutbox(event = event)
-        eventPublisher.publishEvent(
-            TodoPurchaseEvent(outboxEventId = outboxEvent.id)
-        )
+        createEmailOutboxEvent(purchaseEvent)
     }
 
     @Transactional
@@ -89,6 +85,16 @@ class TodoPurchaseTxService(
 
         // seller 금액 증가
         balanceService.increaseBalance(amount = todo.price, userId = sellerId)
+
+        // 승인 이벤트 발행
+        val purchaseEvent = PublishableEvent.PurchaseApprovedEvent(
+            sellerId = sellerId,
+            buyerId = purchase.buyerId,
+            todoId = todoId,
+            price = todo.price,
+            purchaseId = purchase.id,
+        )
+        createEmailOutboxEvent(purchaseEvent)
     }
 
     @Transactional
@@ -113,6 +119,16 @@ class TodoPurchaseTxService(
 
         // buyer 잔액 다시 증가
         balanceService.increaseBalance(amount = todo.price, userId = purchase.buyerId)
+
+        // 거절 이벤트 발행
+        val purchaseEvent = PublishableEvent.PurchaseRejectedEvent(
+            sellerId = sellerId,
+            buyerId = purchase.buyerId,
+            todoId = todoId,
+            price = todo.price,
+            purchaseId = purchase.id,
+        )
+        createEmailOutboxEvent(purchaseEvent)
     }
 
     @Transactional
@@ -140,5 +156,12 @@ class TodoPurchaseTxService(
 
         // buyer 잔액 다시 증가
         balanceService.increaseBalance(amount = todo.price, userId = purchase.buyerId)
+    }
+
+    private fun createEmailOutboxEvent(purchaseEvent: PublishableEvent) {
+        val event =
+            outboxService.createOutboxEvent(event = purchaseEvent, listener = OutboxListenerType.EMAIL_NOTIFICATION)
+        val outboxEvent = outboxService.saveOutbox(event = event)
+        eventPublisher.publishEvent(TodoPurchaseEmailEvent(outboxEventId = outboxEvent.id))
     }
 }

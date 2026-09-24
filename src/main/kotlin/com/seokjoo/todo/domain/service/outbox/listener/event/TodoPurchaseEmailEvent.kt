@@ -1,5 +1,5 @@
 package com.seokjoo.todo.domain.service.outbox.listener.event
 
-data class TodoPurchaseEvent(
+data class TodoPurchaseEmailEvent(
     val outboxEventId: String,
 )
