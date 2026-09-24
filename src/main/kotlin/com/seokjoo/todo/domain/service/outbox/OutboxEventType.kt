@@ -1,6 +1,7 @@
-package com.seokjoo.todo.domain.entity.outbox
+package com.seokjoo.todo.domain.service.outbox
 
 enum class OutboxEventType {
+    PURCHASE_REQUEST,
     PURCHASE_APPROVED,
     PURCHASE_REJECTED,
     CACHE_EVICT_ALL,
@@ -9,6 +10,16 @@ enum class OutboxEventType {
 
 sealed interface PublishableEvent {
     val eventType: OutboxEventType
+
+    data class PurchaseRequestEvent(
+        val sellerId: String,
+        val buyerId: String,
+        val todoId: Long,
+        val price: Long,
+        val purchaseId: Long,
+    ) : PublishableEvent {
+        override val eventType: OutboxEventType = OutboxEventType.PURCHASE_REQUEST
+    }
 
     data class PurchaseApprovedEvent(
         val sellerId: String,

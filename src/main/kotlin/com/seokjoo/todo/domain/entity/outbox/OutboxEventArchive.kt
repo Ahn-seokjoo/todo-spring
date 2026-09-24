@@ -1,5 +1,6 @@
 package com.seokjoo.todo.domain.entity.outbox
 
+import com.seokjoo.todo.domain.service.outbox.OutboxEventType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
