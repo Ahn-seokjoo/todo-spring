@@ -34,9 +34,7 @@ class TodoPurchaseEmailEventListener(
                     PublishableEvent.PurchaseRequestEvent::class.java
                 )
                 val seller = authService.findUserByUserId(userId = purchase.sellerId)
-                val sellerEmail = requireNotNull(seller.email) {
-                    throw TodoException.of(TodoExceptionType.OUTBOX_SELLER_EMAIL_EMPTY)
-                }
+                val sellerEmail = seller.email ?: throw TodoException.of(TodoExceptionType.OUTBOX_SELLER_EMAIL_EMPTY)
                 mailService.sendEmail(
                     to = sellerEmail,
                     subject = "Todo 구매 요청",
@@ -50,9 +48,7 @@ class TodoPurchaseEmailEventListener(
                     PublishableEvent.PurchaseApprovedEvent::class.java
                 )
                 val buyer = authService.findUserByUserId(userId = purchase.buyerId)
-                val buyerEmail = requireNotNull(buyer.email) {
-                    throw TodoException.of(TodoExceptionType.OUTBOX_BUYER_EMAIL_EMPTY)
-                }
+                val buyerEmail = buyer.email ?: throw TodoException.of(TodoExceptionType.OUTBOX_BUYER_EMAIL_EMPTY)
                 mailService.sendEmail(
                     to = buyerEmail,
                     subject = "Todo 구매 승인",
@@ -66,9 +62,7 @@ class TodoPurchaseEmailEventListener(
                     PublishableEvent.PurchaseRejectedEvent::class.java
                 )
                 val buyer = authService.findUserByUserId(userId = purchase.buyerId)
-                val buyerEmail = requireNotNull(buyer.email) {
-                    throw TodoException.of(TodoExceptionType.OUTBOX_BUYER_EMAIL_EMPTY)
-                }
+                val buyerEmail = buyer.email ?: throw TodoException.of(TodoExceptionType.OUTBOX_BUYER_EMAIL_EMPTY)
                 mailService.sendEmail(
                     to = buyerEmail,
                     subject = "Todo 구매 거부",
