@@ -47,5 +47,5 @@ class OutboxEvent(
 ) {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    val id: String = UUID.randomUUID().toString()
+    lateinit var id: String
 }

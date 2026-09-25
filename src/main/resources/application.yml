@@ -31,6 +31,17 @@ spring:
       port: 6381
   cache:
     type: redis
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${USER_EMAIL}
+    password: ${USER_APP_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 
 management:
   server:
