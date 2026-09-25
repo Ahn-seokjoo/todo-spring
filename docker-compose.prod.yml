@@ -6,6 +6,7 @@ services:
     expose:
       - '6379'
   server:
+    stop_grace_period: 30s
     build:
       context: .
     environment:

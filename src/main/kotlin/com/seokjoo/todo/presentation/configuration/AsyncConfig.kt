@@ -10,18 +10,12 @@ import java.util.concurrent.Executor
 
 @Configuration
 @EnableAsync
-class AsyncConfig : AsyncConfigurer {
+class AsyncConfig(
+    private val asyncTaskExecutor: ThreadPoolTaskExecutor,
+) : AsyncConfigurer {
     private val logger = LoggerFactory.getLogger(AsyncConfig::class.java)
 
-    override fun getAsyncExecutor(): Executor {
-        return ThreadPoolTaskExecutor().apply {
-            corePoolSize = 4
-            maxPoolSize = 8
-            queueCapacity = 100
-            setThreadNamePrefix("outbox-async-")
-            initialize()
-        }
-    }
+    override fun getAsyncExecutor(): Executor = asyncTaskExecutor
 
     override fun getAsyncUncaughtExceptionHandler(): AsyncUncaughtExceptionHandler {
         return AsyncUncaughtExceptionHandler { ex, method, _ ->
