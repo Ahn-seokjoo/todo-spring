@@ -7,7 +7,6 @@ import org.springframework.transaction.event.TransactionalEventListener
 
 @Async
 @TransactionalEventListener
-@Transactional(propagation = Propagation.REQUIRES_NEW)
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
 annotation class TodoTransactionalEventListener
