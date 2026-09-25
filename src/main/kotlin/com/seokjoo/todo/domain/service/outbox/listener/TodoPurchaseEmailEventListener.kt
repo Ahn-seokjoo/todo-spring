@@ -24,7 +24,7 @@ class TodoPurchaseEmailEventListener(
 
     @TodoTransactionalEventListener
     fun eventListener(event: TodoPurchaseEmailEvent) {
-        val outboxEvent = outboxService.getOutbox(event.outboxEventId)
+        val outboxEvent = outboxService.claimOutbox(event.outboxEventId)
 
         // 실제 이메일 전송
         val result = when (outboxEvent.eventType) {

@@ -85,7 +85,7 @@ class TodoPurchaseEmailEventListenerTest : BehaviorSpec({
         Given(case.description) {
             val outboxEvent = outboxEventOf(case.eventType, case.event)
 
-            every { outboxService.getOutbox(any()) } returns outboxEvent
+            every { outboxService.claimOutbox(any()) } returns outboxEvent
             every { authService.findUserByUserId(seller.userId) } returns seller
             every { authService.findUserByUserId(buyer.userId) } returns buyer
             every { outboxService.updateOutboxSuccess(any()) } just Runs
@@ -113,7 +113,7 @@ class TodoPurchaseEmailEventListenerTest : BehaviorSpec({
         )
         val outboxEvent = outboxEventOf(OutboxEventType.PURCHASE_REQUEST, purchaseRequestEvent)
 
-        every { outboxService.getOutbox(any()) } returns outboxEvent
+        every { outboxService.claimOutbox(any()) } returns outboxEvent
         every { authService.findUserByUserId(sellerWithoutEmail.userId) } returns sellerWithoutEmail
         every { outboxService.updateOutboxSuccess(any()) } just Runs
         every { outboxService.updateOutboxFail(any()) } just Runs
