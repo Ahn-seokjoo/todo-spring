@@ -25,7 +25,7 @@ class OutboxEvent(
     val eventType: OutboxEventType,
 
     // 원본 json
-    @Column(name = "serialized_event", nullable = false)
+    @Column(name = "serialized_event", nullable = false, columnDefinition = "json")
     val serializedEvent: String,
 
     // timestamp
