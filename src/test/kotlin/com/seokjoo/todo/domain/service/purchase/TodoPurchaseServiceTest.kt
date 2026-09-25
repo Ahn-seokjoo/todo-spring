@@ -7,6 +7,9 @@ import com.seokjoo.todo.domain.repository.purchase.TodoPurchaseRepository
 import com.seokjoo.todo.domain.service.auth.TodoAuthService
 import com.seokjoo.todo.domain.service.balance.TodoBalanceService
 import com.seokjoo.todo.domain.service.charge.TodoChargeService
+import com.seokjoo.todo.domain.service.outbox.OutboxEventType
+import com.seokjoo.todo.domain.service.outbox.listener.event.TodoPurchaseEmailEvent
+import com.seokjoo.todo.domain.service.outbox.repository.OutboxRepository
 import com.seokjoo.todo.domain.service.todo.TodoCreateServiceRequestDTO
 import com.seokjoo.todo.domain.service.todo.TodoPageServiceDTO
 import com.seokjoo.todo.domain.service.todo.TodoService
@@ -15,8 +18,12 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.data.repository.findByIdOrNull
+import org.springframework.test.context.event.ApplicationEvents
+import org.springframework.test.context.event.RecordApplicationEvents
 import org.springframework.transaction.annotation.Transactional
 
+@RecordApplicationEvents
 @TodoTest
 @Transactional
 class TodoPurchaseServiceTest @Autowired constructor(
@@ -26,6 +33,7 @@ class TodoPurchaseServiceTest @Autowired constructor(
     private val userBalanceService: TodoBalanceService,
     private val purchaseTxService: TodoPurchaseTxService,
     private val purchaseRepository: TodoPurchaseRepository,
+    private val outboxRepository: OutboxRepository,
 ) {
     lateinit var todo: TodoServiceResponseDTO
 
@@ -113,6 +121,47 @@ class TodoPurchaseServiceTest @Autowired constructor(
         // 구매 요청 이후 상태 조회
         val purchase = purchaseRepository.findByTodoIdAndPurchaseStatus(todo.id, PurchaseStatus.APPROVED)
         assertThat(purchase?.purchaseStatus).isEqualTo(PurchaseStatus.APPROVED)
+    }
+
+    @Test
+    fun `구매 요청시에 TodoPurchaseEmailEvent, Request 이벤트가 발행된다`(applicationEvents: ApplicationEvents) {
+        // given
+        // when
+        purchaseTxService.purchaseTodo(todo.id, "pita2")
+
+        val events = applicationEvents.stream(TodoPurchaseEmailEvent::class.java).toList()
+        assertThat(events).hasSize(1)
+
+        val outboxEvent = outboxRepository.findByIdOrNull(events.first().outboxEventId)
+        assertThat(outboxEvent?.eventType).isEqualTo(OutboxEventType.PURCHASE_REQUEST)
+    }
+
+    @Test
+    fun `구매 요청 허락시에 TodoPurchaseEmailEvent, Approved 이벤트가 발행된다`(applicationEvents: ApplicationEvents) {
+        // given
+        // when
+        purchaseTxService.purchaseTodo(todo.id, "pita2")
+        purchaseTxService.approvePurchaseTodo(todo.id, "pita1")
+
+        val events = applicationEvents.stream(TodoPurchaseEmailEvent::class.java).toList()
+        assertThat(events).hasSize(2)
+
+        val outboxEvent = outboxRepository.findByIdOrNull(events.last().outboxEventId)
+        assertThat(outboxEvent?.eventType).isEqualTo(OutboxEventType.PURCHASE_APPROVED)
+    }
+
+    @Test
+    fun `구매 요청 거절 시에 TodoPurchaseEmailEvent, Reject 이벤트가 발행된다`(applicationEvents: ApplicationEvents) {
+        // given
+        // when
+        purchaseTxService.purchaseTodo(todo.id, "pita2")
+        purchaseTxService.rejectPurchaseTodo(todo.id, "pita1")
+
+        val events = applicationEvents.stream(TodoPurchaseEmailEvent::class.java).toList()
+        assertThat(events).hasSize(2)
+
+        val outboxEvent = outboxRepository.findByIdOrNull(events.last().outboxEventId)
+        assertThat(outboxEvent?.eventType).isEqualTo(OutboxEventType.PURCHASE_REJECTED)
     }
 
     @BeforeEach
