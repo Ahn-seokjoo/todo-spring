@@ -2,6 +2,7 @@ package com.seokjoo.todo.domain.service.outbox
 
 import com.seokjoo.todo.annotation.TodoTest
 import com.seokjoo.todo.domain.entity.outbox.OutboxStatus
+import com.seokjoo.todo.domain.repository.purchase.TodoPurchaseRepository
 import com.seokjoo.todo.domain.service.auth.TodoAuthService
 import com.seokjoo.todo.domain.service.charge.TodoChargeService
 import com.seokjoo.todo.domain.service.email.EmailService
@@ -34,6 +35,7 @@ class TodoOutboxArchiveTest @Autowired constructor(
     private val todoChargeService: TodoChargeService,
 
     private val purchaseTxService: TodoPurchaseTxService,
+    private val todoPurchaseRepository: TodoPurchaseRepository,
     private val outboxRepository: OutboxRepository,
     private val outboxArchiveRepository: OutboxArchiveRepository,
 ) {
@@ -75,8 +77,11 @@ class TodoOutboxArchiveTest @Autowired constructor(
                 assertThat(archived?.status).isEqualTo(OutboxStatus.SUCCESS)
             }
         } finally {
-            // 실제 커밋을 했기 때문에 여기서 만든 데이터는 직접 정리해야 다른 테스트 클래스와 안 겹침
+            // 실제 커밋을 했기 때문에 여기서 만든 데이터는 직접 정리해야 다른 테스트 클래스와 안 겹침.
+            // purchaseTodo()가 만든 Purchase row도 롤백이 안 되므로 같이 지워야
+            // 다른 테스트(TodoPurchaseRepository.findAll() 로 전체 개수를 세는 동시성 테스트 등)가 오염되지 않는다.
             outboxArchiveRepository.deleteById(outboxEventId)
+            todoPurchaseRepository.deleteAll()
             todoAuthService.delete(sellerId, "pita")
             todoAuthService.delete(buyerId, "pita")
         }
