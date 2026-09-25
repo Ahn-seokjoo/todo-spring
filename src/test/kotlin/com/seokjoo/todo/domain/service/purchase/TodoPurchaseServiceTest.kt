@@ -1,5 +1,6 @@
 package com.seokjoo.todo.domain.service.purchase
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.seokjoo.todo.annotation.TodoTest
 import com.seokjoo.todo.domain.entity.purchase.PurchaseStatus
 import com.seokjoo.todo.domain.entity.todo.TodoStatus
@@ -8,6 +9,7 @@ import com.seokjoo.todo.domain.service.auth.TodoAuthService
 import com.seokjoo.todo.domain.service.balance.TodoBalanceService
 import com.seokjoo.todo.domain.service.charge.TodoChargeService
 import com.seokjoo.todo.domain.service.outbox.OutboxEventType
+import com.seokjoo.todo.domain.service.outbox.PublishableEvent
 import com.seokjoo.todo.domain.service.outbox.listener.event.TodoPurchaseEmailEvent
 import com.seokjoo.todo.domain.service.outbox.repository.OutboxRepository
 import com.seokjoo.todo.domain.service.todo.TodoCreateServiceRequestDTO
@@ -34,6 +36,7 @@ class TodoPurchaseServiceTest @Autowired constructor(
     private val purchaseTxService: TodoPurchaseTxService,
     private val purchaseRepository: TodoPurchaseRepository,
     private val outboxRepository: OutboxRepository,
+    private val objectMapper: ObjectMapper,
 ) {
     lateinit var todo: TodoServiceResponseDTO
 
@@ -148,6 +151,14 @@ class TodoPurchaseServiceTest @Autowired constructor(
 
         val outboxEvent = outboxRepository.findByIdOrNull(events.last().outboxEventId)
         assertThat(outboxEvent?.eventType).isEqualTo(OutboxEventType.PURCHASE_APPROVED)
+
+        // 판매자/구매자가 뒤바뀌지 않고 실제 purchase 기준(판매자=pita1, 구매자=pita2)으로 발행되는지 확인
+        val approvedEvent = objectMapper.readValue(
+            outboxEvent?.serializedEvent,
+            PublishableEvent.PurchaseApprovedEvent::class.java
+        )
+        assertThat(approvedEvent.sellerId).isEqualTo("pita1")
+        assertThat(approvedEvent.buyerId).isEqualTo("pita2")
     }
 
     @Test
@@ -162,6 +173,14 @@ class TodoPurchaseServiceTest @Autowired constructor(
 
         val outboxEvent = outboxRepository.findByIdOrNull(events.last().outboxEventId)
         assertThat(outboxEvent?.eventType).isEqualTo(OutboxEventType.PURCHASE_REJECTED)
+
+        // 판매자/구매자가 뒤바뀌지 않고 실제 purchase 기준(판매자=pita1, 구매자=pita2)으로 발행되는지 확인
+        val rejectedEvent = objectMapper.readValue(
+            outboxEvent?.serializedEvent,
+            PublishableEvent.PurchaseRejectedEvent::class.java
+        )
+        assertThat(rejectedEvent.sellerId).isEqualTo("pita1")
+        assertThat(rejectedEvent.buyerId).isEqualTo("pita2")
     }
 
     @BeforeEach
