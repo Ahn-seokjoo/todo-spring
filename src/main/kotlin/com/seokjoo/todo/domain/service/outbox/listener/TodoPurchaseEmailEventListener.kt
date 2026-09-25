@@ -1,6 +1,8 @@
 package com.seokjoo.todo.domain.service.outbox.listener
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.seokjoo.todo.common.exception.TodoException
+import com.seokjoo.todo.common.exception.TodoExceptionType
 import com.seokjoo.todo.domain.service.auth.TodoAuthService
 import com.seokjoo.todo.domain.service.email.EmailService
 import com.seokjoo.todo.domain.service.outbox.OutboxEventType
@@ -32,7 +34,9 @@ class TodoPurchaseEmailEventListener(
                     PublishableEvent.PurchaseRequestEvent::class.java
                 )
                 val seller = authService.findUserByUserId(userId = purchase.sellerId)
-                val sellerEmail = requireNotNull(seller.email) { "판매자 이메일이 등록되지 않았습니다." }
+                val sellerEmail = requireNotNull(seller.email) {
+                    throw TodoException.of(TodoExceptionType.OUTBOX_SELLER_EMAIL_EMPTY)
+                }
                 mailService.sendEmail(
                     to = sellerEmail,
                     subject = "Todo 구매 요청",
@@ -46,7 +50,9 @@ class TodoPurchaseEmailEventListener(
                     PublishableEvent.PurchaseApprovedEvent::class.java
                 )
                 val buyer = authService.findUserByUserId(userId = purchase.buyerId)
-                val buyerEmail = requireNotNull(buyer.email) { "구매자 이메일이 등록되지 않았습니다." }
+                val buyerEmail = requireNotNull(buyer.email) {
+                    throw TodoException.of(TodoExceptionType.OUTBOX_BUYER_EMAIL_EMPTY)
+                }
                 mailService.sendEmail(
                     to = buyerEmail,
                     subject = "Todo 구매 승인",
@@ -60,7 +66,9 @@ class TodoPurchaseEmailEventListener(
                     PublishableEvent.PurchaseRejectedEvent::class.java
                 )
                 val buyer = authService.findUserByUserId(userId = purchase.buyerId)
-                val buyerEmail = requireNotNull(buyer.email) { "구매자 이메일이 등록되지 않았습니다." }
+                val buyerEmail = requireNotNull(buyer.email) {
+                    throw TodoException.of(TodoExceptionType.OUTBOX_BUYER_EMAIL_EMPTY)
+                }
                 mailService.sendEmail(
                     to = buyerEmail,
                     subject = "Todo 구매 거부",
