@@ -1,5 +1,6 @@
 package com.seokjoo.todo.domain.service.purchase
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.seokjoo.todo.annotation.TodoTest
 import com.seokjoo.todo.domain.entity.purchase.PurchaseStatus
 import com.seokjoo.todo.domain.entity.todo.TodoStatus
@@ -7,6 +8,10 @@ import com.seokjoo.todo.domain.repository.purchase.TodoPurchaseRepository
 import com.seokjoo.todo.domain.service.auth.TodoAuthService
 import com.seokjoo.todo.domain.service.balance.TodoBalanceService
 import com.seokjoo.todo.domain.service.charge.TodoChargeService
+import com.seokjoo.todo.domain.service.outbox.OutboxEventType
+import com.seokjoo.todo.domain.service.outbox.PublishableEvent
+import com.seokjoo.todo.domain.service.outbox.listener.event.TodoPurchaseEmailEvent
+import com.seokjoo.todo.domain.service.outbox.repository.OutboxRepository
 import com.seokjoo.todo.domain.service.todo.TodoCreateServiceRequestDTO
 import com.seokjoo.todo.domain.service.todo.TodoPageServiceDTO
 import com.seokjoo.todo.domain.service.todo.TodoService
@@ -15,8 +20,12 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.data.repository.findByIdOrNull
+import org.springframework.test.context.event.ApplicationEvents
+import org.springframework.test.context.event.RecordApplicationEvents
 import org.springframework.transaction.annotation.Transactional
 
+@RecordApplicationEvents
 @TodoTest
 @Transactional
 class TodoPurchaseServiceTest @Autowired constructor(
@@ -26,6 +35,8 @@ class TodoPurchaseServiceTest @Autowired constructor(
     private val userBalanceService: TodoBalanceService,
     private val purchaseTxService: TodoPurchaseTxService,
     private val purchaseRepository: TodoPurchaseRepository,
+    private val outboxRepository: OutboxRepository,
+    private val objectMapper: ObjectMapper,
 ) {
     lateinit var todo: TodoServiceResponseDTO
 
@@ -113,6 +124,63 @@ class TodoPurchaseServiceTest @Autowired constructor(
         // 구매 요청 이후 상태 조회
         val purchase = purchaseRepository.findByTodoIdAndPurchaseStatus(todo.id, PurchaseStatus.APPROVED)
         assertThat(purchase?.purchaseStatus).isEqualTo(PurchaseStatus.APPROVED)
+    }
+
+    @Test
+    fun `구매 요청시에 TodoPurchaseEmailEvent, Request 이벤트가 발행된다`(applicationEvents: ApplicationEvents) {
+        // given
+        // when
+        purchaseTxService.purchaseTodo(todo.id, "pita2")
+
+        val events = applicationEvents.stream(TodoPurchaseEmailEvent::class.java).toList()
+        assertThat(events).hasSize(1)
+
+        val outboxEvent = outboxRepository.findByIdOrNull(events.first().outboxEventId)
+        assertThat(outboxEvent?.eventType).isEqualTo(OutboxEventType.PURCHASE_REQUEST)
+    }
+
+    @Test
+    fun `구매 요청 허락시에 TodoPurchaseEmailEvent, Approved 이벤트가 발행된다`(applicationEvents: ApplicationEvents) {
+        // given
+        // when
+        purchaseTxService.purchaseTodo(todo.id, "pita2")
+        purchaseTxService.approvePurchaseTodo(todo.id, "pita1")
+
+        val events = applicationEvents.stream(TodoPurchaseEmailEvent::class.java).toList()
+        assertThat(events).hasSize(2)
+
+        val outboxEvent = outboxRepository.findByIdOrNull(events.last().outboxEventId)
+        assertThat(outboxEvent?.eventType).isEqualTo(OutboxEventType.PURCHASE_APPROVED)
+
+        // 판매자/구매자가 뒤바뀌지 않고 실제 purchase 기준(판매자=pita1, 구매자=pita2)으로 발행되는지 확인
+        val approvedEvent = objectMapper.readValue(
+            outboxEvent?.serializedEvent,
+            PublishableEvent.PurchaseApprovedEvent::class.java
+        )
+        assertThat(approvedEvent.sellerId).isEqualTo("pita1")
+        assertThat(approvedEvent.buyerId).isEqualTo("pita2")
+    }
+
+    @Test
+    fun `구매 요청 거절 시에 TodoPurchaseEmailEvent, Reject 이벤트가 발행된다`(applicationEvents: ApplicationEvents) {
+        // given
+        // when
+        purchaseTxService.purchaseTodo(todo.id, "pita2")
+        purchaseTxService.rejectPurchaseTodo(todo.id, "pita1")
+
+        val events = applicationEvents.stream(TodoPurchaseEmailEvent::class.java).toList()
+        assertThat(events).hasSize(2)
+
+        val outboxEvent = outboxRepository.findByIdOrNull(events.last().outboxEventId)
+        assertThat(outboxEvent?.eventType).isEqualTo(OutboxEventType.PURCHASE_REJECTED)
+
+        // 판매자/구매자가 뒤바뀌지 않고 실제 purchase 기준(판매자=pita1, 구매자=pita2)으로 발행되는지 확인
+        val rejectedEvent = objectMapper.readValue(
+            outboxEvent?.serializedEvent,
+            PublishableEvent.PurchaseRejectedEvent::class.java
+        )
+        assertThat(rejectedEvent.sellerId).isEqualTo("pita1")
+        assertThat(rejectedEvent.buyerId).isEqualTo("pita2")
     }
 
     @BeforeEach
