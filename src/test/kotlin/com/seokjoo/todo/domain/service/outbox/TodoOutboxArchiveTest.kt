@@ -10,6 +10,7 @@ import com.seokjoo.todo.domain.service.email.EmailService
 import com.seokjoo.todo.domain.service.outbox.listener.event.TodoPurchaseEmailEvent
 import com.seokjoo.todo.domain.service.outbox.repository.OutboxArchiveRepository
 import com.seokjoo.todo.domain.service.outbox.repository.OutboxRepository
+import com.seokjoo.todo.domain.service.outbox.service.OutboxService
 import com.seokjoo.todo.domain.service.purchase.TodoPurchaseTxService
 import com.seokjoo.todo.domain.service.todo.TodoCreateServiceRequestDTO
 import com.seokjoo.todo.domain.service.todo.TodoService
@@ -39,6 +40,7 @@ class TodoOutboxArchiveTest @Autowired constructor(
     private val todoPurchaseRepository: TodoPurchaseRepository,
     private val outboxRepository: OutboxRepository,
     private val outboxArchiveRepository: OutboxArchiveRepository,
+    private val outboxService: OutboxService,
 ) {
     // 이 테스트는 AFTER_COMMIT 리스너를 실제로 태우기 위해 트랜잭션을 강제 커밋한다.
     // 즉 @Transactional 롤백에 기대서 데이터를 정리할 수 없으므로,
@@ -78,9 +80,9 @@ class TodoOutboxArchiveTest @Autowired constructor(
                 assertThat(archived?.status).isEqualTo(OutboxStatus.SUCCESS)
             }
         } finally {
-            // 실제 커밋된 데이터라 직접 정리. deleteOutboxEventById는 대상 없어도 안전(FAILED로 남는 경우 대비).
+            // 실제 커밋된 데이터라 직접 정리. deleteOutboxEvent는 대상 없어도 안전(FAILED로 남는 경우 대비).
             outboxArchiveRepository.deleteById(outboxEventId)
-            outboxRepository.deleteOutboxEventById(outboxEventId)
+            outboxService.deleteOutboxEvent(outboxEventId)
             todoPurchaseRepository.findByTodoIdAndPurchaseStatus(todo.id, PurchaseStatus.PENDING)
                 ?.let { todoPurchaseRepository.delete(it) }
             todoAuthService.delete(sellerId, "pita")
