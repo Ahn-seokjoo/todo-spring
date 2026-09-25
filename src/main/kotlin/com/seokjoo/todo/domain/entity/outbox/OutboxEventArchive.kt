@@ -7,15 +7,18 @@ import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
 import jakarta.persistence.Id
+import jakarta.persistence.PostLoad
+import jakarta.persistence.PostPersist
 import jakarta.persistence.Table
+import jakarta.persistence.Transient
+import org.springframework.data.domain.Persistable
 import java.time.LocalDateTime
 
 @Entity
 @Table(name = "outbox_event_archive")
 class OutboxEventArchive(
     // 기존 Outbox Event의 id를 물려받음
-    @Id
-    val id: String,
+    id: String,
 
     @Enumerated(EnumType.STRING)
     @Column(name = "listener_type", nullable = false, length = 50)
@@ -45,7 +48,24 @@ class OutboxEventArchive(
 
     @Column(name = "last_resubmission_date")
     val lastResubmissionDate: LocalDateTime? = null,
-) {
+) : Persistable<String> {
+
+    @Id
+    @Column(name = "id")
+    private val entityId: String = id
+
+    @Transient
+    private var isNewEntity: Boolean = true
+
+    override fun isNew(): Boolean = isNewEntity
+    override fun getId(): String = entityId
+
+    @PostPersist
+    @PostLoad
+    fun markNotNew() {
+        isNewEntity = false
+    }
+
     companion object {
         fun from(outboxEvent: OutboxEvent): OutboxEventArchive {
             return OutboxEventArchive(
