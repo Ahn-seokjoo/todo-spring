@@ -39,6 +39,6 @@ interface OutboxRepository : JpaRepository<OutboxEvent, String> {
     fun deleteOutboxEventById(id: String): Int
 
     companion object {
-        private const val MAX_ATTEMPTS = 5
+        const val MAX_ATTEMPTS = 5
     }
 }

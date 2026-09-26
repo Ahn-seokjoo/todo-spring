@@ -5,10 +5,13 @@ import com.seokjoo.todo.common.exception.TodoException
 import com.seokjoo.todo.common.exception.TodoExceptionType
 import com.seokjoo.todo.domain.entity.outbox.OutboxEvent
 import com.seokjoo.todo.domain.entity.outbox.OutboxEventArchive
+import com.seokjoo.todo.domain.entity.outbox.OutboxStatus
 import com.seokjoo.todo.domain.service.outbox.OutboxListenerType
 import com.seokjoo.todo.domain.service.outbox.PublishableEvent
 import com.seokjoo.todo.domain.service.outbox.repository.OutboxArchiveRepository
 import com.seokjoo.todo.domain.service.outbox.repository.OutboxRepository
+import com.seokjoo.todo.domain.service.outbox.repository.OutboxRepository.Companion.MAX_ATTEMPTS
+import org.slf4j.LoggerFactory
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -20,6 +23,8 @@ class OutboxService(
     private val outboxArchiveRepository: OutboxArchiveRepository,
     private val objectMapper: ObjectMapper,
 ) {
+    private val logger = LoggerFactory.getLogger(OutboxService::class.java)
+
     @Transactional
     fun saveOutbox(event: OutboxEvent): OutboxEvent {
         return outboxRepository.save(event)
@@ -28,8 +33,30 @@ class OutboxService(
     @Transactional
     fun claimOutbox(id: String): OutboxEvent {
         val effectedCount = outboxRepository.updateProcessingOutbox(id)
-        check(effectedCount == 1) { throw TodoException.of(TodoExceptionType.OUTBOX_UPDATE_ERROR) }
-        return outboxRepository.findByIdOrNull(id) ?: throw TodoException.of(TodoExceptionType.OUTBOX_NOT_FOUND)
+        val outboxEvent =
+            outboxRepository.findByIdOrNull(id) ?: throw TodoException.of(TodoExceptionType.OUTBOX_NOT_FOUND)
+
+        if (effectedCount == 1) return outboxEvent
+        return when {
+            outboxEvent.completionAttempts >= MAX_ATTEMPTS -> {
+                // TODO dlq 마킹 예정
+                outboxEvent
+            }
+
+            outboxEvent.status == OutboxStatus.PROCESSING -> {
+                if (true) {
+                    // TODO 여기서 RESUBMIT - processingStartedDate 로 null이면 무시, 있다면 시간 측정하고 수정
+                } else {
+                    logger.info("이미 다른곳에서 PROCESSING 진행중")
+                }
+                outboxEvent
+            }
+
+            else -> {
+                // 현재는 올수 없지만, 추후에 누군가 리팩토링으로 이곳으로 흘러오는것을 방지하기 위해 둠
+                throw TodoException.of(TodoExceptionType.OUTBOX_UPDATE_ERROR)
+            }
+        }
     }
 
     @Transactional
