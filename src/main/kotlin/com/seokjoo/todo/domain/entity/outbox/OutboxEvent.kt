@@ -11,7 +11,6 @@ import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
 import java.time.LocalDateTime
-import java.util.UUID
 
 @Entity
 @Table(name = "outbox_event")
@@ -44,6 +43,9 @@ class OutboxEvent(
 
     @Column(name = "last_resubmission_date")
     val lastResubmissionDate: LocalDateTime? = null,
+
+    @Column(name = "processing_started_date")
+    val processingStartedDate: LocalDateTime? = null,
 ) {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

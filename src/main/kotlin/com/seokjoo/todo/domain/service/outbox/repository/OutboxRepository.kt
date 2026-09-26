@@ -13,14 +13,16 @@ interface OutboxRepository : JpaRepository<OutboxEvent, String> {
 
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query(
-        "update OutboxEvent oe set oe.status = :processing " +
-            "where oe.id = :id and oe.status in (:pending, :failed) and oe.completionAttempts < :max"
+        "update OutboxEvent oe set oe.status = :processing, oe.processingStartedDate = :now " +
+            "where oe.id = :id and oe.status in (:pending, :failed, :resubmitted) and oe.completionAttempts < :max"
     )
     fun updateProcessingOutbox(
         id: String,
         processing: OutboxStatus = OutboxStatus.PROCESSING,
         pending: OutboxStatus = OutboxStatus.PENDING,
         failed: OutboxStatus = OutboxStatus.FAILED,
+        resubmitted: OutboxStatus = OutboxStatus.RESUBMITTED,
+        now: LocalDateTime = LocalDateTime.now(),
         max: Int = MAX_ATTEMPTS,
     ): Int
 
@@ -36,10 +38,19 @@ interface OutboxRepository : JpaRepository<OutboxEvent, String> {
         status: OutboxStatus = OutboxStatus.FAILED,
     ): Int
 
-    @Query("select oe from OutboxEvent oe where oe.status in (:pending, :failed) and oe.completionAttempts < :max")
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("update OutboxEvent oe set oe.status = :resubmitted where oe.status = :status and oe.processingStartedDate < :cutoff")
+    fun updateAllResubmittedOutbox(
+        cutoff: LocalDateTime,
+        status: OutboxStatus = OutboxStatus.PROCESSING,
+        resubmitted: OutboxStatus = OutboxStatus.RESUBMITTED,
+    ): Int
+
+    @Query("select oe from OutboxEvent oe where oe.status in (:pending, :failed, :resubmitted) and oe.completionAttempts < :max")
     fun findPollerEvents(
         pending: OutboxStatus = OutboxStatus.PENDING,
         failed: OutboxStatus = OutboxStatus.FAILED,
+        resubmitted: OutboxStatus = OutboxStatus.RESUBMITTED,
     ): List<OutboxEvent>
 
     fun deleteOutboxEventById(id: String): Int

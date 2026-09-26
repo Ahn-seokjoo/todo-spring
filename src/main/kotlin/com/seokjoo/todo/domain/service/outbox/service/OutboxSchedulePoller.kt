@@ -13,6 +13,7 @@ class OutboxSchedulePoller(
 
     @Scheduled(fixedDelayString = "\${outbox.poller.fixed-delay:60000}")
     fun process() {
+        outboxService.updateAllResubmittedOutbox()
         val events = outboxService.findPollerEvents()
         events.forEach { event ->
             runCatching {

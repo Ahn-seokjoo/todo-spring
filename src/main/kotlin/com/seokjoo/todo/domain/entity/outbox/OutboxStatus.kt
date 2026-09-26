@@ -5,5 +5,6 @@ enum class OutboxStatus {
     PROCESSING,
     SUCCESS,
     FAILED,
+    RESUBMITTED,
     DLQ;
 }

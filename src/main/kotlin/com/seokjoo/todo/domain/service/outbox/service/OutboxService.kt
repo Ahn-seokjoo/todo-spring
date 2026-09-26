@@ -14,9 +14,11 @@ import com.seokjoo.todo.domain.service.outbox.PublishableEvent
 import com.seokjoo.todo.domain.service.outbox.repository.OutboxArchiveRepository
 import com.seokjoo.todo.domain.service.outbox.repository.OutboxRepository
 import com.seokjoo.todo.domain.service.outbox.repository.OutboxRepository.Companion.MAX_ATTEMPTS
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.Duration
 import java.time.LocalDateTime
 
 @Service
@@ -24,6 +26,7 @@ class OutboxService(
     private val outboxRepository: OutboxRepository,
     private val outboxArchiveRepository: OutboxArchiveRepository,
     private val objectMapper: ObjectMapper,
+    @param:Value("\${outbox.poller.stale-threshold}") private val staleThresholdMillis: Long,
 ) {
 
     @Transactional
@@ -44,12 +47,7 @@ class OutboxService(
             }
 
             outboxEvent.status == OutboxStatus.PROCESSING -> {
-                if (true) {
-                    // TODO 임시로 Processing, 여기서 RESUBMIT - processingStartedDate 로 null이면 무시, 있다면 시간 측정하고 수정
-                    ClaimFailure.Processing
-                } else {
-                    ClaimFailure.Processing
-                }
+                ClaimFailure.Processing
             }
 
             else -> {
@@ -79,6 +77,12 @@ class OutboxService(
     @Transactional
     fun findPollerEvents(): List<OutboxEvent> {
         return outboxRepository.findPollerEvents()
+    }
+
+    @Transactional
+    fun updateAllResubmittedOutbox() {
+        val cutoff = LocalDateTime.now().minus(Duration.ofMillis(staleThresholdMillis))
+        outboxRepository.updateAllResubmittedOutbox(cutoff = cutoff)
     }
 
     fun createOutboxEvent(event: PublishableEvent, listener: OutboxListenerType): OutboxEvent {
