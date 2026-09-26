@@ -15,8 +15,8 @@ import org.springframework.data.domain.Persistable
 import java.time.LocalDateTime
 
 @Entity
-@Table(name = "outbox_event_archive")
-class OutboxEventArchive(
+@Table(name = "outbox_event_dlq")
+class OutboxEventDLQ(
     // 기존 Outbox Event의 id를 물려받음
     id: String,
 
@@ -70,15 +70,15 @@ class OutboxEventArchive(
     }
 
     companion object {
-        fun from(outboxEvent: OutboxEvent): OutboxEventArchive {
-            return OutboxEventArchive(
+        fun from(outboxEvent: OutboxEvent): OutboxEventDLQ {
+            return OutboxEventDLQ(
                 id = outboxEvent.id,
                 listenerType = outboxEvent.listenerType,
                 eventType = outboxEvent.eventType,
                 serializedEvent = outboxEvent.serializedEvent,
                 publicationDate = outboxEvent.publicationDate,
                 completionDate = LocalDateTime.now(),
-                status = OutboxStatus.SUCCESS,
+                status = OutboxStatus.DLQ,
                 completionAttempts = outboxEvent.completionAttempts,
                 lastResubmissionDate = outboxEvent.lastResubmissionDate,
                 lastErrorMessage = outboxEvent.lastErrorMessage,

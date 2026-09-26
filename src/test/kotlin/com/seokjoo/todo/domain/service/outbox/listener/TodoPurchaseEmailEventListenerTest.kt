@@ -126,7 +126,7 @@ class TodoPurchaseEmailEventListenerTest : BehaviorSpec({
 
             Then("메일 발송을 시도하지 않고 outbox가 실패 처리된다") {
                 verify(exactly = 0) { mailService.sendEmail(any(), any(), any()) }
-                verify(exactly = 1) { outboxService.updateOutboxFail(id = outboxEvent.id, any()) }
+                verify(exactly = 1) { outboxService.updateOutboxFail(id = outboxEvent.id, errorMessage = any()) }
                 verify(exactly = 0) { outboxService.updateOutboxSuccess(any()) }
             }
         }

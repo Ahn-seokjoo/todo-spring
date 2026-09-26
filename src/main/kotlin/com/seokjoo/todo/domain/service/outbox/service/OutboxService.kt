@@ -5,6 +5,7 @@ import com.seokjoo.todo.common.exception.TodoException
 import com.seokjoo.todo.common.exception.TodoExceptionType
 import com.seokjoo.todo.domain.entity.outbox.OutboxEvent
 import com.seokjoo.todo.domain.entity.outbox.OutboxEventArchive
+import com.seokjoo.todo.domain.entity.outbox.OutboxEventDLQ
 import com.seokjoo.todo.domain.entity.outbox.OutboxStatus
 import com.seokjoo.todo.domain.service.outbox.ClaimFailure
 import com.seokjoo.todo.domain.service.outbox.ClaimSuccess
@@ -12,6 +13,7 @@ import com.seokjoo.todo.domain.service.outbox.OutboxEventClaimType
 import com.seokjoo.todo.domain.service.outbox.OutboxListenerType
 import com.seokjoo.todo.domain.service.outbox.PublishableEvent
 import com.seokjoo.todo.domain.service.outbox.repository.OutboxArchiveRepository
+import com.seokjoo.todo.domain.service.outbox.repository.OutboxDLQRepository
 import com.seokjoo.todo.domain.service.outbox.repository.OutboxRepository
 import com.seokjoo.todo.domain.service.outbox.repository.OutboxRepository.Companion.MAX_ATTEMPTS
 import org.springframework.beans.factory.annotation.Value
@@ -25,6 +27,7 @@ import java.time.LocalDateTime
 class OutboxService(
     private val outboxRepository: OutboxRepository,
     private val outboxArchiveRepository: OutboxArchiveRepository,
+    private val outboxDLQRepository: OutboxDLQRepository,
     private val objectMapper: ObjectMapper,
     @param:Value("\${outbox.poller.stale-threshold}") private val staleThresholdMillis: Long,
 ) {
@@ -43,7 +46,7 @@ class OutboxService(
         if (effectedCount == 1) return ClaimSuccess(outboxEvent)
         return when {
             outboxEvent.completionAttempts >= MAX_ATTEMPTS -> {
-                ClaimFailure.CheckDLQ
+                ClaimFailure.CheckDLQ(outboxEvent)
             }
 
             outboxEvent.status == OutboxStatus.PROCESSING -> {
@@ -66,6 +69,12 @@ class OutboxService(
     @Transactional
     fun updateOutboxFail(id: String, errorMessage: String) {
         outboxRepository.updateFailedOutbox(id, errorMessage)
+    }
+
+    @Transactional
+    fun updateOutboxDLQ(outboxEvent: OutboxEvent) {
+        outboxRepository.deleteOutboxEventById(outboxEvent.id)
+        outboxDLQRepository.save(OutboxEventDLQ.from(outboxEvent))
     }
 
     // deleteOutboxEventById는 파생 delete 쿼리라 자체 트랜잭션이 없어서, 서비스 메서드로 감싸서 노출
