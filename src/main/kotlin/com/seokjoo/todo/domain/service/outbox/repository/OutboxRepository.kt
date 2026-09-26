@@ -47,7 +47,7 @@ interface OutboxRepository : JpaRepository<OutboxEvent, String> {
         resubmitted: OutboxStatus = OutboxStatus.RESUBMITTED,
     ): Int
 
-    @Query("select oe from OutboxEvent oe where oe.status in (:pending, :failed, :resubmitted) and oe.completionAttempts < :max")
+    @Query("select oe from OutboxEvent oe where oe.status in (:pending, :failed, :resubmitted)")
     fun findPollerEvents(
         pending: OutboxStatus = OutboxStatus.PENDING,
         failed: OutboxStatus = OutboxStatus.FAILED,
