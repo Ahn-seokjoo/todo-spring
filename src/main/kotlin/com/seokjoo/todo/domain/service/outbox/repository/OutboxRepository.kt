@@ -52,6 +52,7 @@ interface OutboxRepository : JpaRepository<OutboxEvent, String> {
         pending: OutboxStatus = OutboxStatus.PENDING,
         failed: OutboxStatus = OutboxStatus.FAILED,
         resubmitted: OutboxStatus = OutboxStatus.RESUBMITTED,
+        max: Int = MAX_ATTEMPTS,
     ): List<OutboxEvent>
 
     fun deleteOutboxEventById(id: String): Int
