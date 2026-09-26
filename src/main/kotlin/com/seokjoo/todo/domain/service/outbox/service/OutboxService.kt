@@ -28,9 +28,7 @@ class OutboxService(
     @Transactional
     fun claimOutbox(id: String): OutboxEvent {
         val effectedCount = outboxRepository.updateProcessingOutbox(id)
-        check(effectedCount == 1) {
-            throw TodoException.of(TodoExceptionType.OUTBOX_UPDATE_ERROR)
-        }
+        check(effectedCount == 1) { throw TodoException.of(TodoExceptionType.OUTBOX_UPDATE_ERROR) }
         return outboxRepository.findByIdOrNull(id) ?: throw TodoException.of(TodoExceptionType.OUTBOX_NOT_FOUND)
     }
 

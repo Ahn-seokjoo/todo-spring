@@ -10,6 +10,7 @@ import com.seokjoo.todo.domain.service.outbox.OutboxEventType
 import com.seokjoo.todo.domain.service.outbox.OutboxListenerType
 import com.seokjoo.todo.domain.service.outbox.PublishableEvent
 import com.seokjoo.todo.domain.service.outbox.listener.event.TodoPurchaseEmailEvent
+import com.seokjoo.todo.domain.service.outbox.service.OutboxEventProcessor
 import com.seokjoo.todo.domain.service.outbox.service.OutboxService
 import io.kotest.core.spec.IsolationMode
 import io.kotest.core.spec.style.BehaviorSpec
@@ -27,12 +28,16 @@ class TodoPurchaseEmailEventListenerTest : BehaviorSpec({
     val authService: TodoAuthService = mockk()
     val mailService: EmailService = mockk()
     val objectMapper: ObjectMapper = jacksonObjectMapper()
+    val processor = OutboxEventProcessor(
+        outboxService = outboxService,
+        authService = authService,
+        mailService = mailService,
+        objectMapper = objectMapper,
+    )
 
     val listener = TodoPurchaseEmailEventListener(
         outboxService = outboxService,
-        authService = authService,
-        objectMapper = objectMapper,
-        mailService = mailService,
+        outboxEventProcessor = processor,
     )
 
     val seller = User(userId = "pita1", password = "pw", email = "seller@test.com")
