@@ -29,11 +29,12 @@ interface OutboxRepository : JpaRepository<OutboxEvent, String> {
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query(
         "update OutboxEvent oe " +
-            "set oe.completionAttempts = oe.completionAttempts + 1, oe.lastResubmissionDate = :now, oe.status = :status " +
+            "set oe.completionAttempts = oe.completionAttempts + 1, oe.lastResubmissionDate = :now, oe.status = :status, oe.lastErrorMessage = :errorMessage " +
             "where oe.id = :id"
     )
     fun updateFailedOutbox(
         id: String,
+        errorMessage: String,
         now: LocalDateTime = LocalDateTime.now(),
         status: OutboxStatus = OutboxStatus.FAILED,
     ): Int

@@ -64,8 +64,8 @@ class OutboxService(
     }
 
     @Transactional
-    fun updateOutboxFail(id: String) {
-        outboxRepository.updateFailedOutbox(id)
+    fun updateOutboxFail(id: String, errorMessage: String) {
+        outboxRepository.updateFailedOutbox(id, errorMessage)
     }
 
     // deleteOutboxEventById는 파생 delete 쿼리라 자체 트랜잭션이 없어서, 서비스 메서드로 감싸서 노출

@@ -80,7 +80,10 @@ class OutboxEventProcessor(
                 result
                     .onSuccess { outboxService.updateOutboxSuccess(outboxEvent = claim.outboxEvent) }
                     .onFailure { throwable ->
-                        outboxService.updateOutboxFail(id = claim.outboxEvent.id)
+                        outboxService.updateOutboxFail(
+                            id = claim.outboxEvent.id,
+                            errorMessage = throwable.message.orEmpty(),
+                        )
                         onFailure.invoke(throwable)
                     }
             }

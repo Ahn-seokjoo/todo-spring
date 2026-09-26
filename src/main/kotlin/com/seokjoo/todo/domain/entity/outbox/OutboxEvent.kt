@@ -46,6 +46,9 @@ class OutboxEvent(
 
     @Column(name = "processing_started_date")
     val processingStartedDate: LocalDateTime? = null,
+
+    @Column(name = "last_error_message", length = 1000)
+    val lastErrorMessage: String? = null,
 ) {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

@@ -92,7 +92,7 @@ class TodoPurchaseEmailEventListenerTest : BehaviorSpec({
             every { authService.findUserByUserId(seller.userId) } returns seller
             every { authService.findUserByUserId(buyer.userId) } returns buyer
             every { outboxService.updateOutboxSuccess(any()) } just Runs
-            every { outboxService.updateOutboxFail(any()) } just Runs
+            every { outboxService.updateOutboxFail(any(), any()) } just Runs
 
             val toSlot = slot<String>()
             every { mailService.sendEmail(to = capture(toSlot), subject = any(), content = any()) } just Runs
@@ -103,7 +103,7 @@ class TodoPurchaseEmailEventListenerTest : BehaviorSpec({
                 Then("올바른 수신자에게 메일이 발송되고 outbox가 성공 처리된다") {
                     toSlot.captured shouldBe case.expectedRecipient.email
                     verify(exactly = 1) { outboxService.updateOutboxSuccess(outboxEvent) }
-                    verify(exactly = 0) { outboxService.updateOutboxFail(any()) }
+                    verify(exactly = 0) { outboxService.updateOutboxFail(any(), any()) }
                 }
             }
         }
@@ -119,14 +119,14 @@ class TodoPurchaseEmailEventListenerTest : BehaviorSpec({
         every { outboxService.claimOutbox(any()) } returns ClaimSuccess(outboxEvent)
         every { authService.findUserByUserId(sellerWithoutEmail.userId) } returns sellerWithoutEmail
         every { outboxService.updateOutboxSuccess(any()) } just Runs
-        every { outboxService.updateOutboxFail(any()) } just Runs
+        every { outboxService.updateOutboxFail(any(), any()) } just Runs
 
         When("리스너가 이벤트를 처리하면") {
             listener.eventListener(TodoPurchaseEmailEvent(outboxEventId = "dummy-outbox-id"))
 
             Then("메일 발송을 시도하지 않고 outbox가 실패 처리된다") {
                 verify(exactly = 0) { mailService.sendEmail(any(), any(), any()) }
-                verify(exactly = 1) { outboxService.updateOutboxFail(id = outboxEvent.id) }
+                verify(exactly = 1) { outboxService.updateOutboxFail(id = outboxEvent.id, any()) }
                 verify(exactly = 0) { outboxService.updateOutboxSuccess(any()) }
             }
         }
