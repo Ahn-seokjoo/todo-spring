@@ -6,6 +6,7 @@ import com.seokjoo.todo.domain.entity.outbox.OutboxEvent
 import com.seokjoo.todo.domain.entity.todouser.User
 import com.seokjoo.todo.domain.service.auth.TodoAuthService
 import com.seokjoo.todo.domain.service.email.EmailService
+import com.seokjoo.todo.domain.service.outbox.ClaimSuccess
 import com.seokjoo.todo.domain.service.outbox.OutboxEventType
 import com.seokjoo.todo.domain.service.outbox.OutboxListenerType
 import com.seokjoo.todo.domain.service.outbox.PublishableEvent
@@ -35,10 +36,7 @@ class TodoPurchaseEmailEventListenerTest : BehaviorSpec({
         objectMapper = objectMapper,
     )
 
-    val listener = TodoPurchaseEmailEventListener(
-        outboxService = outboxService,
-        outboxEventProcessor = processor,
-    )
+    val listener = TodoPurchaseEmailEventListener(processor = processor)
 
     val seller = User(userId = "pita1", password = "pw", email = "seller@test.com")
     val buyer = User(userId = "pita2", password = "pw", email = "buyer@test.com")
@@ -90,7 +88,7 @@ class TodoPurchaseEmailEventListenerTest : BehaviorSpec({
         Given(case.description) {
             val outboxEvent = outboxEventOf(case.eventType, case.event)
 
-            every { outboxService.claimOutbox(any()) } returns outboxEvent
+            every { outboxService.claimOutbox(any()) } returns ClaimSuccess(outboxEvent)
             every { authService.findUserByUserId(seller.userId) } returns seller
             every { authService.findUserByUserId(buyer.userId) } returns buyer
             every { outboxService.updateOutboxSuccess(any()) } just Runs
@@ -118,7 +116,7 @@ class TodoPurchaseEmailEventListenerTest : BehaviorSpec({
         )
         val outboxEvent = outboxEventOf(OutboxEventType.PURCHASE_REQUEST, purchaseRequestEvent)
 
-        every { outboxService.claimOutbox(any()) } returns outboxEvent
+        every { outboxService.claimOutbox(any()) } returns ClaimSuccess(outboxEvent)
         every { authService.findUserByUserId(sellerWithoutEmail.userId) } returns sellerWithoutEmail
         every { outboxService.updateOutboxSuccess(any()) } just Runs
         every { outboxService.updateOutboxFail(any()) } just Runs

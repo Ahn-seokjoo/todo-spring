@@ -60,3 +60,7 @@ jwt:
   secret: ${JWT_SECRETS}
   accessTokenExpiration: ${JWT_ACCESS_TOKEN_EXPIRED_TIME}
   refreshTokenExpiration: ${JWT_REFRESH_TOKEN_EXPIRED_TIME}
+
+outbox:
+  poller:
+    fixed-delay: 120000 # 2분

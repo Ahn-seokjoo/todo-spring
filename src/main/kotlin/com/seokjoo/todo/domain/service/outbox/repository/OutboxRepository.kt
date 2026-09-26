@@ -36,6 +36,12 @@ interface OutboxRepository : JpaRepository<OutboxEvent, String> {
         status: OutboxStatus = OutboxStatus.FAILED,
     ): Int
 
+    @Query("select oe from OutboxEvent oe where oe.status in (:pending, :failed) and oe.completionAttempts < :max")
+    fun findPollerEvents(
+        pending: OutboxStatus = OutboxStatus.PENDING,
+        failed: OutboxStatus = OutboxStatus.FAILED,
+    ): List<OutboxEvent>
+
     fun deleteOutboxEventById(id: String): Int
 
     companion object {

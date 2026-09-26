@@ -6,12 +6,14 @@ import com.seokjoo.todo.common.exception.TodoExceptionType
 import com.seokjoo.todo.domain.entity.outbox.OutboxEvent
 import com.seokjoo.todo.domain.entity.outbox.OutboxEventArchive
 import com.seokjoo.todo.domain.entity.outbox.OutboxStatus
+import com.seokjoo.todo.domain.service.outbox.ClaimFailure
+import com.seokjoo.todo.domain.service.outbox.ClaimSuccess
+import com.seokjoo.todo.domain.service.outbox.OutboxEventClaimType
 import com.seokjoo.todo.domain.service.outbox.OutboxListenerType
 import com.seokjoo.todo.domain.service.outbox.PublishableEvent
 import com.seokjoo.todo.domain.service.outbox.repository.OutboxArchiveRepository
 import com.seokjoo.todo.domain.service.outbox.repository.OutboxRepository
 import com.seokjoo.todo.domain.service.outbox.repository.OutboxRepository.Companion.MAX_ATTEMPTS
-import org.slf4j.LoggerFactory
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -23,7 +25,6 @@ class OutboxService(
     private val outboxArchiveRepository: OutboxArchiveRepository,
     private val objectMapper: ObjectMapper,
 ) {
-    private val logger = LoggerFactory.getLogger(OutboxService::class.java)
 
     @Transactional
     fun saveOutbox(event: OutboxEvent): OutboxEvent {
@@ -31,25 +32,24 @@ class OutboxService(
     }
 
     @Transactional
-    fun claimOutbox(id: String): OutboxEvent {
+    fun claimOutbox(id: String): OutboxEventClaimType {
         val effectedCount = outboxRepository.updateProcessingOutbox(id)
         val outboxEvent =
             outboxRepository.findByIdOrNull(id) ?: throw TodoException.of(TodoExceptionType.OUTBOX_NOT_FOUND)
 
-        if (effectedCount == 1) return outboxEvent
+        if (effectedCount == 1) return ClaimSuccess(outboxEvent)
         return when {
             outboxEvent.completionAttempts >= MAX_ATTEMPTS -> {
-                // TODO dlq 마킹 예정
-                outboxEvent
+                ClaimFailure.CheckDLQ
             }
 
             outboxEvent.status == OutboxStatus.PROCESSING -> {
                 if (true) {
-                    // TODO 여기서 RESUBMIT - processingStartedDate 로 null이면 무시, 있다면 시간 측정하고 수정
+                    // TODO 임시로 Processing, 여기서 RESUBMIT - processingStartedDate 로 null이면 무시, 있다면 시간 측정하고 수정
+                    ClaimFailure.Processing
                 } else {
-                    logger.info("이미 다른곳에서 PROCESSING 진행중")
+                    ClaimFailure.Processing
                 }
-                outboxEvent
             }
 
             else -> {
@@ -74,6 +74,11 @@ class OutboxService(
     @Transactional
     fun deleteOutboxEvent(id: String) {
         outboxRepository.deleteOutboxEventById(id)
+    }
+
+    @Transactional
+    fun findPollerEvents(): List<OutboxEvent> {
+        return outboxRepository.findPollerEvents()
     }
 
     fun createOutboxEvent(event: PublishableEvent, listener: OutboxListenerType): OutboxEvent {
