@@ -2,11 +2,11 @@ package com.seokjoo.todo.domain.service.outbox
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.seokjoo.todo.domain.entity.outbox.OutboxEvent
-import com.seokjoo.todo.domain.entity.todouser.User
 import com.seokjoo.todo.domain.service.auth.TodoAuthService
 import com.seokjoo.todo.domain.service.email.EmailService
 import com.seokjoo.todo.domain.service.outbox.service.OutboxEventProcessor
 import com.seokjoo.todo.domain.service.outbox.service.OutboxService
+import io.kotest.core.spec.IsolationMode
 import io.kotest.core.spec.style.BehaviorSpec
 import io.mockk.every
 import io.mockk.mockk
@@ -35,20 +35,10 @@ class OutboxEventProcessorTest : BehaviorSpec({
         }
 
         When("ClaimFailure.CheckDLQ 가 들어오면") {
-            val buyer = User(userId = "pita2", password = "pw", email = "buyer@test.com")
-            val sellerWithoutEmail = User(userId = "pita1", password = "pw", email = null)
-            every { objectMapper.writeValueAsString(any()) } returns PublishableEvent.PurchaseRequestEvent(
-                sellerId = sellerWithoutEmail.userId,
-                buyerId = buyer.userId,
-                todoId = 1L,
-                price = 100L,
-                purchaseId = 1L
-            ).toString()
-
             val outboxEvent = OutboxEvent(
                 listenerType = OutboxListenerType.EMAIL_NOTIFICATION,
                 eventType = OutboxEventType.PURCHASE_REQUEST,
-                serializedEvent = objectMapper.writeValueAsString(""),
+                serializedEvent = "dummy",
                 publicationDate = LocalDateTime.now(),
             ).apply {
                 id = "99"
@@ -63,5 +53,6 @@ class OutboxEventProcessorTest : BehaviorSpec({
             }
         }
     }
+}) {
+    override fun isolationMode(): IsolationMode = IsolationMode.InstancePerLeaf
 }
-)
