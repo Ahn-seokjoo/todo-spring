@@ -96,7 +96,7 @@ class OutboxEventProcessor(
             }
 
             is ClaimFailure.Processing -> {
-                onLog.invoke("Process failure")
+                onLog.invoke("Already Processing Event failure")
             }
         }
     }
