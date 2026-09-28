@@ -174,7 +174,9 @@ class OutboxRepositoryTest @Autowired constructor(
             )
         )
 
-        val result = outboxRepository.updateAllResubmittedOutbox(cutoff = time)
+        // DB 컬럼 저장 시 나노초 정밀도가 잘려나갈 수 있어, cutoff를 정확히 같은 값으로 두면
+        // processingStartedDate < cutoff가 우연히 참이 되는 flaky한 경계값이 된다. 1초 여유를 둔다.
+        val result = outboxRepository.updateAllResubmittedOutbox(cutoff = time.minusSeconds(1))
 
         assertThat(result).isEqualTo(0)
         val updated = outboxRepository.findByIdOrNull(event.id)
@@ -209,8 +211,7 @@ class OutboxRepositoryTest @Autowired constructor(
         val pending = outboxRepository.save(outboxEventOf(status = OutboxStatus.PENDING))
         val failed = outboxRepository.save(outboxEventOf(status = OutboxStatus.FAILED))
         val resubmitted = outboxRepository.save(outboxEventOf(status = OutboxStatus.RESUBMITTED))
-        val processing =
-            outboxRepository.save(outboxEventOf(status = OutboxStatus.PROCESSING)) // 제외되는 것도 같이 넣어야 필터링 검증됨
+        outboxRepository.save(outboxEventOf(status = OutboxStatus.PROCESSING)) // 제외되는 것도 같이 넣어야 필터링 검증됨
 
         // when
         val result = outboxRepository.findPollerEvents()

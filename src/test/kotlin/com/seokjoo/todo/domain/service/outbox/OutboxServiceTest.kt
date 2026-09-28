@@ -97,23 +97,23 @@ class OutboxServiceTest : BehaviorSpec({
             every { outboxRepository.updateProcessingOutbox(any(), now = any()) } returns 0
 
             Then("MAX_ATTEMPT 보다 크면") {
-                val event = outboxEventOf(
+                val maxAttemptEvent = outboxEventOf(
                     eventType = OutboxEventType.PURCHASE_REQUEST,
                     event = purchaseRequestEvent,
                     completionAttempts = 5,
                 )
-                every { outboxRepository.findByIdOrNull(any()) } returns event
+                every { outboxRepository.findByIdOrNull(any()) } returns maxAttemptEvent
 
                 val result = outboxService.claimOutbox("99")
-                assertThat(result).isEqualTo(ClaimFailure.CheckDLQ(event))
+                assertThat(result).isEqualTo(ClaimFailure.CheckDLQ(maxAttemptEvent))
             }
             Then("status == PROCESSING 이면") {
-                val event = outboxEventOf(
+                val processingEvent = outboxEventOf(
                     eventType = OutboxEventType.PURCHASE_REQUEST,
                     event = purchaseRequestEvent,
                     status = OutboxStatus.PROCESSING,
                 )
-                every { outboxRepository.findByIdOrNull(any()) } returns event
+                every { outboxRepository.findByIdOrNull(any()) } returns processingEvent
 
                 val result = outboxService.claimOutbox("99")
                 assertThat(result).isEqualTo(ClaimFailure.Processing)
