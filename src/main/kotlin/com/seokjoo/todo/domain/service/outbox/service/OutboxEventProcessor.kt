@@ -91,7 +91,9 @@ class OutboxEventProcessor(
             is ClaimFailure.CheckDLQ -> {
                 runCatching {
                     outboxService.updateOutboxDLQ(claim.outboxEvent)
-                }.onFailure { /** 여러 인스턴스가 dlq 이관 시도 시에 pk 중복 에러로 실패 날 수 있지만 무시 */ }
+                }.onFailure {
+                    onFailure.invoke(it)
+                }
                 onLog.invoke("Check DLQ failure")
             }
 
