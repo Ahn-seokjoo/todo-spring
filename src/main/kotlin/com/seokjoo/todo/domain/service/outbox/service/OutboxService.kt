@@ -73,7 +73,8 @@ class OutboxService(
 
     @Transactional
     fun updateOutboxDLQ(outboxEvent: OutboxEvent) {
-        outboxRepository.deleteOutboxEventById(outboxEvent.id)
+        val effectedCount = outboxRepository.deleteOutboxEventById(outboxEvent.id)
+        if (effectedCount == 0) return
         outboxDLQRepository.save(OutboxEventDLQ.from(outboxEvent))
     }
 
