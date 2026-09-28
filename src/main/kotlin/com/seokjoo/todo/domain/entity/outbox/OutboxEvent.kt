@@ -9,11 +9,17 @@ import jakarta.persistence.Enumerated
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
+import jakarta.persistence.Index
 import jakarta.persistence.Table
 import java.time.LocalDateTime
 
 @Entity
-@Table(name = "outbox_event")
+@Table(
+    name = "outbox_event",
+    indexes = [
+        Index(name = "idx_outbox_event_status_processing_started_date", columnList = "status, processing_started_date")
+    ]
+)
 class OutboxEvent(
     @Enumerated(EnumType.STRING)
     @Column(name = "listener_type", nullable = false, length = 50)
