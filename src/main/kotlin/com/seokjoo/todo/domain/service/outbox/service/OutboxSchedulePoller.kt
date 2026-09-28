@@ -26,6 +26,8 @@ class OutboxSchedulePoller(
                         logger.info("OutboxSchedulePoller - Outbox scheduled $message")
                     }
                 )
+            }.onFailure {
+                logger.error("OutboxSchedulePoller - unexpected error. id=${event.id}", it)
             }
         }
     }
