@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.seokjoo.todo.annotation.TodoTest
 import com.seokjoo.todo.domain.entity.outbox.OutboxEvent
 import com.seokjoo.todo.domain.service.auth.TodoAuthService
+import com.seokjoo.todo.domain.service.email.EmailService
 import com.seokjoo.todo.domain.service.outbox.repository.OutboxArchiveRepository
 import com.seokjoo.todo.domain.service.outbox.repository.OutboxRepository
 import com.seokjoo.todo.domain.service.outbox.service.OutboxEventProcessor
@@ -41,6 +42,7 @@ class OutboxEmailDuplicateSendTest @Autowired constructor(
     private val processor: OutboxEventProcessor,
     private val objectMapper: ObjectMapper,
     private val transactionManager: PlatformTransactionManager,
+    private val mailService: EmailService,
 ) {
     @MockitoBean
     private lateinit var mailSender: JavaMailSender
@@ -103,6 +105,7 @@ class OutboxEmailDuplicateSendTest @Autowired constructor(
             verify(mailSender, times(1)).send(any<SimpleMailMessage>())
         } finally {
             executor.shutdownNow()
+            mailService.deleteSentRecord(id = outboxEvent.id)
             outboxArchiveRepository.deleteById(outboxEvent.id)
             outboxService.deleteOutboxEvent(outboxEvent.id)
             todoAuthService.delete(sellerId, "pita")
