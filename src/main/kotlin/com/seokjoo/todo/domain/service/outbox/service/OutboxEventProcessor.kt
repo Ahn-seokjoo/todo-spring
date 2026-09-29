@@ -9,6 +9,7 @@ import com.seokjoo.todo.domain.service.outbox.ClaimFailure
 import com.seokjoo.todo.domain.service.outbox.ClaimSuccess
 import com.seokjoo.todo.domain.service.outbox.OutboxEventType
 import com.seokjoo.todo.domain.service.outbox.PublishableEvent
+import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.stereotype.Component
 
 @Component
@@ -36,6 +37,7 @@ class OutboxEventProcessor(
                         val sellerEmail =
                             seller.email ?: throw TodoException.of(TodoExceptionType.OUTBOX_SELLER_EMAIL_EMPTY)
 
+                        mailService.markSentAt(id = claim.outboxEvent.id)
                         mailService.sendEmail(
                             to = sellerEmail,
                             subject = "Todo 구매 요청",
@@ -52,6 +54,7 @@ class OutboxEventProcessor(
                         val buyerEmail =
                             buyer.email ?: throw TodoException.of(TodoExceptionType.OUTBOX_BUYER_EMAIL_EMPTY)
 
+                        mailService.markSentAt(id = claim.outboxEvent.id)
                         mailService.sendEmail(
                             to = buyerEmail,
                             subject = "Todo 구매 승인",
@@ -68,6 +71,7 @@ class OutboxEventProcessor(
                         val buyerEmail =
                             buyer.email ?: throw TodoException.of(TodoExceptionType.OUTBOX_BUYER_EMAIL_EMPTY)
 
+                        mailService.markSentAt(id = claim.outboxEvent.id)
                         mailService.sendEmail(
                             to = buyerEmail,
                             subject = "Todo 구매 거부",
@@ -80,12 +84,20 @@ class OutboxEventProcessor(
                 result
                     .onSuccess { outboxService.updateOutboxSuccess(outboxEvent = claim.outboxEvent) }
                     .onFailure { throwable ->
-                        outboxService.updateOutboxFail(
-                            id = claim.outboxEvent.id,
-                            errorMessage = throwable.message.orEmpty().take(1000),
-                            claimedAt = requireNotNull(claim.outboxEvent.processingStartedDate),
-                        )
-                        onFailure.invoke(throwable)
+                        if (throwable is DataIntegrityViolationException) {
+                            // 다른 워커가 이미 처리(발송)함 -> 정상적인 멱등 스킵이라 onFailure(에러 로그) 대신 onLog로
+                            outboxService.updateOutboxSuccess(outboxEvent = claim.outboxEvent)
+                            onLog.invoke("Duplicate email send skipped (already sent by another worker): ${claim.outboxEvent.id}")
+                        } else {
+                            // 진짜 실패 -> 마킹 롤백하고 재시도 대상으로
+                            mailService.deleteSentRecord(id = claim.outboxEvent.id)
+                            outboxService.updateOutboxFail(
+                                id = claim.outboxEvent.id,
+                                errorMessage = throwable.message.orEmpty().take(1000),
+                                claimedAt = requireNotNull(claim.outboxEvent.processingStartedDate),
+                            )
+                            onFailure.invoke(throwable)
+                        }
                     }
             }
 

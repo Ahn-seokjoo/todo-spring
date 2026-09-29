@@ -94,6 +94,7 @@ class TodoPurchaseEmailEventListenerTest : BehaviorSpec({
             every { authService.findUserByUserId(buyer.userId) } returns buyer
             every { outboxService.updateOutboxSuccess(any()) } just Runs
             every { outboxService.updateOutboxFail(any(), any(), any()) } just Runs
+            every { mailService.markSentAt(any(), any()) } returns mockk()
 
             val toSlot = slot<String>()
             every { mailService.sendEmail(to = capture(toSlot), subject = any(), content = any()) } just Runs
@@ -121,6 +122,7 @@ class TodoPurchaseEmailEventListenerTest : BehaviorSpec({
         every { authService.findUserByUserId(sellerWithoutEmail.userId) } returns sellerWithoutEmail
         every { outboxService.updateOutboxSuccess(any()) } just Runs
         every { outboxService.updateOutboxFail(any(), any(), any()) } just Runs
+        every { mailService.deleteSentRecord(any()) } just Runs
 
         When("리스너가 이벤트를 처리하면") {
             listener.eventListener(TodoPurchaseEmailEvent(outboxEventId = "dummy-outbox-id"))
