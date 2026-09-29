@@ -120,7 +120,8 @@ class OutboxRepositoryTest @Autowired constructor(
                 status = OutboxStatus.FAILED,
             )
         )
-        outboxRepository.updateProcessingOutbox(id = event.id)
+        val firstClaimCount = outboxRepository.updateProcessingOutbox(id = event.id)
+        assertThat(firstClaimCount).isEqualTo(1)
         val claimedAt = outboxRepository.findByIdOrNull(event.id)!!.processingStartedDate!!
 
         val errorMessage = "error-message"
@@ -134,7 +135,8 @@ class OutboxRepositoryTest @Autowired constructor(
         assertThat(updated?.status).isEqualTo(OutboxStatus.FAILED)
         assertThat(updated?.lastErrorMessage).isEqualTo(errorMessage)
 
-        outboxRepository.updateProcessingOutbox(id = event.id)
+        val secondClaimCount = outboxRepository.updateProcessingOutbox(id = event.id)
+        assertThat(secondClaimCount).isEqualTo(1)
         val secondEvents = outboxRepository.findByIdOrNull(event.id)!!
         val secondsEffectedCount = outboxRepository.updateFailedOutbox(
             id = event.id,
@@ -158,13 +160,18 @@ class OutboxRepositoryTest @Autowired constructor(
                 status = OutboxStatus.FAILED,
             )
         )
-        // A가 claim
-        outboxRepository.updateProcessingOutbox(id = event.id)
+        // A가 claim. claim 시각을 명시적으로 고정해서, LocalDateTime.now()를 두 번 호출했을 때
+        // DB 컬럼 정밀도(마이크로초) 안에서 우연히 같은 값이 되어 A/B의 토큰이 구분 불가능해지는 상황(flaky)을 원천 차단한다.
+        val firstClaimAt = LocalDateTime.now()
+        val firstClaimCount = outboxRepository.updateProcessingOutbox(id = event.id, now = firstClaimAt)
+        assertThat(firstClaimCount).isEqualTo(1)
         val staleClaimedAt = outboxRepository.findByIdOrNull(event.id)!!.processingStartedDate!!
 
-        // 폴러가 stale로 판단해 RESUBMITTED로 되돌리고, B가 재claim (새 processingStartedDate)
-        outboxRepository.updateAllResubmittedOutbox(cutoff = LocalDateTime.now().plusMinutes(1))
-        outboxRepository.updateProcessingOutbox(id = event.id)
+        // 폴러가 stale로 판단해 RESUBMITTED로 되돌리고, B가 재claim (첫 claim과 확실히 다른 시각으로)
+        outboxRepository.updateAllResubmittedOutbox(cutoff = firstClaimAt.plusMinutes(1))
+        val secondClaimAt = firstClaimAt.plusSeconds(1)
+        val secondClaimCount = outboxRepository.updateProcessingOutbox(id = event.id, now = secondClaimAt)
+        assertThat(secondClaimCount).isEqualTo(1)
 
         // A가 뒤늦게 옛날 토큰으로 실패 기록을 시도
         val effectedCount = outboxRepository.updateFailedOutbox(
