@@ -2,6 +2,8 @@ package com.seokjoo.todo.domain.service.outbox.repository
 
 import com.seokjoo.todo.domain.entity.outbox.OutboxEvent
 import com.seokjoo.todo.domain.entity.outbox.OutboxStatus
+import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
@@ -48,16 +50,18 @@ interface OutboxRepository : JpaRepository<OutboxEvent, String> {
         resubmitted: OutboxStatus = OutboxStatus.RESUBMITTED,
     ): Int
 
-    @Query("select oe from OutboxEvent oe where oe.status in (:pending, :failed, :resubmitted)")
+    @Query("select oe from OutboxEvent oe where oe.status in (:pending, :failed, :resubmitted) order by oe.publicationDate asc")
     fun findPollerEvents(
         pending: OutboxStatus = OutboxStatus.PENDING,
         failed: OutboxStatus = OutboxStatus.FAILED,
         resubmitted: OutboxStatus = OutboxStatus.RESUBMITTED,
+        pageable: Pageable = PageRequest.of(0, POLLER_BATCH_SIZE)
     ): List<OutboxEvent>
 
     fun deleteOutboxEventById(id: String): Int
 
     companion object {
         const val MAX_ATTEMPTS = 5
+        const val POLLER_BATCH_SIZE = 100
     }
 }
