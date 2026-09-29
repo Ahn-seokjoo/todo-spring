@@ -83,6 +83,7 @@ class OutboxEventProcessor(
                         outboxService.updateOutboxFail(
                             id = claim.outboxEvent.id,
                             errorMessage = throwable.message.orEmpty().take(1000),
+                            claimedAt = requireNotNull(claim.outboxEvent.processingStartedDate),
                         )
                         onFailure.invoke(throwable)
                     }

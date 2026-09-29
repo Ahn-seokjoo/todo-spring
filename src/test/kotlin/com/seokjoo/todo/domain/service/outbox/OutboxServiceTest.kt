@@ -156,9 +156,9 @@ class OutboxServiceTest : BehaviorSpec({
         When("updateOutboxFail 호출시에") {
             every { outboxRepository.updateFailedOutbox(any(), any(), any(), any()) } returns 1
             Then("updateFailedOutbox 1회 호출") {
-                outboxService.updateOutboxFail("id", "message")
+                outboxService.updateOutboxFail("id", "message", LocalDateTime.now())
                 verify(exactly = 1) {
-                    outboxRepository.updateFailedOutbox(any(), any(), any(), any())
+                    outboxRepository.updateFailedOutbox(any(), any(), any(), any(), any())
                 }
             }
         }

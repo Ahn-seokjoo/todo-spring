@@ -67,8 +67,8 @@ class OutboxService(
     }
 
     @Transactional
-    fun updateOutboxFail(id: String, errorMessage: String) {
-        outboxRepository.updateFailedOutbox(id, errorMessage)
+    fun updateOutboxFail(id: String, errorMessage: String, claimedAt: LocalDateTime) {
+        outboxRepository.updateFailedOutbox(id, errorMessage, claimedAt)
     }
 
     @Transactional

@@ -120,8 +120,12 @@ class OutboxRepositoryTest @Autowired constructor(
                 status = OutboxStatus.FAILED,
             )
         )
+        outboxRepository.updateProcessingOutbox(id = event.id)
+        val claimedAt = outboxRepository.findByIdOrNull(event.id)!!.processingStartedDate!!
+
         val errorMessage = "error-message"
-        val effectedCount = outboxRepository.updateFailedOutbox(id = event.id, errorMessage = errorMessage)
+        val effectedCount =
+            outboxRepository.updateFailedOutbox(id = event.id, errorMessage = errorMessage, claimedAt = claimedAt)
 
         assertThat(effectedCount).isEqualTo(1)
         val updated = outboxRepository.findByIdOrNull(event.id)
@@ -130,10 +134,41 @@ class OutboxRepositoryTest @Autowired constructor(
         assertThat(updated?.status).isEqualTo(OutboxStatus.FAILED)
         assertThat(updated?.lastErrorMessage).isEqualTo(errorMessage)
 
-        val secondsEffectedCount = outboxRepository.updateFailedOutbox(id = event.id, errorMessage = errorMessage)
+        val secondsEffectedCount =
+            outboxRepository.updateFailedOutbox(id = event.id, errorMessage = errorMessage, claimedAt = claimedAt)
         assertThat(secondsEffectedCount).isEqualTo(1)
         val secondsUpdated = outboxRepository.findByIdOrNull(event.id)
         assertThat(secondsUpdated?.completionAttempts).isEqualTo(2)
+    }
+
+    @Test
+    fun `claimedAt이 최신 processingStartedDate와 다르면 업데이트하지 않는다`() {
+        val event = outboxRepository.save(
+            OutboxEvent(
+                listenerType = OutboxListenerType.EMAIL_NOTIFICATION,
+                eventType = OutboxEventType.PURCHASE_REQUEST,
+                serializedEvent = "dummy",
+                publicationDate = LocalDateTime.now(),
+                status = OutboxStatus.FAILED,
+            )
+        )
+        // A가 claim
+        outboxRepository.updateProcessingOutbox(id = event.id)
+        val staleClaimedAt = outboxRepository.findByIdOrNull(event.id)!!.processingStartedDate!!
+
+        // 폴러가 stale로 판단해 RESUBMITTED로 되돌리고, B가 재claim (새 processingStartedDate)
+        outboxRepository.updateAllResubmittedOutbox(cutoff = LocalDateTime.now().plusMinutes(1))
+        outboxRepository.updateProcessingOutbox(id = event.id)
+
+        // A가 뒤늦게 옛날 토큰으로 실패 기록을 시도
+        val effectedCount = outboxRepository.updateFailedOutbox(
+            id = event.id, errorMessage = "stale-failure", claimedAt = staleClaimedAt,
+        )
+
+        assertThat(effectedCount).isEqualTo(0) // A의 쓰기는 무시됨
+        val updated = outboxRepository.findByIdOrNull(event.id)
+        assertThat(updated?.status).isEqualTo(OutboxStatus.PROCESSING) // B의 상태 그대로
+        assertThat(updated?.completionAttempts).isEqualTo(0) // A의 유령 실패로 안 올라감
     }
 
     @Test
