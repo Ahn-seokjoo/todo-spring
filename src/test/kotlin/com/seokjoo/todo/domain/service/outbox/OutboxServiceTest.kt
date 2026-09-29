@@ -74,13 +74,9 @@ class OutboxServiceTest : BehaviorSpec({
             } returns 0
             every { outboxRepository.findByIdOrNull(any()) } returns null
 
-            Then("claimOutbox 는 TodoExceptionType.OUTBOX_NOT_FOUND 를 뱉는다") {
-                val result = assertThrows<TodoException> {
-                    outboxService.claimOutbox("99")
-                }
-                assertThat(result.errorCode).isEqualTo(TodoExceptionType.OUTBOX_NOT_FOUND.errorCode)
-                assertThat(result.message).isEqualTo(TodoExceptionType.OUTBOX_NOT_FOUND.message)
-                assertThat(result.httpStatusCode).isEqualTo(TodoExceptionType.OUTBOX_NOT_FOUND.httpStatusCode)
+            Then("claimOutbox 는 ClaimFailure.NotClaimable 를 뱉는다") {
+                val result = outboxService.claimOutbox("99")
+                assertThat(result).isEqualTo(ClaimFailure.NotClaimable)
             }
         }
         When("수정이 성공해서 effectedCount = 1이면 ClaimSuccess로 리턴") {

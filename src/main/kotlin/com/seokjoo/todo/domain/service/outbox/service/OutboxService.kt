@@ -41,7 +41,7 @@ class OutboxService(
     fun claimOutbox(id: String): OutboxEventClaimType {
         val effectedCount = outboxRepository.updateProcessingOutbox(id)
         val outboxEvent =
-            outboxRepository.findByIdOrNull(id) ?: throw TodoException.of(TodoExceptionType.OUTBOX_NOT_FOUND)
+            outboxRepository.findByIdOrNull(id) ?: return ClaimFailure.NotClaimable
 
         if (effectedCount == 1) return ClaimSuccess(outboxEvent)
         return when {

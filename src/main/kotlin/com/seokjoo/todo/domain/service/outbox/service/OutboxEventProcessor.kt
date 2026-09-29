@@ -101,6 +101,10 @@ class OutboxEventProcessor(
             is ClaimFailure.Processing -> {
                 onLog.invoke("Already Processing Event failure")
             }
+
+            is ClaimFailure.NotClaimable -> {
+                onLog.invoke("Not claimable — already processed elsewhere: $eventId")
+            }
         }
     }
 }
