@@ -6,10 +6,12 @@ import com.seokjoo.todo.domain.entity.outbox.OutboxEvent
 import com.seokjoo.todo.domain.entity.todouser.User
 import com.seokjoo.todo.domain.service.auth.TodoAuthService
 import com.seokjoo.todo.domain.service.email.EmailService
+import com.seokjoo.todo.domain.service.outbox.ClaimSuccess
 import com.seokjoo.todo.domain.service.outbox.OutboxEventType
 import com.seokjoo.todo.domain.service.outbox.OutboxListenerType
 import com.seokjoo.todo.domain.service.outbox.PublishableEvent
 import com.seokjoo.todo.domain.service.outbox.listener.event.TodoPurchaseEmailEvent
+import com.seokjoo.todo.domain.service.outbox.service.OutboxEventProcessor
 import com.seokjoo.todo.domain.service.outbox.service.OutboxService
 import io.kotest.core.spec.IsolationMode
 import io.kotest.core.spec.style.BehaviorSpec
@@ -27,13 +29,14 @@ class TodoPurchaseEmailEventListenerTest : BehaviorSpec({
     val authService: TodoAuthService = mockk()
     val mailService: EmailService = mockk()
     val objectMapper: ObjectMapper = jacksonObjectMapper()
-
-    val listener = TodoPurchaseEmailEventListener(
+    val processor = OutboxEventProcessor(
         outboxService = outboxService,
         authService = authService,
-        objectMapper = objectMapper,
         mailService = mailService,
+        objectMapper = objectMapper,
     )
+
+    val listener = TodoPurchaseEmailEventListener(processor = processor)
 
     val seller = User(userId = "pita1", password = "pw", email = "seller@test.com")
     val buyer = User(userId = "pita2", password = "pw", email = "buyer@test.com")
@@ -44,6 +47,7 @@ class TodoPurchaseEmailEventListenerTest : BehaviorSpec({
             eventType = eventType,
             serializedEvent = objectMapper.writeValueAsString(event),
             publicationDate = LocalDateTime.now(),
+            processingStartedDate = LocalDateTime.now(),
         ).also { it.id = "outbox-${eventType.name}" }
     }
 
@@ -85,11 +89,11 @@ class TodoPurchaseEmailEventListenerTest : BehaviorSpec({
         Given(case.description) {
             val outboxEvent = outboxEventOf(case.eventType, case.event)
 
-            every { outboxService.claimOutbox(any()) } returns outboxEvent
+            every { outboxService.claimOutbox(any()) } returns ClaimSuccess(outboxEvent)
             every { authService.findUserByUserId(seller.userId) } returns seller
             every { authService.findUserByUserId(buyer.userId) } returns buyer
             every { outboxService.updateOutboxSuccess(any()) } just Runs
-            every { outboxService.updateOutboxFail(any()) } just Runs
+            every { outboxService.updateOutboxFail(any(), any(), any()) } just Runs
 
             val toSlot = slot<String>()
             every { mailService.sendEmail(to = capture(toSlot), subject = any(), content = any()) } just Runs
@@ -100,7 +104,7 @@ class TodoPurchaseEmailEventListenerTest : BehaviorSpec({
                 Then("올바른 수신자에게 메일이 발송되고 outbox가 성공 처리된다") {
                     toSlot.captured shouldBe case.expectedRecipient.email
                     verify(exactly = 1) { outboxService.updateOutboxSuccess(outboxEvent) }
-                    verify(exactly = 0) { outboxService.updateOutboxFail(any()) }
+                    verify(exactly = 0) { outboxService.updateOutboxFail(any(), any(), any()) }
                 }
             }
         }
@@ -113,17 +117,23 @@ class TodoPurchaseEmailEventListenerTest : BehaviorSpec({
         )
         val outboxEvent = outboxEventOf(OutboxEventType.PURCHASE_REQUEST, purchaseRequestEvent)
 
-        every { outboxService.claimOutbox(any()) } returns outboxEvent
+        every { outboxService.claimOutbox(any()) } returns ClaimSuccess(outboxEvent)
         every { authService.findUserByUserId(sellerWithoutEmail.userId) } returns sellerWithoutEmail
         every { outboxService.updateOutboxSuccess(any()) } just Runs
-        every { outboxService.updateOutboxFail(any()) } just Runs
+        every { outboxService.updateOutboxFail(any(), any(), any()) } just Runs
 
         When("리스너가 이벤트를 처리하면") {
             listener.eventListener(TodoPurchaseEmailEvent(outboxEventId = "dummy-outbox-id"))
 
             Then("메일 발송을 시도하지 않고 outbox가 실패 처리된다") {
                 verify(exactly = 0) { mailService.sendEmail(any(), any(), any()) }
-                verify(exactly = 1) { outboxService.updateOutboxFail(id = outboxEvent.id) }
+                verify(exactly = 1) {
+                    outboxService.updateOutboxFail(
+                        id = outboxEvent.id,
+                        errorMessage = any(),
+                        claimedAt = any(),
+                    )
+                }
                 verify(exactly = 0) { outboxService.updateOutboxSuccess(any()) }
             }
         }

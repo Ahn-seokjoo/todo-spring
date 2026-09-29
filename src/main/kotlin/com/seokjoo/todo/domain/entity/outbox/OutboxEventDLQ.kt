@@ -6,21 +6,20 @@ import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
-import jakarta.persistence.Index
+import jakarta.persistence.PostLoad
+import jakarta.persistence.PostPersist
 import jakarta.persistence.Table
+import jakarta.persistence.Transient
+import org.springframework.data.domain.Persistable
 import java.time.LocalDateTime
 
 @Entity
-@Table(
-    name = "outbox_event",
-    indexes = [
-        Index(name = "idx_outbox_event_status_processing_started_date", columnList = "status, processing_started_date")
-    ]
-)
-class OutboxEvent(
+@Table(name = "outbox_event_dlq")
+class OutboxEventDLQ(
+    // 기존 Outbox Event의 id를 물려받음
+    id: String,
+
     @Enumerated(EnumType.STRING)
     @Column(name = "listener_type", nullable = false, length = 50)
     val listenerType: OutboxListenerType,
@@ -42,7 +41,7 @@ class OutboxEvent(
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    val status: OutboxStatus = OutboxStatus.PENDING,
+    val status: OutboxStatus,
 
     @Column(name = "completion_attempts", nullable = false)
     val completionAttempts: Int = 0,
@@ -50,13 +49,40 @@ class OutboxEvent(
     @Column(name = "last_resubmission_date")
     val lastResubmissionDate: LocalDateTime? = null,
 
-    @Column(name = "processing_started_date")
-    val processingStartedDate: LocalDateTime? = null,
-
     @Column(name = "last_error_message", length = 1000)
     val lastErrorMessage: String? = null,
-) {
+) : Persistable<String> {
+
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    lateinit var id: String
+    @Column(name = "id")
+    private val entityId: String = id
+
+    @Transient
+    private var isNewEntity: Boolean = true
+
+    override fun isNew(): Boolean = isNewEntity
+    override fun getId(): String = entityId
+
+    @PostPersist
+    @PostLoad
+    fun markNotNew() {
+        isNewEntity = false
+    }
+
+    companion object {
+        fun from(outboxEvent: OutboxEvent): OutboxEventDLQ {
+            return OutboxEventDLQ(
+                id = outboxEvent.id,
+                listenerType = outboxEvent.listenerType,
+                eventType = outboxEvent.eventType,
+                serializedEvent = outboxEvent.serializedEvent,
+                publicationDate = outboxEvent.publicationDate,
+                completionDate = LocalDateTime.now(),
+                status = OutboxStatus.DLQ,
+                completionAttempts = outboxEvent.completionAttempts,
+                lastResubmissionDate = outboxEvent.lastResubmissionDate,
+                lastErrorMessage = outboxEvent.lastErrorMessage,
+            )
+        }
+    }
 }

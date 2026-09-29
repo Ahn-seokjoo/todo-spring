@@ -48,6 +48,9 @@ class OutboxEventArchive(
 
     @Column(name = "last_resubmission_date")
     val lastResubmissionDate: LocalDateTime? = null,
+
+    @Column(name = "last_error_message", length = 1000)
+    val lastErrorMessage: String? = null,
 ) : Persistable<String> {
 
     @Id
@@ -78,6 +81,7 @@ class OutboxEventArchive(
                 status = OutboxStatus.SUCCESS,
                 completionAttempts = outboxEvent.completionAttempts,
                 lastResubmissionDate = outboxEvent.lastResubmissionDate,
+                lastErrorMessage = outboxEvent.lastErrorMessage,
             )
         }
     }

@@ -110,11 +110,6 @@ enum class TodoExceptionType(
         errorCode = "OB000_OUTBOX_UPDATE_ERROR",
         httpStatusCode = 500,
     ),
-    OUTBOX_NOT_FOUND(
-        message = "outbox not found",
-        errorCode = "OB001_NOT_FOUND",
-        httpStatusCode = 500,
-    ),
     OUTBOX_SELLER_EMAIL_EMPTY(
         message = "판매자의 email이 등록되지 않았습니다",
         errorCode = "OB002_OUTBOX_SELLER_EMAIL_EMPTY",

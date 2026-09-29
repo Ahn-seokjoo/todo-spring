@@ -42,6 +42,9 @@ spring:
           auth: true
           starttls:
             enable: true
+          connectiontimeout: 5000 # 연결 맺는데 최대 시간
+          timeout: 5000           # 연결 후 응답 대기 시간
+          writetimeout: 5000      # 쓰기 작업 최대 시간
 
 management:
   server:
@@ -60,3 +63,8 @@ jwt:
   secret: ${JWT_SECRETS}
   accessTokenExpiration: ${JWT_ACCESS_TOKEN_EXPIRED_TIME}
   refreshTokenExpiration: ${JWT_REFRESH_TOKEN_EXPIRED_TIME}
+
+outbox:
+  poller:
+    fixed-delay: 120000     # 2분
+    stale-threshold: 180000 # 3분
