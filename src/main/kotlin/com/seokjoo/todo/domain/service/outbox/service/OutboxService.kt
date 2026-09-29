@@ -61,14 +61,15 @@ class OutboxService(
     }
 
     @Transactional
-    fun updateOutboxSuccess(outboxEvent: OutboxEvent) {
-        outboxRepository.deleteOutboxEventById(outboxEvent.id)
-        outboxArchiveRepository.save(OutboxEventArchive.from(outboxEvent))
+    fun updateOutboxFail(id: String, errorMessage: String, claimedAt: LocalDateTime) {
+        outboxRepository.updateFailedOutbox(id, errorMessage, claimedAt)
     }
 
     @Transactional
-    fun updateOutboxFail(id: String, errorMessage: String, claimedAt: LocalDateTime) {
-        outboxRepository.updateFailedOutbox(id, errorMessage, claimedAt)
+    fun updateOutboxSuccess(outboxEvent: OutboxEvent) {
+        val effectedCount = outboxRepository.deleteOutboxEventById(outboxEvent.id)
+        if (effectedCount == 0) return
+        outboxArchiveRepository.save(OutboxEventArchive.from(outboxEvent))
     }
 
     @Transactional

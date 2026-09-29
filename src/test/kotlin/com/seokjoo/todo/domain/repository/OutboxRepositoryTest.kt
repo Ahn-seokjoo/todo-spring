@@ -274,6 +274,16 @@ class OutboxRepositoryTest @Autowired constructor(
         assertThat(outboxRepository.findByIdOrNull(outboxEvent.id)).isNull()
     }
 
+    @Test
+    fun `이미 삭제된 id를 다시 삭제하면 0을 반환한다`() {
+        val event = outboxRepository.save(outboxEventOf(status = OutboxStatus.DLQ))
+        val first = outboxRepository.deleteOutboxEventById(event.id)
+        assertThat(first).isEqualTo(1)
+
+        val second = outboxRepository.deleteOutboxEventById(event.id)
+        assertThat(second).isEqualTo(0)
+    }
+
     fun outboxEventOf(
         completionAttempts: Int = 0,
         status: OutboxStatus = OutboxStatus.PENDING,

@@ -59,6 +59,8 @@ interface OutboxRepository : JpaRepository<OutboxEvent, String> {
         pageable: Pageable = PageRequest.of(0, POLLER_BATCH_SIZE)
     ): List<OutboxEvent>
 
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("delete from OutboxEvent oe where oe.id = :id")
     fun deleteOutboxEventById(id: String): Int
 
     companion object {
