@@ -134,11 +134,17 @@ class OutboxRepositoryTest @Autowired constructor(
         assertThat(updated?.status).isEqualTo(OutboxStatus.FAILED)
         assertThat(updated?.lastErrorMessage).isEqualTo(errorMessage)
 
-        val secondsEffectedCount =
-            outboxRepository.updateFailedOutbox(id = event.id, errorMessage = errorMessage, claimedAt = claimedAt)
+        outboxRepository.updateProcessingOutbox(id = event.id)
+        val secondEvents = outboxRepository.findByIdOrNull(event.id)!!
+        val secondsEffectedCount = outboxRepository.updateFailedOutbox(
+            id = event.id,
+            errorMessage = errorMessage,
+            claimedAt = secondEvents.processingStartedDate!!,
+        )
+
+        val finalEvent = outboxRepository.findByIdOrNull(event.id)!!
         assertThat(secondsEffectedCount).isEqualTo(1)
-        val secondsUpdated = outboxRepository.findByIdOrNull(event.id)
-        assertThat(secondsUpdated?.completionAttempts).isEqualTo(2)
+        assertThat(finalEvent.completionAttempts).isEqualTo(2)
     }
 
     @Test
