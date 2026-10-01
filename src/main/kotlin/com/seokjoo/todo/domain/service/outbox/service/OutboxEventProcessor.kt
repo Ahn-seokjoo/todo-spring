@@ -3,6 +3,7 @@ package com.seokjoo.todo.domain.service.outbox.service
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.seokjoo.todo.common.exception.TodoException
 import com.seokjoo.todo.common.exception.TodoExceptionType
+import com.seokjoo.todo.domain.entity.email.EmailSentStatus
 import com.seokjoo.todo.domain.service.auth.TodoAuthService
 import com.seokjoo.todo.domain.service.email.EmailService
 import com.seokjoo.todo.domain.service.outbox.ClaimFailure
@@ -37,12 +38,13 @@ class OutboxEventProcessor(
                         val sellerEmail =
                             seller.email ?: throw TodoException.of(TodoExceptionType.OUTBOX_SELLER_EMAIL_EMPTY)
 
-                        mailService.markSentAt(id = claim.outboxEvent.id)
+                        mailService.saveEmailSentRecordToReady(id = claim.outboxEvent.id)
                         mailService.sendEmail(
                             to = sellerEmail,
                             subject = "Todo 구매 요청",
                             content = "Todo [${purchase.todoId}] 구매 요청이 ${purchase.buyerId} 로부터 도착했습니다."
                         )
+                        mailService.markSentAt(id = claim.outboxEvent.id)
                     }
 
                     OutboxEventType.PURCHASE_APPROVED -> runCatching {
@@ -54,12 +56,13 @@ class OutboxEventProcessor(
                         val buyerEmail =
                             buyer.email ?: throw TodoException.of(TodoExceptionType.OUTBOX_BUYER_EMAIL_EMPTY)
 
-                        mailService.markSentAt(id = claim.outboxEvent.id)
+                        mailService.saveEmailSentRecordToReady(id = claim.outboxEvent.id)
                         mailService.sendEmail(
                             to = buyerEmail,
                             subject = "Todo 구매 승인",
                             content = "Todo [${purchase.todoId}] 구매가 ${purchase.sellerId} 로부터 승인됐습니다."
                         )
+                        mailService.markSentAt(id = claim.outboxEvent.id)
                     }
 
                     OutboxEventType.PURCHASE_REJECTED -> runCatching {
@@ -71,12 +74,13 @@ class OutboxEventProcessor(
                         val buyerEmail =
                             buyer.email ?: throw TodoException.of(TodoExceptionType.OUTBOX_BUYER_EMAIL_EMPTY)
 
-                        mailService.markSentAt(id = claim.outboxEvent.id)
+                        mailService.saveEmailSentRecordToReady(id = claim.outboxEvent.id)
                         mailService.sendEmail(
                             to = buyerEmail,
                             subject = "Todo 구매 거부",
                             content = "Todo [${purchase.todoId}] 구매가 ${purchase.sellerId} 로부터 거절되어 환불처리 됐습니다."
                         )
+                        mailService.markSentAt(id = claim.outboxEvent.id)
                     }
 
                     else -> Result.success(Unit)
@@ -85,9 +89,28 @@ class OutboxEventProcessor(
                     .onSuccess { outboxService.updateOutboxSuccess(outboxEvent = claim.outboxEvent) }
                     .onFailure { throwable ->
                         if (throwable is DataIntegrityViolationException) {
-                            // 다른 워커가 이미 처리(발송)함 -> 정상적인 멱등 스킵이라 onFailure(에러 로그) 대신 onLog로
-                            outboxService.updateOutboxSuccess(outboxEvent = claim.outboxEvent)
-                            onLog.invoke("Duplicate email send skipped (already sent by another worker): ${claim.outboxEvent.id}")
+                            val sentStatus = mailService.findStatusByEmailId(claim.outboxEvent.id)
+                            when (sentStatus) {
+                                EmailSentStatus.READY -> {
+                                    // 다른 워커 둘이 동시에 넣으려고 할 때 한쪽에서는 실패로 이쪽으로 옴
+                                    // 다른 워커에서 처리 예정이니 이번 워커의 프로세스는 실패처리로 기록
+                                    outboxService.updateOutboxFail(
+                                        id = claim.outboxEvent.id,
+                                        errorMessage = "Email send still unconfirmed by another worker (status=READY)",
+                                        claimedAt = requireNotNull(claim.outboxEvent.processingStartedDate),
+                                    )
+                                }
+
+                                EmailSentStatus.SENT -> {
+                                    // 이미 보냈음, 성공처리
+                                    outboxService.updateOutboxSuccess(outboxEvent = claim.outboxEvent)
+                                    onLog.invoke("Duplicate email send skipped (confirmed already sent by another worker): ${claim.outboxEvent.id}")
+                                }
+
+                                null -> {
+                                    // no-op
+                                }
+                            }
                         } else {
                             // 진짜 실패 -> 마킹 롤백하고 재시도 대상으로
                             mailService.deleteSentRecord(id = claim.outboxEvent.id)
