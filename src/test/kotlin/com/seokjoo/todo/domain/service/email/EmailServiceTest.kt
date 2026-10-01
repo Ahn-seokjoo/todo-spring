@@ -15,13 +15,13 @@ class EmailServiceTest @Autowired constructor(
 ) {
 
     @Test
-    fun `같은 outboxEventId로 markSentAt을 두 번 호출하면 두 번째는 중복 키 예외가 발생한다`() {
+    fun `같은 outboxEventId로 saveEmailSentRecordToReady를 두 번 호출하면 두 번째는 중복 키 예외가 발생한다`() {
         val id = UUID.randomUUID().toString()
 
-        emailService.markSentAt(id = id)
+        emailService.saveEmailSentRecordToReady(id = id)
 
         assertThrows(DataIntegrityViolationException::class.java) {
-            emailService.markSentAt(id = id)
+            emailService.saveEmailSentRecordToReady(id = id)
         }
     }
 }

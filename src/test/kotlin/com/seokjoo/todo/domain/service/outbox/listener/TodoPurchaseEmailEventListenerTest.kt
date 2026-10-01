@@ -94,6 +94,7 @@ class TodoPurchaseEmailEventListenerTest : BehaviorSpec({
             every { authService.findUserByUserId(buyer.userId) } returns buyer
             every { outboxService.updateOutboxSuccess(any()) } just Runs
             every { outboxService.updateOutboxFail(any(), any(), any()) } just Runs
+            every { mailService.saveEmailSentRecordToReady(any()) } returns mockk()
             every { mailService.markSentAt(any(), any()) } returns mockk()
 
             val toSlot = slot<String>()
