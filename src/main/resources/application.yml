@@ -68,3 +68,7 @@ outbox:
   poller:
     fixed-delay: 120000     # 2분
     stale-threshold: 180000 # 3분
+
+email:
+  reconciler:
+    fixed-delay: 300000 # 5분 - markSentAt 기록 실패로 READY에 멈춘 레코드를 SENT로 되돌리는 배치 주기

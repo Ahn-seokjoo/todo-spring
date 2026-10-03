@@ -2,18 +2,25 @@ package com.seokjoo.todo.domain.service.email
 
 import com.seokjoo.todo.annotation.TodoTest
 import com.seokjoo.todo.domain.entity.email.EmailSentStatus
+import com.seokjoo.todo.domain.entity.outbox.OutboxEventArchive
+import com.seokjoo.todo.domain.entity.outbox.OutboxStatus
+import com.seokjoo.todo.domain.service.outbox.OutboxEventType
+import com.seokjoo.todo.domain.service.outbox.OutboxListenerType
+import com.seokjoo.todo.domain.service.outbox.repository.OutboxArchiveRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDateTime
 import java.util.UUID
 
 @TodoTest
 @Transactional
 class EmailServiceTest @Autowired constructor(
     private val emailService: EmailService,
+    private val outboxArchiveRepository: OutboxArchiveRepository,
 ) {
 
     @Test
@@ -66,5 +73,38 @@ class EmailServiceTest @Autowired constructor(
         emailService.deleteSentRecord(id = id)
 
         assertThat(emailService.findStatusByEmailId(id)).isNull()
+    }
+
+    @Test
+    fun `reconcileConfirmedSentRecords는 READY인데 대응하는 outbox_event가 이미 archive에 있으면 SENT로 되돌린다`() {
+        val id = UUID.randomUUID().toString()
+        emailService.saveEmailSentRecordToReady(id = id)
+        // sendEmail은 성공했지만 markSentAt 기록만 실패한 상황을 흉내낸다: outbox는 이미 SUCCESS로 종결(=archive에 존재).
+        outboxArchiveRepository.save(
+            OutboxEventArchive(
+                id = id,
+                listenerType = OutboxListenerType.EMAIL_NOTIFICATION,
+                eventType = OutboxEventType.PURCHASE_REQUEST,
+                serializedEvent = "dummy",
+                publicationDate = LocalDateTime.now(),
+                status = OutboxStatus.SUCCESS,
+            )
+        )
+
+        val updatedCount = emailService.reconcileConfirmedSentRecords()
+
+        assertThat(updatedCount).isEqualTo(1)
+        assertThat(emailService.findStatusByEmailId(id)).isEqualTo(EmailSentStatus.SENT)
+    }
+
+    @Test
+    fun `reconcileConfirmedSentRecords는 대응하는 outbox_event_archive가 없는 READY 레코드는 건드리지 않는다`() {
+        val id = UUID.randomUUID().toString()
+        emailService.saveEmailSentRecordToReady(id = id)
+
+        val updatedCount = emailService.reconcileConfirmedSentRecords()
+
+        assertThat(updatedCount).isEqualTo(0)
+        assertThat(emailService.findStatusByEmailId(id)).isEqualTo(EmailSentStatus.READY)
     }
 }

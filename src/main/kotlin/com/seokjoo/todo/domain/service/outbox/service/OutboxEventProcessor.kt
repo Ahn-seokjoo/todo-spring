@@ -126,11 +126,9 @@ class OutboxEventProcessor(
         mailService.saveEmailSentRecordToReady(id = outboxEventId)
         mailService.sendEmail(to = to, subject = subject, content = content)
 
-        // sendEmail까지 끝나면 "발송 자체"는 이미 성공, 그 이후 markSentAt 기록 실패는 놔두고 후에 정합성 스케줄러가 처리
-        // 실패를 롤백시키면 이미 나간 메일을 재시도 해 중복 발송으로 이어짐
-        // TODO 정합성 워커 추가 예정
+        // sendEmail까지 끝나면 "발송 자체"는 이미 성공, 그 이후 markSentAt 기록 실패는 놔두고 후에 EmailSentRecordReconciler 가 처리
         runCatching { mailService.markSentAt(id = outboxEventId) }
-            .onFailure { onLog.invoke("발송은 성공했지만 SENT 기록에 실패함(재시도 대상으로 돌리지 않음): $outboxEventId") }
+            .onFailure { onLog.invoke("발송은 성공했지만 SENT 기록에 실패함 : $outboxEventId") }
     }
 
     private fun handleSendSuccess(outboxEvent: OutboxEvent) {

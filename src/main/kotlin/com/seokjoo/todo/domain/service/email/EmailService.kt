@@ -48,4 +48,9 @@ class EmailService(
     fun deleteSentRecord(id: String) {
         emailRepository.deleteByEmailId(emailId = id)
     }
+
+    @Transactional
+    fun reconcileConfirmedSentRecords(): Int {
+        return emailRepository.reconcileConfirmedSentRecords()
+    }
 }
