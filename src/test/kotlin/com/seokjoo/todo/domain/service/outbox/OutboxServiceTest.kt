@@ -292,6 +292,7 @@ class OutboxServiceTest : BehaviorSpec({
                 event = purchaseRequestEvent,
             )
             Then("Entity가 그대로 저장된다") {
+                every { outboxRepository.save(any<OutboxEvent>()) } returns event
                 val result = outboxService.saveOutbox(event)
                 assertThat(result).isEqualTo(event)
             }
