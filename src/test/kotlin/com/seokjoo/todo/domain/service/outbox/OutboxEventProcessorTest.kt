@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.seokjoo.todo.common.exception.TodoException
 import com.seokjoo.todo.common.exception.TodoExceptionType
+import com.seokjoo.todo.domain.entity.email.EmailSentRecord
 import com.seokjoo.todo.domain.entity.email.EmailSentStatus
 import com.seokjoo.todo.domain.entity.outbox.OutboxEvent
 import com.seokjoo.todo.domain.entity.todouser.User
@@ -20,7 +21,6 @@ import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
 import org.assertj.core.api.Assertions.assertThat
-import org.mockito.kotlin.any
 import org.springframework.dao.DataIntegrityViolationException
 import java.time.LocalDateTime
 
@@ -231,7 +231,10 @@ class OutboxEventProcessorTest : BehaviorSpec({
                 password = "pita",
                 email = "abc"
             )
-            every { mailService.saveEmailSentRecordToReady(any()) } returns any()
+            every { mailService.saveEmailSentRecordToReady(any()) } returns EmailSentRecord(
+                id = outboxEvent.id,
+                status = EmailSentStatus.READY,
+            )
             every { mailService.sendEmail(any(), any(), any()) } just Runs
             every { outboxService.updateOutboxSuccess(outboxEvent = outboxEvent) } just Runs
 
@@ -283,7 +286,7 @@ class OutboxEventProcessorTest : BehaviorSpec({
                  * 2. 진짜 처리중이였다면 처리 이후 해당 워커가 success 처리하면서 DELETE 처리 하니 정합성에 문제 없음
                  */
                 every { mailService.findStatusByEmailId(any()) } returns EmailSentStatus.READY
-                every { outboxService.updateOutboxFail(any(), any(), any()) } returns any()
+                every { outboxService.updateOutboxFail(any(), any(), any()) } just Runs
 
                 processor.process(eventId = outboxEvent.id, onFailure = onFailure, onLog = onLog)
 
