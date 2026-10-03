@@ -84,5 +84,20 @@ class OutboxEventArchive(
                 lastErrorMessage = outboxEvent.lastErrorMessage,
             )
         }
+
+        fun from(dlqEvent: OutboxEventDLQ): OutboxEventArchive {
+            return OutboxEventArchive(
+                id = dlqEvent.id,
+                listenerType = dlqEvent.listenerType,
+                eventType = dlqEvent.eventType,
+                serializedEvent = dlqEvent.serializedEvent,
+                publicationDate = dlqEvent.publicationDate,
+                completionDate = LocalDateTime.now(),
+                status = OutboxStatus.SUCCESS,
+                completionAttempts = dlqEvent.completionAttempts,
+                lastResubmissionDate = dlqEvent.lastResubmissionDate,
+                lastErrorMessage = dlqEvent.lastErrorMessage,
+            )
+        }
     }
 }

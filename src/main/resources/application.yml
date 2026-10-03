@@ -68,6 +68,8 @@ outbox:
   poller:
     fixed-delay: 120000     # 2분
     stale-threshold: 180000 # 3분
+  dlq-reconciler:
+    fixed-delay: 300000 # 5분 - 사실은 발송에 성공했는데 DLQ로 먼저 이관된 이벤트를 archive로 되돌리는 배치 주기
 
 email:
   reconciler:
