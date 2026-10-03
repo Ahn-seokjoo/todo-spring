@@ -12,8 +12,8 @@ import java.time.LocalDateTime
 interface TodoEmailRepository : JpaRepository<EmailSentRecord, String> {
 
     @Modifying(flushAutomatically = true, clearAutomatically = true)
-    @Query("delete from EmailSentRecord email where email.entityId = :emailId")
-    fun deleteByEmailId(emailId: String): Int
+    @Query("delete from EmailSentRecord email where email.entityId = :emailId and email.status = :ready")
+    fun deleteByEmailId(emailId: String, ready: EmailSentStatus = EmailSentStatus.READY): Int
 
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query(
