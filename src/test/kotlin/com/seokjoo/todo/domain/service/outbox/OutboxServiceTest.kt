@@ -282,6 +282,21 @@ class OutboxServiceTest : BehaviorSpec({
             }
         }
     }
+    Given("saveOutbox 테스트") {
+        When("save 시에") {
+            val purchaseRequestEvent = PublishableEvent.PurchaseRequestEvent(
+                sellerId = seller.userId, buyerId = buyer.userId, todoId = 1L, price = 100L, purchaseId = 1L
+            )
+            val event = outboxEventOf(
+                eventType = OutboxEventType.PURCHASE_REQUEST,
+                event = purchaseRequestEvent,
+            )
+            Then("Entity가 그대로 저장된다") {
+                val result = outboxService.saveOutbox(event)
+                assertThat(result).isEqualTo(event)
+            }
+        }
+    }
 }) {
     override fun isolationMode(): IsolationMode = IsolationMode.InstancePerLeaf
 }
