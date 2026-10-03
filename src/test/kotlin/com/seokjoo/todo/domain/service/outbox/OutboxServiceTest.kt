@@ -15,7 +15,9 @@ import com.seokjoo.todo.domain.service.outbox.repository.OutboxRepository
 import com.seokjoo.todo.domain.service.outbox.service.OutboxService
 import io.kotest.core.spec.IsolationMode
 import io.kotest.core.spec.style.BehaviorSpec
+import io.mockk.Runs
 import io.mockk.every
+import io.mockk.just
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
@@ -145,6 +147,17 @@ class OutboxServiceTest : BehaviorSpec({
                     outboxArchiveRepository.save(any())
                 }
             }
+            Then("updateOutboxSuccess 호출시에, effectedCount = 0 이라면 save는 미호출된다") {
+                every { outboxRepository.deleteOutboxEventById(any()) } returns 0
+                outboxService.updateOutboxSuccess(outboxEvent)
+
+                verify(exactly = 1) {
+                    outboxRepository.deleteOutboxEventById(any())
+                }
+                verify(exactly = 0) {
+                    outboxArchiveRepository.save(any())
+                }
+            }
         }
     }
 
@@ -167,9 +180,10 @@ class OutboxServiceTest : BehaviorSpec({
                 event = PublishableEvent.CacheEvictAllEvent,
             )
 
-            every { outboxRepository.deleteOutboxEventById(any()) } returns 1
             every { outboxDLQRepository.save(any()) } returns OutboxEventDLQ.from(outboxEvent)
             Then("deleteOutboxEventById, outboxDLQRepository.save 가 둘다 불린다") {
+                every { outboxRepository.deleteOutboxEventById(any()) } returns 1
+
                 outboxService.updateOutboxDLQ(outboxEvent)
 
                 verify(exactly = 1) {
@@ -178,6 +192,54 @@ class OutboxServiceTest : BehaviorSpec({
                 verify(exactly = 1) {
                     outboxDLQRepository.save(any())
                 }
+            }
+
+            Then("updateOutboxDLQ 호출시에, effectedCount = 0 이라면 save는 미호출된다") {
+                every { outboxRepository.deleteOutboxEventById(any()) } returns 0
+                outboxService.updateOutboxDLQ(outboxEvent)
+
+                verify(exactly = 1) {
+                    outboxRepository.deleteOutboxEventById(any())
+                }
+                verify(exactly = 0) {
+                    outboxDLQRepository.save(any())
+                }
+            }
+        }
+    }
+
+    Given("reconcileConfirmedSentDlqEvents 테스트") {
+        When("DLQ에 SENT로 확정된 이벤트가 있으면") {
+            val confirmedEvent = OutboxEventDLQ.from(
+                outboxEventOf(
+                    eventType = OutboxEventType.PURCHASE_REQUEST,
+                    event = PublishableEvent.CacheEvictAllEvent,
+                )
+            )
+            every { outboxDLQRepository.findConfirmedSentDlqEvents() } returns listOf(confirmedEvent)
+            every { outboxArchiveRepository.saveAll(any<List<OutboxEventArchive>>()) } returns listOf(
+                OutboxEventArchive.from(confirmedEvent)
+            )
+            every { outboxDLQRepository.deleteAll(any<List<OutboxEventDLQ>>()) } just Runs
+
+            Then("archive로 저장되고 DLQ에서는 삭제되며, 이관된 개수를 반환한다") {
+                val result = outboxService.reconcileConfirmedSentDlqEvents()
+
+                assertThat(result).isEqualTo(1)
+                verify(exactly = 1) { outboxArchiveRepository.saveAll(any<List<OutboxEventArchive>>()) }
+                verify(exactly = 1) { outboxDLQRepository.deleteAll(any<List<OutboxEventDLQ>>()) }
+            }
+        }
+
+        When("DLQ에 SENT로 확정된 이벤트가 없으면") {
+            every { outboxDLQRepository.findConfirmedSentDlqEvents() } returns emptyList()
+
+            Then("아무것도 이관하지 않고 0을 반환한다") {
+                val result = outboxService.reconcileConfirmedSentDlqEvents()
+
+                assertThat(result).isEqualTo(0)
+                verify(exactly = 0) { outboxArchiveRepository.saveAll(any<List<OutboxEventArchive>>()) }
+                verify(exactly = 0) { outboxDLQRepository.deleteAll(any<List<OutboxEventDLQ>>()) }
             }
         }
     }
@@ -255,6 +317,22 @@ class OutboxServiceTest : BehaviorSpec({
                 assertThat(result.eventType).isEqualTo(OutboxEventType.PURCHASE_REQUEST)
                 assertThat(result.serializedEvent).isEqualTo(objectMapper.writeValueAsString(purchaseRequestEvent))
                 assertThat(result.publicationDate).isBetween(before, after)
+            }
+        }
+    }
+    Given("saveOutbox 테스트") {
+        When("save 시에") {
+            val purchaseRequestEvent = PublishableEvent.PurchaseRequestEvent(
+                sellerId = seller.userId, buyerId = buyer.userId, todoId = 1L, price = 100L, purchaseId = 1L
+            )
+            val event = outboxEventOf(
+                eventType = OutboxEventType.PURCHASE_REQUEST,
+                event = purchaseRequestEvent,
+            )
+            Then("Entity가 그대로 저장된다") {
+                every { outboxRepository.save(any<OutboxEvent>()) } returns event
+                val result = outboxService.saveOutbox(event)
+                assertThat(result).isEqualTo(event)
             }
         }
     }

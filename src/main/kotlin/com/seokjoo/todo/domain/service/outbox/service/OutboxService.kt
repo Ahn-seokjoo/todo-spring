@@ -79,6 +79,19 @@ class OutboxService(
         outboxDLQRepository.save(OutboxEventDLQ.from(outboxEvent))
     }
 
+    // DLQ 전환과 success 전환이 경합 때를 위한 정합화.(4회 재시도, 5회차 때 성공 + 윈도우에 DLQ로 다른 워커가 이관해버리는 경우)
+    // email_sent_record가 SENT로 확정된 DLQ 이벤트는 "이미 보냈다"는 확정된 증거이므로, 새로운 판단 없이 archive로 이관하고 DLQ에서는 제거한다.
+    @Transactional
+    fun reconcileConfirmedSentDlqEvents(): Int {
+        val confirmedSentDlqEvents = outboxDLQRepository.findConfirmedSentDlqEvents()
+        if (confirmedSentDlqEvents.isEmpty()) return 0
+
+        outboxArchiveRepository.saveAll(confirmedSentDlqEvents.map { OutboxEventArchive.from(it) })
+        outboxDLQRepository.deleteAll(confirmedSentDlqEvents)
+
+        return confirmedSentDlqEvents.size
+    }
+
     // deleteOutboxEventById는 파생 delete 쿼리라 자체 트랜잭션이 없어서, 서비스 메서드로 감싸서 노출
     @Transactional
     fun deleteOutboxEvent(id: String) {
