@@ -145,6 +145,17 @@ class OutboxServiceTest : BehaviorSpec({
                     outboxArchiveRepository.save(any())
                 }
             }
+            Then("updateOutboxSuccess 호출시에, effectedCount = 0 이라면 save는 미호출된다") {
+                every { outboxRepository.deleteOutboxEventById(any()) } returns 0
+                outboxService.updateOutboxSuccess(outboxEvent)
+
+                verify(exactly = 1) {
+                    outboxRepository.deleteOutboxEventById(any())
+                }
+                verify(exactly = 0) {
+                    outboxArchiveRepository.save(any())
+                }
+            }
         }
     }
 
@@ -167,15 +178,28 @@ class OutboxServiceTest : BehaviorSpec({
                 event = PublishableEvent.CacheEvictAllEvent,
             )
 
-            every { outboxRepository.deleteOutboxEventById(any()) } returns 1
             every { outboxDLQRepository.save(any()) } returns OutboxEventDLQ.from(outboxEvent)
             Then("deleteOutboxEventById, outboxDLQRepository.save 가 둘다 불린다") {
+                every { outboxRepository.deleteOutboxEventById(any()) } returns 1
+
                 outboxService.updateOutboxDLQ(outboxEvent)
 
                 verify(exactly = 1) {
                     outboxRepository.deleteOutboxEventById(any())
                 }
                 verify(exactly = 1) {
+                    outboxDLQRepository.save(any())
+                }
+            }
+
+            Then("updateOutboxDLQ 호출시에, effectedCount = 0 이라면 save는 미호출된다") {
+                every { outboxRepository.deleteOutboxEventById(any()) } returns 0
+                outboxService.updateOutboxDLQ(outboxEvent)
+
+                verify(exactly = 1) {
+                    outboxRepository.deleteOutboxEventById(any())
+                }
+                verify(exactly = 0) {
                     outboxDLQRepository.save(any())
                 }
             }
