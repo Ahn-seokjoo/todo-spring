@@ -124,7 +124,12 @@ class OutboxEventProcessor(
         onLog: (String) -> Unit,
     ) {
         mailService.saveEmailSentRecordToReady(id = outboxEventId)
-        mailService.sendEmail(to = to, subject = subject, content = content)
+        runCatching {
+            mailService.sendEmail(to = to, subject = subject, content = content)
+        }.onFailure { throwable ->
+            mailService.deleteSentRecord(id = outboxEventId)
+            throw throwable
+        }
 
         // sendEmail까지 끝나면 "발송 자체"는 이미 성공, 그 이후 markSentAt 기록 실패는 놔두고 후에 EmailSentRecordReconciler 가 처리
         runCatching { mailService.markSentAt(id = outboxEventId) }
@@ -166,8 +171,6 @@ class OutboxEventProcessor(
                 }
             }
         } else {
-            // 진짜 실패(sendEmail 이전/도중) -> 마킹 롤백하고 재시도 대상으로
-            mailService.deleteSentRecord(id = outboxEvent.id)
             outboxService.updateOutboxFail(
                 id = outboxEvent.id,
                 errorMessage = throwable.message.orEmpty().take(1000),

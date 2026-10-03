@@ -173,7 +173,6 @@ class OutboxEventProcessorTest : BehaviorSpec({
                     password = "pita",
                     email = null
                 )
-                every { mailService.deleteSentRecord(any()) } just Runs
                 every { outboxService.updateOutboxFail(any(), any(), any()) } just Runs
 
                 // TodoException은 processClaimedEvent 내부 runCatching에 흡수돼 process() 밖으로 다시 던져지지 않는다.
@@ -185,7 +184,9 @@ class OutboxEventProcessorTest : BehaviorSpec({
                     processor.process(eventId = outboxEvent.id, onFailure = onFailure, onLog = onLog)
 
                     verify(exactly = 0) { mailService.sendEmail(any(), any(), any()) }
-                    verify(exactly = 1) { mailService.deleteSentRecord(any()) }
+                    // saveEmailSentRecordToReady 자체가 호출된 적이 없으므로(이메일이 없어서 그 전에 터짐),
+                    // 이 워커는 애초에 아무 row도 소유한 적이 없다 -> 지울 게 없다.
+                    verify(exactly = 0) { mailService.deleteSentRecord(any()) }
                     verify(exactly = 1) {
                         outboxService.updateOutboxFail(
                             id = outboxEvent.id,
@@ -201,6 +202,53 @@ class OutboxEventProcessorTest : BehaviorSpec({
                     assertThat(result.message).isEqualTo(case.expectedErrorType.message)
                     assertThat(result.httpStatusCode).isEqualTo(case.expectedErrorType.httpStatusCode)
                 }
+            }
+        }
+
+        When("saveEmailSentRecordToReady는 성공했지만 sendEmail이 진짜로 실패하면") {
+            val outboxEvent = OutboxEvent(
+                listenerType = OutboxListenerType.EMAIL_NOTIFICATION,
+                eventType = OutboxEventType.PURCHASE_REQUEST,
+                serializedEvent = objectMapper.writeValueAsString(
+                    PublishableEvent.PurchaseRequestEvent(
+                        sellerId = "email-user",
+                        buyerId = "buyer",
+                        todoId = 1L,
+                        price = 100L,
+                        purchaseId = 1L,
+                    )
+                ),
+                publicationDate = LocalDateTime.now(),
+                processingStartedDate = LocalDateTime.now(),
+            ).apply { id = "99" }
+
+            every { outboxService.claimOutbox(any()) } returns ClaimSuccess(outboxEvent)
+            every { authService.findUserByUserId(userId = any()) } returns User(
+                userId = "email-user",
+                password = "pita",
+                email = "abc"
+            )
+            every { mailService.saveEmailSentRecordToReady(any()) } returns EmailSentRecord(
+                id = outboxEvent.id,
+                status = EmailSentStatus.READY,
+            )
+            every { mailService.sendEmail(any(), any(), any()) } throws RuntimeException("smtp down")
+            every { mailService.deleteSentRecord(any()) } just Runs
+            every { outboxService.updateOutboxFail(any(), any(), any()) } just Runs
+
+            Then("saveEmailSentRecordToReady로 자신이 만든 row이므로 deleteSentRecord가 호출되고 재시도 대상으로 처리된다") {
+                processor.process(eventId = outboxEvent.id, onFailure = onFailure, onLog = onLog)
+
+                verify(exactly = 1) { mailService.deleteSentRecord(id = outboxEvent.id) }
+                verify(exactly = 1) {
+                    outboxService.updateOutboxFail(
+                        id = outboxEvent.id,
+                        errorMessage = any(),
+                        claimedAt = any(),
+                    )
+                }
+                verify(exactly = 1) { onFailure(any()) }
+                verify(exactly = 0) { mailService.markSentAt(any(), any()) }
             }
         }
 
