@@ -12,7 +12,10 @@ import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.dao.DataIntegrityViolationException
+import org.springframework.transaction.PlatformTransactionManager
+import org.springframework.transaction.TransactionDefinition
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.transaction.support.TransactionTemplate
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -21,16 +24,30 @@ import java.util.UUID
 class EmailServiceTest @Autowired constructor(
     private val emailService: EmailService,
     private val outboxArchiveRepository: OutboxArchiveRepository,
+    private val transactionManager: PlatformTransactionManager,
 ) {
 
     @Test
-    fun `같은 outboxEventId로 saveEmailSentRecordToReady를 두 번 호출하면 두 번째는 중복 키 예외가 발생한다`() {
+    fun `같은 outboxEventId로 saveEmailSentRecordToReady를 두 번 호출하면 두 번째는 DB 유니크 제약으로 중복 키 예외가 발생한다`() {
+        val requiresNewTransactionTemplate = TransactionTemplate(transactionManager).apply {
+            propagationBehavior = TransactionDefinition.PROPAGATION_REQUIRES_NEW
+        }
         val id = UUID.randomUUID().toString()
 
-        emailService.saveEmailSentRecordToReady(id = id)
-
-        assertThrows(DataIntegrityViolationException::class.java) {
+        requiresNewTransactionTemplate.execute {
             emailService.saveEmailSentRecordToReady(id = id)
+        }
+
+        try {
+            assertThrows(DataIntegrityViolationException::class.java) {
+                requiresNewTransactionTemplate.execute {
+                    emailService.saveEmailSentRecordToReady(id = id)
+                }
+            }
+        } finally {
+            requiresNewTransactionTemplate.execute {
+                emailService.deleteSentRecord(id = id)
+            }
         }
     }
 
