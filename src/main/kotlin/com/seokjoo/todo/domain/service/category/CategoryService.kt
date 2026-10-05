@@ -33,14 +33,6 @@ class CategoryService(
         return CategoryServiceResponseDTO.from(category = category)
     }
 
-    @Transactional
-    fun removeCategory(categoryId: Long) {
-        val count = categoryRepository.countByCategoryId(categoryId)
-        if (count == 0L) {
-            categoryRepository.deleteById(categoryId)
-        }
-    }
-
     @Transactional(readOnly = true)
     fun findById(id: Long): Category {
         return categoryRepository.findByIdOrNull(id) ?: throw TodoException.of(TodoExceptionType.CATEGORY_NOT_EXIST)

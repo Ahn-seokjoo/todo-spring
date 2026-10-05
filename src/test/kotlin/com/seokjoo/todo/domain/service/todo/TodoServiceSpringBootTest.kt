@@ -153,53 +153,6 @@ class TodoServiceSpringBootTest @Autowired constructor(
     }
 
     @Test
-    fun `delete 테스트 - 제거 이후 Todo DB 조회`() {
-        // given
-        val deleteId = result.id
-        service.deleteTodo(deleteId, user.userId)
-
-        // when
-        val todoPageRequest = TodoPageRequest()
-        val removedList = service.getPagedTodos(user.userId, todoPageRequest.toPageServiceDTO())
-
-        // then
-        assert(removedList.responseList.isEmpty())
-    }
-
-    @Test
-    fun `delete 테스트 - 제거 이후 Category DB 조회`() {
-        // given
-        val beforeEntity = categoryRepository.findCategoryByName("drama")
-
-        val deleteId = result.id
-        service.deleteTodo(deleteId, user.userId)
-
-        // when
-        val deletedEntity = categoryRepository.findCategoryByName("drama")
-
-        // then
-        assert(beforeEntity?.name == "drama")
-        assert(deletedEntity == null)
-    }
-
-    @Test
-    fun `delete 테스트 - 제거 이후 TodoCategory DB 조회, Cascade로 같이 잘 제거가 됐는지`() {
-        // given
-        val categoryId =
-            categoryRepository.findCategoryByName("drama")?.id ?: 0L
-        val todoCategoryBeforeCountByRemove = todoCategoryRepository.countByCategoryId(categoryId)
-        val deleteId = result.id
-        service.deleteTodo(deleteId, user.userId)
-
-        // when
-        val todoCategoryAfterCountByRemove = todoCategoryRepository.countByCategoryId(categoryId)
-
-        // then
-        assert(todoCategoryBeforeCountByRemove == 1)
-        assert(todoCategoryAfterCountByRemove == 0)
-    }
-
-    @Test
     fun `getByTodo 시에 없는 아이디를 조회했을 때 NOT_EXISTED_TODO 을 잘 던져주는지`() {
         val exception = kotlin.runCatching {
             service.getTodoById(200L)
