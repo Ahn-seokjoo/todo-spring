@@ -1,4 +1,4 @@
-package com.seokjoo.todo.domain.service.outbox.annotation
+package com.seokjoo.todo.common.annotation
 
 import org.springframework.scheduling.annotation.Async
 import org.springframework.transaction.event.TransactionalEventListener

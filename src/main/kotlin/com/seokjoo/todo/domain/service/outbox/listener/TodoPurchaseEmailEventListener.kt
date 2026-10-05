@@ -1,6 +1,6 @@
 package com.seokjoo.todo.domain.service.outbox.listener
 
-import com.seokjoo.todo.domain.service.outbox.annotation.TodoTransactionalEventListener
+import com.seokjoo.todo.common.annotation.TodoTransactionalEventListener
 import com.seokjoo.todo.domain.service.outbox.listener.event.TodoPurchaseEmailEvent
 import com.seokjoo.todo.domain.service.outbox.service.OutboxEventProcessor
 import org.slf4j.LoggerFactory
