@@ -72,30 +72,10 @@ class OutboxEventProcessorTest : BehaviorSpec({
             }
         }
 
-        When("else 문으로 빠질 때 기본 success 로") {
-            val outboxEvent = OutboxEvent(
-                listenerType = OutboxListenerType.EMAIL_NOTIFICATION,
-                eventType = OutboxEventType.CACHE_EVICT_ALL,
-                serializedEvent = "dummy",
-                publicationDate = LocalDateTime.now(),
-            ).apply {
-                id = "99"
-            }
-            every { outboxService.claimOutbox(any()) } returns ClaimSuccess(outboxEvent)
-            every { outboxService.updateOutboxSuccess(any()) } just Runs
-
-            Then("메일은 보내지 않고, outbox success만 호출되는지 확인") {
-                processor.process(outboxEvent.id, onFailure = onFailure, onLog = onLog)
-                verify(exactly = 1) { outboxService.claimOutbox(any()) }
-                verify(exactly = 1) { outboxService.updateOutboxSuccess(outboxEvent = outboxEvent) }
-                verify(exactly = 0) { mailService.sendEmail(any(), any(), any()) }
-            }
-        }
-
         When("NotClaimable 로 들어오면") {
             val outboxEvent = OutboxEvent(
                 listenerType = OutboxListenerType.EMAIL_NOTIFICATION,
-                eventType = OutboxEventType.CACHE_EVICT_ALL,
+                eventType = OutboxEventType.PURCHASE_REQUEST,
                 serializedEvent = "dummy",
                 publicationDate = LocalDateTime.now(),
             ).apply {

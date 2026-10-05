@@ -131,7 +131,9 @@ class OutboxServiceTest : BehaviorSpec({
         When("updateOutboxSuccess 가 호출되면") {
             val outboxEvent = outboxEventOf(
                 eventType = OutboxEventType.PURCHASE_REQUEST,
-                event = PublishableEvent.CacheEvictAllEvent,
+                event = PublishableEvent.PurchaseRequestEvent(
+                    sellerId = seller.userId, buyerId = buyer.userId, todoId = 1L, price = 100L, purchaseId = 1L
+                ),
             )
 
             every { outboxRepository.deleteOutboxEventById(any()) } returns 1
@@ -177,7 +179,9 @@ class OutboxServiceTest : BehaviorSpec({
         When("updateOutboxDLQ 호출시에") {
             val outboxEvent = outboxEventOf(
                 eventType = OutboxEventType.PURCHASE_REQUEST,
-                event = PublishableEvent.CacheEvictAllEvent,
+                event = PublishableEvent.PurchaseRequestEvent(
+                    sellerId = seller.userId, buyerId = buyer.userId, todoId = 1L, price = 100L, purchaseId = 1L
+                ),
             )
 
             every { outboxDLQRepository.save(any()) } returns OutboxEventDLQ.from(outboxEvent)
@@ -213,7 +217,9 @@ class OutboxServiceTest : BehaviorSpec({
             val confirmedEvent = OutboxEventDLQ.from(
                 outboxEventOf(
                     eventType = OutboxEventType.PURCHASE_REQUEST,
-                    event = PublishableEvent.CacheEvictAllEvent,
+                    event = PublishableEvent.PurchaseRequestEvent(
+                        sellerId = seller.userId, buyerId = buyer.userId, todoId = 1L, price = 100L, purchaseId = 1L
+                    ),
                 )
             )
             every { outboxDLQRepository.findConfirmedSentDlqEvents() } returns listOf(confirmedEvent)
@@ -247,12 +253,16 @@ class OutboxServiceTest : BehaviorSpec({
     Given("findPollerEvents 테스트") {
         When("findPollerEvents 호출시") {
             val cacheEvictAllEvent = outboxEventOf(
-                eventType = OutboxEventType.CACHE_EVICT_ALL,
-                event = PublishableEvent.CacheEvictAllEvent,
+                eventType = OutboxEventType.PURCHASE_REQUEST,
+                event = PublishableEvent.PurchaseRequestEvent(
+                    sellerId = seller.userId, buyerId = buyer.userId, todoId = 1L, price = 100L, purchaseId = 1L
+                ),
             )
             val cacheEvictSingleEvent = outboxEventOf(
-                eventType = OutboxEventType.CACHE_EVICT_SINGLE,
-                event = PublishableEvent.CacheEvictSingleEvent(123),
+                eventType = OutboxEventType.PURCHASE_APPROVED,
+                event = PublishableEvent.PurchaseApprovedEvent(
+                    sellerId = seller.userId, buyerId = buyer.userId, todoId = 1L, price = 100L, purchaseId = 1L
+                ),
             )
             every { outboxRepository.findPollerEvents() } returns listOf(cacheEvictAllEvent, cacheEvictSingleEvent)
             Then("repository 위임한다") {
