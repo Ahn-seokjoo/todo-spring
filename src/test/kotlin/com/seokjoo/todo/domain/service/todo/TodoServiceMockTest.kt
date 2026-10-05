@@ -8,6 +8,7 @@ import com.seokjoo.todo.domain.entity.todocategory.TodoCategory
 import com.seokjoo.todo.domain.entity.todouser.User
 import com.seokjoo.todo.domain.repository.todo.TodoRepository
 import com.seokjoo.todo.domain.service.category.CategoryService
+import com.seokjoo.todo.domain.service.todo.event.TodoCacheEvictEvent
 import com.seokjoo.todo.presentation.todo.dto.request.TodoPageRequest
 import com.seokjoo.todo.presentation.todo.dto.request.toPageServiceDTO
 import io.kotest.assertions.throwables.shouldThrow
@@ -16,6 +17,8 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.SliceImpl
 import org.springframework.data.repository.findByIdOrNull
@@ -23,12 +26,14 @@ import org.springframework.data.repository.findByIdOrNull
 class TodoServiceMockTest : BehaviorSpec({
     val todoRepository: TodoRepository = mockk()
     val categoryService: CategoryService = mockk()
+    val eventPublisher: ApplicationEventPublisher = mockk(relaxed = true)
     val user = User("pita", "pita")
 
     val todoService = TodoService(
         todoRepository = todoRepository,
         todoDeleteService = mockk(),
         categoryService = categoryService,
+        eventPublisher = eventPublisher,
     )
 
     Given("create todo") {
@@ -43,6 +48,12 @@ class TodoServiceMockTest : BehaviorSpec({
             Then("create Todo 시에, todo 한개가 잘 생성된다") {
                 todo.isDone shouldBe false
                 todo.todo shouldBe "abcde"
+
+                verify(exactly = 1) {
+                    eventPublisher.publishEvent(
+                        TodoCacheEvictEvent(isEvictAll = true)
+                    )
+                }
             }
         }
     }
@@ -139,6 +150,15 @@ class TodoServiceMockTest : BehaviorSpec({
                 updatedTodo.isDone shouldBe false
                 updatedTodo.id shouldNotBe null
                 updatedTodo.price shouldBe 10L
+
+                verify(exactly = 1) {
+                    eventPublisher.publishEvent(
+                        TodoCacheEvictEvent(
+                            isEvictAll = true,
+                            todoIds = listOf(id),
+                        )
+                    )
+                }
             }
         }
 

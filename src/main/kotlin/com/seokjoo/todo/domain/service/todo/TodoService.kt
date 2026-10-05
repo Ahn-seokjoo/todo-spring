@@ -8,10 +8,9 @@ import com.seokjoo.todo.domain.entity.todouser.User
 import com.seokjoo.todo.domain.repository.todo.TodoRepository
 import com.seokjoo.todo.domain.service.category.CategoryService
 import com.seokjoo.todo.domain.service.remove.TodoDeleteService
-import org.springframework.cache.annotation.CacheEvict
-import org.springframework.cache.annotation.CachePut
+import com.seokjoo.todo.domain.service.todo.event.TodoCacheEvictEvent
 import org.springframework.cache.annotation.Cacheable
-import org.springframework.cache.annotation.Caching
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.data.repository.findByIdOrNull
@@ -24,6 +23,7 @@ class TodoService(
     private val todoRepository: TodoRepository,
     private val todoDeleteService: TodoDeleteService,
     private val categoryService: CategoryService,
+    private val eventPublisher: ApplicationEventPublisher,
 ) {
     // 현재 캐시매니저가 1개라서 안써도 되지만 공부용으로 명시함
     @Cacheable(
@@ -49,19 +49,24 @@ class TodoService(
         return TodoServiceResponseDTO.from(todo)
     }
 
+    @Transactional(readOnly = true)
+    fun getTodoByIdForUpdate(todoId: Long): TodoServiceResponseDTO {
+        val todo = todoRepository.findByIdOrNull(todoId) ?: throw TodoException.of(TodoExceptionType.NOT_EXISTED_TODO)
+
+        return TodoServiceResponseDTO.from(todo)
+    }
+
     @Transactional
-    @CacheEvict(value = ["todos"], allEntries = true)
     fun createTodo(request: TodoCreateServiceRequestDTO, owner: User): TodoServiceResponseDTO {
         val todo = Todo(todo = request.todo, isDone = request.isDone, owner = owner, price = request.price)
         todoRepository.save(todo)
 
         checkExistAndAddCategory(request, todo)
+        eventPublisher.publishEvent(TodoCacheEvictEvent(isEvictAll = true))
         return TodoServiceResponseDTO.from(todo)
     }
 
     @Transactional
-    @CacheEvict(value = ["todos"], allEntries = true)
-    @CachePut(cacheNames = ["todo"], key = "#todoId")
     fun updateTodo(todoId: Long, userId: String, request: TodoUpdateServiceRequestDTO): TodoServiceResponseDTO {
         val todo = todoRepository.findByIdOrNull(todoId) ?: throw TodoException.of(TodoExceptionType.NOT_EXISTED_TODO)
         check(isOwner(todo.owner.userId, userId)) {
@@ -75,16 +80,11 @@ class TodoService(
         todoRepository.save(todo)
 
         replaceCategoryIfNotEmpty(request, todo)
+        eventPublisher.publishEvent(TodoCacheEvictEvent(isEvictAll = true, todoIds = listOf(todoId)))
         return TodoServiceResponseDTO.from(todo)
     }
 
     @Transactional
-    @Caching(
-        evict = [
-            CacheEvict(value = ["todos"], allEntries = true),
-            CacheEvict(value = ["todo"], key = "#todoId"),
-        ]
-    )
     fun deleteTodo(todoId: Long, userId: String) {
         val todo = todoRepository.findByIdOrNull(todoId) ?: throw TodoException.of(TodoExceptionType.NOT_EXISTED_TODO)
         check(isOwner(todo.owner.userId, userId)) {
@@ -94,16 +94,11 @@ class TodoService(
             throw TodoException.of(TodoExceptionType.PENDING)
         }
 
+        eventPublisher.publishEvent(TodoCacheEvictEvent(isEvictAll = true, todoIds = listOf(todoId)))
         todoDeleteService.deleteTodo(todo)
     }
 
     @Transactional
-    @Caching(
-        evict = [
-            CacheEvict(value = ["todos"], allEntries = true),
-            CacheEvict(value = ["todo"], key = "#todoId")
-        ]
-    )
     fun updateOwner(todoId: Long, owner: User): TodoServiceResponseDTO {
         val todo = todoRepository.findByIdOrNull(todoId) ?: throw TodoException.of(TodoExceptionType.NOT_EXISTED_TODO)
         check(todo.status == TodoStatus.AVAILABLE) {
@@ -112,6 +107,7 @@ class TodoService(
         todo.updateOwner(owner)
         todoRepository.save(todo)
 
+        eventPublisher.publishEvent(TodoCacheEvictEvent(isEvictAll = true, todoIds = listOf(todoId)))
         return TodoServiceResponseDTO.from(todo)
     }
 
@@ -122,18 +118,13 @@ class TodoService(
     }
 
     @Transactional
-    @Caching(
-        evict = [
-            CacheEvict(value = ["todo"], key = "#todoId"),
-            CacheEvict(value = ["todos"], allEntries = true),
-        ]
-    )
     fun changeStatus(todoId: Long, status: TodoStatus) {
         val successCount = when (status) {
             TodoStatus.PENDING_APPROVAL -> todoRepository.updateTodoStatusPendingIfAvailable(todoId)
             TodoStatus.AVAILABLE -> todoRepository.updateTodoStatusAvailableIfPending(todoId)
         }
         if (successCount == 0) throw TodoException.of(TodoExceptionType.NOT_PENDING)
+        eventPublisher.publishEvent(TodoCacheEvictEvent(isEvictAll = true, todoIds = listOf(todoId)))
     }
 
     private fun checkExistAndAddCategory(
