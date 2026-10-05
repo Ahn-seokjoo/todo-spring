@@ -10,7 +10,7 @@ import com.seokjoo.todo.domain.service.outbox.ClaimSuccess
 import com.seokjoo.todo.domain.service.outbox.OutboxEventType
 import com.seokjoo.todo.domain.service.outbox.OutboxListenerType
 import com.seokjoo.todo.domain.service.outbox.PublishableEvent
-import com.seokjoo.todo.domain.service.outbox.listener.event.TodoPurchaseEmailEvent
+import com.seokjoo.todo.domain.service.outbox.event.TodoPurchaseEmailEvent
 import com.seokjoo.todo.domain.service.outbox.service.OutboxEventProcessor
 import com.seokjoo.todo.domain.service.outbox.service.OutboxService
 import io.kotest.core.spec.IsolationMode

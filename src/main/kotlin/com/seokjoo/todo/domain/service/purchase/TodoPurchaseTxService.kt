@@ -10,7 +10,7 @@ import com.seokjoo.todo.domain.service.auth.TodoAuthService
 import com.seokjoo.todo.domain.service.balance.TodoBalanceService
 import com.seokjoo.todo.domain.service.outbox.OutboxListenerType
 import com.seokjoo.todo.domain.service.outbox.PublishableEvent
-import com.seokjoo.todo.domain.service.outbox.listener.event.TodoPurchaseEmailEvent
+import com.seokjoo.todo.domain.service.outbox.event.TodoPurchaseEmailEvent
 import com.seokjoo.todo.domain.service.outbox.service.OutboxService
 import com.seokjoo.todo.domain.service.todo.TodoService
 import org.springframework.context.ApplicationEventPublisher

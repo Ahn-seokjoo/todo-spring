@@ -10,7 +10,7 @@ import com.seokjoo.todo.domain.service.balance.TodoBalanceService
 import com.seokjoo.todo.domain.service.charge.TodoChargeService
 import com.seokjoo.todo.domain.service.outbox.OutboxEventType
 import com.seokjoo.todo.domain.service.outbox.PublishableEvent
-import com.seokjoo.todo.domain.service.outbox.listener.event.TodoPurchaseEmailEvent
+import com.seokjoo.todo.domain.service.outbox.event.TodoPurchaseEmailEvent
 import com.seokjoo.todo.domain.service.outbox.repository.OutboxRepository
 import com.seokjoo.todo.domain.service.todo.TodoCreateServiceRequestDTO
 import com.seokjoo.todo.domain.service.todo.TodoPageServiceDTO

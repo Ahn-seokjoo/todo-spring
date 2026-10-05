@@ -7,7 +7,7 @@ import com.seokjoo.todo.domain.repository.purchase.TodoPurchaseRepository
 import com.seokjoo.todo.domain.service.auth.TodoAuthService
 import com.seokjoo.todo.domain.service.charge.TodoChargeService
 import com.seokjoo.todo.domain.service.email.EmailService
-import com.seokjoo.todo.domain.service.outbox.listener.event.TodoPurchaseEmailEvent
+import com.seokjoo.todo.domain.service.outbox.event.TodoPurchaseEmailEvent
 import com.seokjoo.todo.domain.service.outbox.repository.OutboxArchiveRepository
 import com.seokjoo.todo.domain.service.outbox.repository.OutboxRepository
 import com.seokjoo.todo.domain.service.outbox.service.OutboxService
