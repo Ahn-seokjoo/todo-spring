@@ -17,9 +17,11 @@ import com.seokjoo.todo.domain.service.todo.TodoPageServiceDTO
 import com.seokjoo.todo.domain.service.todo.TodoService
 import com.seokjoo.todo.domain.service.todo.TodoServiceResponseDTO
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.test.context.event.ApplicationEvents
 import org.springframework.test.context.event.RecordApplicationEvents
@@ -37,6 +39,7 @@ class TodoPurchaseServiceTest @Autowired constructor(
     private val purchaseRepository: TodoPurchaseRepository,
     private val outboxRepository: OutboxRepository,
     private val objectMapper: ObjectMapper,
+    private val redisTemplate: RedisTemplate<String, Any>,
 ) {
     lateinit var todo: TodoServiceResponseDTO
 
@@ -194,5 +197,13 @@ class TodoPurchaseServiceTest @Autowired constructor(
 
         val request = TodoCreateServiceRequestDTO("spring", price = 100L)
         todo = todoService.createTodo(request, user1)
+    }
+
+    // 캐시는 DB 트랜잭션에 참여하지 않아서 테스트가 롤백돼도 Redis 에는 남는다
+    @AfterEach
+    fun cleanupCache() {
+        listOf("todo::*", "todos::*").forEach { pattern ->
+            redisTemplate.keys(pattern)?.takeIf { it.isNotEmpty() }?.let { redisTemplate.delete(it) }
+        }
     }
 }
