@@ -12,12 +12,14 @@ import org.junit.jupiter.api.assertThrows
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.cache.CacheManager
+import org.springframework.transaction.support.TransactionTemplate
 
 @TodoTest
 class TodoCacheTest @Autowired constructor(
     private val authService: TodoAuthService,
     private val todoService: TodoService,
     @Qualifier("todoCacheManager") private val cacheManager: CacheManager,
+    private val transactionTemplate: TransactionTemplate,
 ) {
     @BeforeEach
     fun setUp() {
@@ -133,6 +135,27 @@ class TodoCacheTest @Autowired constructor(
         // 캐시 증발 체크
         assertThat(listCache("pita", 0, 10)).isNull()
         assertThat(singleCache(todo.id)).isNull()
+    }
+
+    @Test
+    fun `롤백되면 AFTER_COMMIT 리스너가 실행되지 않아 캐시가 유지된다`() {
+        val user = authService.findUserByUserId("pita")
+        val todo = todoService.createTodo(request = TodoCreateServiceRequestDTO(todo = "hi"), owner = user)
+        todoService.getTodoById(todo.id)
+        todoService.getPagedTodos("pita", TodoPageServiceDTO(0, 10))
+        assertThat(singleCache(todo.id)).isNotNull()
+        assertThat(listCache("pita", 0, 10)).isNotNull()
+
+        // 바깥 트랜잭션 안에서 수정하고 롤백한다. updateTodo 의 @Transactional 은 이 트랜잭션에 합류한다.
+        transactionTemplate.execute { status ->
+            todoService.updateTodo(todo.id, user.userId, TodoUpdateServiceRequestDTO(todo = "bye", null, null))
+            status.setRollbackOnly()
+        }
+
+        // 롤백이라 evict 되지 않았고, DB 도 그대로다
+        assertThat(singleCache(todo.id)).isNotNull()
+        assertThat(listCache("pita", 0, 10)).isNotNull()
+        assertThat(todoService.getTodoById(todo.id).todo).isEqualTo("hi")
     }
 
     private fun listCache(userId: String, page: Int, size: Int) =
