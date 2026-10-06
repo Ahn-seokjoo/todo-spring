@@ -1,10 +1,12 @@
 package com.seokjoo.todo.domain.service.outbox.service
 
 import org.slf4j.LoggerFactory
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 
 @Component
+@ConditionalOnProperty(prefix = "outbox.poller", name = ["enabled"], havingValue = "true", matchIfMissing = true)
 class OutboxSchedulePoller(
     private val outboxService: OutboxService,
     private val processor: OutboxEventProcessor,

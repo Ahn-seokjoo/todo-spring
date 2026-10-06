@@ -66,6 +66,7 @@ jwt:
 
 outbox:
   poller:
+    enabled: true           # false 면 폴러 빈을 만들지 않는다(크래시 복구 실험의 "폴러 OFF" 용)
     fixed-delay: 120000     # 2분
     stale-threshold: 180000 # 3분
   dlq-reconciler:
