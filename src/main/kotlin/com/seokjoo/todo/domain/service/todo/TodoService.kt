@@ -50,7 +50,7 @@ class TodoService(
     }
 
     @Transactional(readOnly = true)
-    fun getTodoByIdForUpdate(todoId: Long): TodoServiceResponseDTO {
+    fun getTodoByIdFromDb(todoId: Long): TodoServiceResponseDTO {
         val todo = todoRepository.findByIdOrNull(todoId) ?: throw TodoException.of(TodoExceptionType.NOT_EXISTED_TODO)
 
         return TodoServiceResponseDTO.from(todo)
