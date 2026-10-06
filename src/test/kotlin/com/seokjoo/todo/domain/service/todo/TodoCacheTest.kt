@@ -48,7 +48,7 @@ class TodoCacheTest @Autowired constructor(
         todoService.getPagedTodos("pita", TodoPageServiceDTO(0, 10))
         todoService.getPagedTodos("pita", TodoPageServiceDTO(1, 10))   // 빈 결과
 
-        assertThat(listCache("pita", 0, 10)).isNotNull   // 채워졌다
+        assertThat(listCache("pita", 0, 10)).isNotNull()   // 채워졌다
         assertThat(listCache("pita", 1, 10)).isNull()    // 빈 결과는 안 채워졌다
     }
 
@@ -95,7 +95,7 @@ class TodoCacheTest @Autowired constructor(
         val firstCache = singleCache(firstTodo.id)
         todoService.getPagedTodos("pita", TodoPageServiceDTO(0, 10))
 
-        assertThat(listCache("pita", 0, 10)).isNotNull
+        assertThat(listCache("pita", 0, 10)).isNotNull()
         assertThat((firstCache?.get() as? TodoServiceResponseDTO)?.todo).isEqualTo(firstTodo.todo)
 
         todoService.deleteTodo(todo.id, user.userId)
