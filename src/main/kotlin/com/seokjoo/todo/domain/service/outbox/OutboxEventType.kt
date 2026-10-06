@@ -4,8 +4,6 @@ enum class OutboxEventType {
     PURCHASE_REQUEST,
     PURCHASE_APPROVED,
     PURCHASE_REJECTED,
-    CACHE_EVICT_ALL,
-    CACHE_EVICT_SINGLE,
 }
 
 sealed interface PublishableEvent {
@@ -39,15 +37,5 @@ sealed interface PublishableEvent {
         val purchaseId: Long,
     ) : PublishableEvent {
         override val eventType: OutboxEventType = OutboxEventType.PURCHASE_REJECTED
-    }
-
-    data object CacheEvictAllEvent : PublishableEvent {
-        override val eventType: OutboxEventType = OutboxEventType.CACHE_EVICT_ALL
-    }
-
-    data class CacheEvictSingleEvent(
-        val todoId: Long,
-    ) : PublishableEvent {
-        override val eventType: OutboxEventType = OutboxEventType.CACHE_EVICT_SINGLE
     }
 }

@@ -10,7 +10,7 @@ import com.seokjoo.todo.domain.service.auth.TodoAuthService
 import com.seokjoo.todo.domain.service.balance.TodoBalanceService
 import com.seokjoo.todo.domain.service.outbox.OutboxListenerType
 import com.seokjoo.todo.domain.service.outbox.PublishableEvent
-import com.seokjoo.todo.domain.service.outbox.listener.event.TodoPurchaseEmailEvent
+import com.seokjoo.todo.domain.service.outbox.event.TodoPurchaseEmailEvent
 import com.seokjoo.todo.domain.service.outbox.service.OutboxService
 import com.seokjoo.todo.domain.service.todo.TodoService
 import org.springframework.context.ApplicationEventPublisher
@@ -29,7 +29,7 @@ class TodoPurchaseTxService(
     @Transactional
     fun purchaseTodo(todoId: Long, buyerId: String) {
         // 자신의 Todo 인지 체크
-        val todo = todoService.getTodoById(todoId)
+        val todo = todoService.getTodoByIdFromDb(todoId)
         val sellerId = todo.ownerId
         check(sellerId != buyerId) { throw TodoException.of(TodoExceptionType.CAN_NOT_TRADE_OWN_TODO) }
 
@@ -59,7 +59,7 @@ class TodoPurchaseTxService(
     @Transactional
     fun approvePurchaseTodo(todoId: Long, sellerId: String) {
         // 자신의 Todo 인지 체크
-        val todo = todoService.getTodoById(todoId)
+        val todo = todoService.getTodoByIdFromDb(todoId)
         check(todo.ownerId == sellerId) { throw TodoException.of(TodoExceptionType.UNAUTHORIZED_TODO_ACCESS) }
 
         // AVAILABLE 이라면 굳이 아래 로직을 탈필요 없음
@@ -100,7 +100,7 @@ class TodoPurchaseTxService(
     @Transactional
     fun rejectPurchaseTodo(todoId: Long, sellerId: String) {
         // 자신의 Todo 인지 체크
-        val todo = todoService.getTodoById(todoId)
+        val todo = todoService.getTodoByIdFromDb(todoId)
         check(todo.ownerId == sellerId) { throw TodoException.of(TodoExceptionType.UNAUTHORIZED_TODO_ACCESS) }
 
         // AVAILABLE 이라면 굳이 아래 로직을 탈필요 없음
@@ -134,7 +134,7 @@ class TodoPurchaseTxService(
     @Transactional
     fun cancelPurchaseTodo(todoId: Long, buyerId: String) {
         // 자신의 Todo 인지 체크
-        val todo = todoService.getTodoById(todoId)
+        val todo = todoService.getTodoByIdFromDb(todoId)
         check(todo.ownerId != buyerId) { throw TodoException.of(TodoExceptionType.CAN_NOT_CANCEL_OWN_TODO) }
 
         // AVAILABLE 이라면 굳이 아래 로직을 탈필요 없음

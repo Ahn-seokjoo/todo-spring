@@ -7,7 +7,12 @@ import com.seokjoo.todo.common.jwt.JwtProvider
 import com.seokjoo.todo.common.jwt.JwtTokenType
 import com.seokjoo.todo.common.jwt.JwtTokenType.Companion.isAccessToken
 import com.seokjoo.todo.domain.entity.todouser.User
+import com.seokjoo.todo.domain.repository.categorytodo.TodoCategoryRepository
+import com.seokjoo.todo.domain.repository.todo.TodoRepository
 import com.seokjoo.todo.domain.repository.todouser.TodoAuthRepository
+import com.seokjoo.todo.domain.service.remove.event.TodoDeletedEvent
+import com.seokjoo.todo.domain.service.todo.event.TodoCacheEvictEvent
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -16,6 +21,9 @@ class TodoAuthService(
     private val jwtProvider: JwtProvider,
     private val encryptor: TodoAuthEncryptor,
     private val todoAuthRepository: TodoAuthRepository,
+    private val todoRepository: TodoRepository,
+    private val todoCategoryRepository: TodoCategoryRepository,
+    private val eventPublisher: ApplicationEventPublisher,
 ) {
     @Transactional
     fun signUp(userId: String, password: String, email: String) {
@@ -47,8 +55,16 @@ class TodoAuthService(
         val user =
             todoAuthRepository.findUserByUserId(userId) ?: throw TodoException.of(TodoExceptionType.AUTH_USER_NOT_EXIST)
         val validate = encryptor.validatePassword(password = password, encodedPassword = user.password)
-        if (validate) todoAuthRepository.delete(user)
-        else throw TodoException.of(TodoExceptionType.AUTH_NOT_MATCHED_PASSWORD)
+        if (validate) {
+            val todoIds = todoRepository.findTodoIdsByOwnerId(ownerId = userId)
+            val categoryIds = todoCategoryRepository.findCategoryIdsByTodoOwnerId(ownerId = userId)
+
+            todoAuthRepository.delete(user)
+            eventPublisher.publishEvent(TodoDeletedEvent(categoryIds = categoryIds))
+            eventPublisher.publishEvent(TodoCacheEvictEvent(isEvictAll = true, todoIds = todoIds))
+        } else {
+            throw TodoException.of(TodoExceptionType.AUTH_NOT_MATCHED_PASSWORD)
+        }
     }
 
     @Transactional(readOnly = true)

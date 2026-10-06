@@ -106,8 +106,6 @@ class OutboxEventProcessor(
                     onLog = onLog,
                 )
             }
-
-            else -> Result.success(Unit)
         }
 
         sendResult

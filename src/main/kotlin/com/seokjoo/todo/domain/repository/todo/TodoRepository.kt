@@ -33,4 +33,7 @@ interface TodoRepository : JpaRepository<Todo, Long> {
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("update Todo t set t.status = 'AVAILABLE', t.version = t.version + 1  where t.id = :todoId And t.status = 'PENDING_APPROVAL'")
     fun updateTodoStatusAvailableIfPending(todoId: Long): Int
+
+    @Query("select t.id from Todo t where t.owner.userId = :ownerId")
+    fun findTodoIdsByOwnerId(ownerId: String): List<Long>
 }
