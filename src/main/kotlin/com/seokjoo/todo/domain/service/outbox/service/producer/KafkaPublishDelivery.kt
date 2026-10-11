@@ -1,4 +1,4 @@
-package com.seokjoo.todo.domain.service.outbox.service.kafka
+package com.seokjoo.todo.domain.service.outbox.service.producer
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.seokjoo.todo.domain.entity.outbox.OutboxEvent

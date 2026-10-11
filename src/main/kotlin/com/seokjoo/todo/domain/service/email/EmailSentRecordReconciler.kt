@@ -1,6 +1,7 @@
 package com.seokjoo.todo.domain.service.email
 
 import org.slf4j.LoggerFactory
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 
@@ -8,6 +9,7 @@ import org.springframework.stereotype.Component
  * 실제 메일 발송 성공 이후 markSentAt 이 실패한 경우를 보정해주는 워커 5분마다 보정
  */
 @Component
+@ConditionalOnProperty(prefix = "outbox", name = ["delivery-mode"], havingValue = "direct", matchIfMissing = true)
 class EmailSentRecordReconciler(
     private val emailService: EmailService,
 ) {

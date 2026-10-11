@@ -17,4 +17,5 @@ class KafkaTopicConfig {
 
 object KafkaTopics {
     const val PURCHASE_EVENT = "todo.purchase.events"
+    const val PURCHASE_EVENTS_DLT = "todo.purchase.events.dlt"
 }
