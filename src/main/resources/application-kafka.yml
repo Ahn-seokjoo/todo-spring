@@ -1,0 +1,29 @@
+spring:
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      acks: all
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      properties:
+        enable.idempotence: true
+
+    consumer:
+      group-id: email-notifier
+      enable-auto-commit: false
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringSerializer
+      value-deserializer: org.apache.kafka.common.serialization.StringSerializer
+      max-poll-records: 10
+    listener:
+      ack-mode: manual_immediate
+
+  mail:
+    host: localhost
+    port: 1025
+    properties:
+      mail.smtp:auth: false
+      mail.smtp.starttls.enable: false
+
+outbox:
+  delivery-mode: kafka

@@ -11,3 +11,15 @@ services:
     container_name: redis-test
     ports:
       - '6380:6379'
+
+  kafka:
+    image: apache/kafka:4.3.1
+    container_name: todo-kafka
+    ports:
+      - '127.0.0.1:9092:9092'
+  mailpit:
+    image: axllent/mailpit
+    container_name: todo-mailpit
+    ports:
+      - '127.0.0.1:1025:1025'
+      - '127.0.0.1:8025:8025'
