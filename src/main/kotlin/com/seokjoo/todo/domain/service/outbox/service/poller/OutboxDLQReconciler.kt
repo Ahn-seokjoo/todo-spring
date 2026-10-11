@@ -1,5 +1,6 @@
-package com.seokjoo.todo.domain.service.outbox.service
+package com.seokjoo.todo.domain.service.outbox.service.poller
 
+import com.seokjoo.todo.domain.service.outbox.service.OutboxService
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component

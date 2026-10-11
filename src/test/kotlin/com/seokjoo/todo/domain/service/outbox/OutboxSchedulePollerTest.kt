@@ -2,7 +2,7 @@ package com.seokjoo.todo.domain.service.outbox
 
 import com.seokjoo.todo.domain.entity.outbox.OutboxEvent
 import com.seokjoo.todo.domain.service.outbox.service.OutboxEventProcessor
-import com.seokjoo.todo.domain.service.outbox.service.OutboxSchedulePoller
+import com.seokjoo.todo.domain.service.outbox.service.poller.OutboxSchedulePoller
 import com.seokjoo.todo.domain.service.outbox.service.OutboxService
 import io.kotest.core.spec.IsolationMode
 import io.kotest.core.spec.style.BehaviorSpec

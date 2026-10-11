@@ -1,7 +1,7 @@
 package com.seokjoo.todo.domain.service.outbox
 
 import com.seokjoo.todo.domain.service.outbox.service.OutboxEventProcessor
-import com.seokjoo.todo.domain.service.outbox.service.OutboxSchedulePoller
+import com.seokjoo.todo.domain.service.outbox.service.poller.OutboxSchedulePoller
 import com.seokjoo.todo.domain.service.outbox.service.OutboxService
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
