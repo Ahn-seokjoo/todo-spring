@@ -25,7 +25,7 @@ class PurchaseEmailConsumer(
     private val logger = LoggerFactory.getLogger(PurchaseEmailConsumer::class.java)
 
     @KafkaListener(topics = [KafkaTopics.PURCHASE_EVENT], groupId = "email-notifier")
-    fun consume(record: ConsumerRecord<String, String>, ack: Acknowledgment) {
+    fun consume(record: ConsumerRecord<String, String>) {
         val message = objectMapper.readValue(record.value(), PurchaseEventMessage::class.java)
         try {
             sender.send(
@@ -44,7 +44,6 @@ class PurchaseEmailConsumer(
                 null -> throw e
             }
         }
-        ack.acknowledge()
     }
 }
 

@@ -16,7 +16,7 @@ spring:
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       max-poll-records: 10
     listener:
-      ack-mode: manual_immediate
+      ack-mode: record
 
   mail:
     host: localhost
