@@ -46,4 +46,4 @@ class PurchaseEmailConsumer(
     }
 }
 
-class UnconfirmedSendException(eventId: String) : RuntimeException("이전 발송 시대고 결과 미확정(READY) 상태 : $eventId")
+class UnconfirmedSendException(eventId: String) : RuntimeException("이전 발송 시도 후 결과 미확정(READY) 상태 : $eventId")

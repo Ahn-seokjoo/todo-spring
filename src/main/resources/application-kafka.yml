@@ -23,7 +23,7 @@ spring:
     host: localhost
     port: 1025
     properties:
-      mail.smtp:auth: false
+      mail.smtp.auth: false
       mail.smtp.starttls.enable: false
 
 outbox:
