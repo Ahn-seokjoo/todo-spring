@@ -12,6 +12,8 @@ import com.seokjoo.todo.domain.service.auth.TodoAuthService
 import com.seokjoo.todo.domain.service.email.EmailService
 import com.seokjoo.todo.domain.service.outbox.service.OutboxEventProcessor
 import com.seokjoo.todo.domain.service.outbox.service.OutboxService
+import com.seokjoo.todo.domain.service.outbox.service.email.DirectEmailDelivery
+import com.seokjoo.todo.domain.service.outbox.service.email.PurchaseEmailSender
 import io.kotest.core.spec.IsolationMode
 import io.kotest.core.spec.style.BehaviorSpec
 import io.mockk.Runs
@@ -30,7 +32,11 @@ class OutboxEventProcessorTest : BehaviorSpec({
     val mailService: EmailService = mockk()
     val outboxService: OutboxService = mockk()
 
-    val processor = OutboxEventProcessor(authService, objectMapper, mailService, outboxService)
+    val processor = OutboxEventProcessor(
+        mailService = mailService,
+        outboxService = outboxService,
+        delivery = DirectEmailDelivery(PurchaseEmailSender(authService, objectMapper, mailService)),
+    )
 
     Given("processor가 수행됐을 때") {
         val onLog: (String) -> Unit = mockk(relaxed = true)

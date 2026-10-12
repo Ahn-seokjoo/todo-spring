@@ -1,6 +1,6 @@
 package com.seokjoo.todo.domain.service.outbox
 
-import com.seokjoo.todo.domain.service.outbox.service.OutboxDLQReconciler
+import com.seokjoo.todo.domain.service.outbox.service.poller.OutboxDLQReconciler
 import com.seokjoo.todo.domain.service.outbox.service.OutboxService
 import io.kotest.core.spec.IsolationMode
 import io.kotest.core.spec.style.BehaviorSpec

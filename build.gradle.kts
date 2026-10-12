@@ -34,6 +34,7 @@ dependencies {
     implementation("org.springframework.retry:spring-retry")
     implementation("org.flywaydb:flyway-core")
     implementation("org.flywaydb:flyway-mysql")
+    implementation("org.springframework.kafka:spring-kafka")
 
     runtimeOnly("com.mysql:mysql-connector-j")
     runtimeOnly("com.h2database:h2")
@@ -43,6 +44,7 @@ dependencies {
     testImplementation("org.mockito:mockito-core:4.8.0")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("io.mockk:mockk:1.13.17")
+    testImplementation("org.springframework.kafka:spring-kafka-test")
 
     // kotest
     testImplementation("io.kotest:kotest-runner-junit5:5.4.2")
@@ -75,4 +77,5 @@ allOpen {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+    maxHeapSize = "1g"
 }

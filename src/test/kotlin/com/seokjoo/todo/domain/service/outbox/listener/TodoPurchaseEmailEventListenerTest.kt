@@ -13,6 +13,8 @@ import com.seokjoo.todo.domain.service.outbox.PublishableEvent
 import com.seokjoo.todo.domain.service.outbox.event.TodoPurchaseEmailEvent
 import com.seokjoo.todo.domain.service.outbox.service.OutboxEventProcessor
 import com.seokjoo.todo.domain.service.outbox.service.OutboxService
+import com.seokjoo.todo.domain.service.outbox.service.email.DirectEmailDelivery
+import com.seokjoo.todo.domain.service.outbox.service.email.PurchaseEmailSender
 import io.kotest.core.spec.IsolationMode
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
@@ -31,9 +33,8 @@ class TodoPurchaseEmailEventListenerTest : BehaviorSpec({
     val objectMapper: ObjectMapper = jacksonObjectMapper()
     val processor = OutboxEventProcessor(
         outboxService = outboxService,
-        authService = authService,
         mailService = mailService,
-        objectMapper = objectMapper,
+        delivery = DirectEmailDelivery(PurchaseEmailSender(authService, objectMapper, mailService)),
     )
 
     val listener = TodoPurchaseEmailEventListener(processor = processor)
