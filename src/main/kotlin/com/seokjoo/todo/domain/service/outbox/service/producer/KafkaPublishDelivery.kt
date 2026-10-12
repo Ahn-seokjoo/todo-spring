@@ -21,7 +21,11 @@ class KafkaPublishDelivery(
         outboxEvent: OutboxEvent,
         onLog: (String) -> Unit
     ) {
-        val key = objectMapper.readTree(outboxEvent.serializedEvent).get("purchaseId").asText()
+        val key = objectMapper.readTree(outboxEvent.serializedEvent).get("purchaseId")
+            ?.takeUnless { it.isNull }
+            ?.asText()
+            ?: throw IllegalStateException("purchaseId가 없는 아웃박스 이벤트: ${outboxEvent.id}")
+
         val message = PurchaseEventMessage(
             eventId = outboxEvent.id,
             eventType = outboxEvent.eventType,
