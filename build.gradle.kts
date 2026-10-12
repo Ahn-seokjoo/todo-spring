@@ -77,4 +77,5 @@ allOpen {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+    maxHeapSize = "1g"
 }
