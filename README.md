@@ -36,11 +36,15 @@ flowchart LR
 - 이후 실행 계획, 락 유지 시간, 커넥션 풀을 차례로 확인해 원인을 좁히고, 비관적 락을 조건부 UPDATE 한 번의 원자적 업데이트로 바꿨습니다.
 - 결과: 응답시간 중앙값 3~4배, p99 최대 2배 개선. 재측정 시 VU 62 기준 446 req/s, 실패율 0% (로컬 단일 머신 기준)
 
+관련 PR: [#92 분산락 재시도, 낙관적 락](https://github.com/Ahn-seokjoo/todo-spring/pull/92) · [#96 데드락 해결](https://github.com/Ahn-seokjoo/todo-spring/pull/96) · [#98 원자적 UPDATE로 충전 지연 해소](https://github.com/Ahn-seokjoo/todo-spring/pull/98)
+
 ### 구매 알림 안정화: 아웃박스로 서버가 죽어도 알림 이벤트를 잃지 않는 구조
 
 - 구매와 같은 트랜잭션에 아웃박스 이벤트를 저장하고, 커밋 후 비동기로 발송합니다. 메일 서버 응답을 3초 지연시켜도 구매 API는 30ms대로 응답했습니다.
 - 서버 3대 중 1대를 처리 도중 종료했을 때 멈춰 버린 이벤트를 폴러가 되돌려 재처리하고, 5회 실패하면 DLQ로 옮깁니다.
 - 여러 서버가 같은 이벤트를 동시에 처리하지 않도록 조건부 UPDATE로 선점하고, 선점 시각을 펜싱 토큰으로 써서 늦게 끝난 서버가 결과를 덮어쓰지 못하게 했습니다.
+
+관련 PR: [#103 구매 승인 방식 전환](https://github.com/Ahn-seokjoo/todo-spring/pull/103) · [#104 아웃박스 + 이메일 발송](https://github.com/Ahn-seokjoo/todo-spring/pull/104) · [#106 폴러, DLQ, 펜싱 토큰](https://github.com/Ahn-seokjoo/todo-spring/pull/106)
 
 ### Kafka 전달 경로 (로컬 검증)
 
@@ -48,17 +52,17 @@ flowchart LR
 - 컨슈머는 아웃박스 id로 발송 기록을 먼저 선점해 같은 이벤트가 여러 번 와도 메일을 한 번만 보냅니다. 발송 결과를 확정할 수 없는 이벤트는 다시 보내지 않고 DLT로 분리합니다.
 - 토픽을 처음부터 다시 읽게 해도 추가 발송이 없는 것, 브로커가 멈춘 동안 들어온 요청이 복구 후 전달되는 것을 로컬에서 확인했습니다.
 
+관련 PR: [#111 Kafka 전달 경로](https://github.com/Ahn-seokjoo/todo-spring/pull/111)
+
 ## 4. 기술 스택
 
 | 분류 | 사용 기술 |
 | --- | --- |
 | 언어 / 프레임워크 | Kotlin, Spring Boot |
-| 데이터 | MySQL, JPA/Hibernate, Flyway, Redis |
-| 메시징 | Kafka (spring-kafka), 아웃박스 패턴 |
-| 동시성 제어 | Redisson 분산락, 조건부(원자적) UPDATE, 낙관적 락(`@Version`) |
+| 데이터 | MySQL, JPA/Hibernate, Flyway, Redis(Redisson) |
+| 메시징 | Kafka |
 | 인증 | JWT |
-| 테스트 | JUnit5, Kotest, MockK/Mockito, 임베디드 Kafka |
-| 부하 테스트 | k6 |
+| 테스트 / 부하 테스트 | JUnit5, Kotest, MockK, k6 |
 | 배포 | Docker, Docker Compose |
 
 ## 5. 알려진 한계
