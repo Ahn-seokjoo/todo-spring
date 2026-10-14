@@ -104,6 +104,13 @@ enum class TodoExceptionType(
         httpStatusCode = 403,
     ),
 
+    // SALES
+    SALES_INVALID_DATE_RANGE(
+        message = "조회 시작일(from)은 종료일(to)보다 앞서야 합니다.",
+        errorCode = "S000_INVALID_DATE_RANGE",
+        httpStatusCode = 400,
+    ),
+
     // Outbox
     OUTBOX_UPDATE_ERROR(
         message = "outbox table 상태 업데이트 실패",
