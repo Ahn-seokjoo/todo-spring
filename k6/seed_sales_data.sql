@@ -10,7 +10,8 @@
 --   - 판매자 1만 명(seed_seller_00000 ~ 09999) × 300건
 --   - 판매자 안에서도 상태 APPROVED 70% / REJECTED 20% / CANCELLED 10%  (j 기준)
 --   - 가격 1,000 ~ 5,900원 50종 (j 기준)
---   - created_at: 판매자별로 연속 300일에 하루 1건(나머지 65일은 빈 구간)
+--   - created_at: 기준시각(@base) 이전 1년 중 판매자별로 연속 300일에 하루 1건(나머지 65일은 빈 구간)
+--     기준시각을 고정해 언제 실행해도 같은 날짜가 나오게 한다(k6의 FROM/TO 고정값과 맞추기 위함).
 --   주의: 상태·가격을 n % 10, n % 50 으로 만들면 10과 50이 10000의 약수라
 --         판매자마다 상태·가격이 하나로 고정된다. 그래서 j(n DIV 10000) 기준으로 생성.
 --
@@ -31,6 +32,9 @@ WHERE d7.d < 3;
 SELECT COUNT(*), MIN(n), MAX(n) FROM seed_numbers;   -- 3000000, 0, 2999999
 
 -- 2. todo_purchase 시드 (100만 건씩 3회. 회차마다 마지막 WHERE만 바꿔 한 번씩 실행)
+--    @base는 세션 변수라 SET과 INSERT 3회를 같은 세션(같은 콘솔)에서 실행할 것.
+SET @base = TIMESTAMP '2026-10-14 00:00:00';
+
 --    1회차: WHERE n < 1000000
 --    2회차: WHERE n >= 1000000 AND n < 2000000
 --    3회차: WHERE n >= 2000000
@@ -46,8 +50,8 @@ SELECT
     WHEN (n DIV 10000) % 10 < 9 THEN 'REJECTED'
     ELSE 'CANCELLED'
   END,
-  NOW() - INTERVAL ((n DIV 10000 + n % 10000) % 365) DAY - INTERVAL (n % 86400) SECOND,
-  NOW() - INTERVAL ((n DIV 10000 + n % 10000) % 365) DAY - INTERVAL (n % 86400) SECOND
+  @base - INTERVAL ((n DIV 10000 + n % 10000) % 365) DAY - INTERVAL (n % 86400) SECOND,
+  @base - INTERVAL ((n DIV 10000 + n % 10000) % 365) DAY - INTERVAL (n % 86400) SECOND
 FROM seed_numbers
 WHERE n < 1000000;
 
@@ -63,7 +67,7 @@ WHERE seller_id LIKE 'seed_%' GROUP BY purchase_status;
 SELECT purchase_status, COUNT(*) FROM todo_purchase
 WHERE seller_id = 'seed_seller_00123' GROUP BY purchase_status;
 
--- 같은 판매자의 가격 종류 / 날짜 수: 50 / 300 근처 (시각을 빼면서 날짜가 겹쳐 실행 시각에 따라 260~300)
+-- 같은 판매자의 가격 종류 / 날짜 수: 50 / 300
 SELECT COUNT(DISTINCT price), COUNT(DISTINCT DATE(created_at)) FROM todo_purchase
 WHERE seller_id = 'seed_seller_00123';
 
@@ -72,6 +76,6 @@ ANALYZE TABLE todo_purchase;
 DROP TABLE seed_numbers;
 DROP TABLE digits;
 
--- 참고: k6/sales_daily_test.js 는 seed_seller_00100 ~ 00199 를 사용한다.
---       created_at 이 NOW() 기준이므로, 시드를 넣은 날짜에 맞춰 k6 의 FROM/TO 를 조정할 것.
---       (판매자 0~99번 중 일부는 최근 30일이 빈 구간에 걸려 결과가 비어 있음)
+-- 참고: k6/sales_daily_test.js 는 seed_seller_00100 ~ 00199 와 FROM=2026-09-14, TO=2026-10-14 를 사용한다.
+--       이 판매자들은 위 구간에 각각 APPROVED 21건이 있다.
+--       (판매자 0~99번 중 일부는 이 구간이 빈 구간에 걸려 결과가 비어 있음)
