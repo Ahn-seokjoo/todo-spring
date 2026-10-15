@@ -53,7 +53,7 @@ enum class TodoExceptionType(
     ),
     AUTH_WRONG_USER_ACCESS(
         message = "본인 계정에만 접근할 수 있습니다.",
-        errorCode = "A006_AUTH_WRONG_USER_ACCESS",
+        errorCode = "A007_AUTH_WRONG_USER_ACCESS",
         httpStatusCode = 403
     ),
 
