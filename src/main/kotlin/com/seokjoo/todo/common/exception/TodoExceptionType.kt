@@ -51,6 +51,11 @@ enum class TodoExceptionType(
         errorCode = "A006_FORBIDDEN_USER_ACCESS",
         httpStatusCode = 403
     ),
+    AUTH_WRONG_USER_ACCESS(
+        message = "본인 계정에만 접근할 수 있습니다.",
+        errorCode = "A006_AUTH_WRONG_USER_ACCESS",
+        httpStatusCode = 403
+    ),
 
     // MONEY
     BALANCE_NOT_ENOUGH(message = "잔액 부족입니다.", errorCode = "M000_BALANCE_NOT_ENOUGH", httpStatusCode = 400),
