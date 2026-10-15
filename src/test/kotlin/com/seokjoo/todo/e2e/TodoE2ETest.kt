@@ -260,7 +260,7 @@ class TodoE2ETest @Autowired constructor(
     }
 
     @Test
-    fun `GET Todo by id 다른 사용자의 todo는 조회할 수 없다`() {
+    fun `GET Todo by id 다른 사용자의 todo를 조회하면 없는 todo와 같은 404를 받는다`() {
         val otherHeader = signUpAndCreateHeader("other")
         try {
             val url = "http://localhost:$port/api/v1/todos/${todoResponse.id}"
@@ -272,9 +272,10 @@ class TodoE2ETest @Autowired constructor(
                     .headers { it.addAll(otherHeader) }
                     .exchange { _, res -> res.statusCode.value() to res.bodyTo(String::class.java).orEmpty() }
 
-            assertThat(result?.first).isEqualTo(TodoExceptionType.UNAUTHORIZED_TODO_ACCESS.httpStatusCode)
+            // "남의 것"과 "없는 것"을 같은 응답으로 돌려줘 다른 사용자의 todo 존재 여부가 드러나지 않게 한다
+            assertThat(result?.first).isEqualTo(TodoExceptionType.NOT_EXISTED_TODO.httpStatusCode)
             val err = objectMapper.readValue<ApiErrorResponse>(result?.second.orEmpty())
-            assertThat(err.errorCode).isEqualTo(TodoExceptionType.UNAUTHORIZED_TODO_ACCESS.errorCode)
+            assertThat(err.errorCode).isEqualTo(TodoExceptionType.NOT_EXISTED_TODO.errorCode)
         } finally {
             loginService.delete("other", "other")
         }

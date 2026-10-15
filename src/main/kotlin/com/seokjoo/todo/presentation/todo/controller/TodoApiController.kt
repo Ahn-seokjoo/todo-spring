@@ -83,7 +83,7 @@ class TodoApiController(
         val userId = authService.getSubject(servletRequest.getBearerToken())
         val todo = todoService.getTodoById(id).toResponse()
         if (todo.owner != userId) {
-            throw TodoException.of(TodoExceptionType.UNAUTHORIZED_TODO_ACCESS)
+            throw TodoException.of(TodoExceptionType.NOT_EXISTED_TODO)
         }
         return ResponseEntity.ok(todo)
     }
