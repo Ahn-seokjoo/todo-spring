@@ -22,7 +22,6 @@ spring:
   data:
     redis:
       host: ${REDIS_HOST}
-      password: ${REDIS_PASSWORD}
       port: 6379
   cache:
     type: redis
@@ -37,3 +36,7 @@ springdoc:
     enabled: false
   swagger-ui:
     enabled: false
+
+logging:
+  level:
+    org.springframework.cache: info

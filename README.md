@@ -88,7 +88,7 @@ flowchart LR
 Kafka 모드로 실행하려면 `kafka` 프로필을 켭니다. 메일은 Mailpit(http://localhost:8025)에서 확인할 수 있습니다.
 
 ```bash
-./gradlew bootRun --args='--spring.profiles.active=kafka'
+./gradlew bootRun --args='--spring.profiles.active=kafka,mailpit'
 ```
 
 ### 프로덕션 배포용 (테스트 겸용)

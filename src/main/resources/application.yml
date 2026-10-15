@@ -3,6 +3,8 @@ spring:
     import: optional:file:.env[.properties]
   profiles:
     default: local
+    group:
+      prod: kafka
   application:
     name: todo
   datasource:
