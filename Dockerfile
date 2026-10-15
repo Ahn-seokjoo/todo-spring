@@ -1,32 +1,22 @@
 # Gradle 8.12.1 + JDK 17 베이스 이미지 사용
 FROM gradle:8.12.1-jdk17 AS build
-
 WORKDIR /app
 
-# 필요한 설정 파일 먼저 복사
+# 1) 빌드 설정만 먼저 복사하고 의존성을 받아 둔다
+#    → build.gradle.kts가 바뀔 때만 다시 실행되고, 코드만 바뀌면 캐시를 재사용
 COPY build.gradle.kts settings.gradle.kts ./
-COPY gradle /app/gradle
+COPY gradle ./gradle
+RUN gradle dependencies --no-daemon > /dev/null
 
-# 전체 소스 복사
-COPY . /app
+# 소스는 그다음에 복사해서 빌드
+COPY src ./src
+RUN gradle bootJar --no-daemon -x test
 
-# 빌드 실행
-RUN gradle clean build --no-daemon -x test
-
-# JAR 파일 목록 출력 (파일이 생성되었는지 확인)
-RUN ls -al /app/build/libs
-
-# 런타임 이미지는 슬림한 JDK 17 이미지 사용
-# 가장 취약점 없어보이는 걸로 선택
-# https://hub.docker.com/_/openjdk/tags?name=17-jdk-slim
-FROM openjdk:21-ea-17-jdk-slim-buster
+FROM eclipse-temurin:17-jre
 
 WORKDIR /app
-
-ENV JAVA_OPTS="-Dspring.profiles.active=prod"
-# 빌드한 JAR 복사
 COPY --from=build /app/build/libs/*.jar /app/todo.jar
 
+ENV JAVA_OPTS="-Xms256m -Xmx768m"
 EXPOSE 8080
-ENTRYPOINT ["java", "-Dspring.profiles.active=prod"]
-CMD ["-jar", "todo.jar"]
+ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar /app/todo.jar"]
