@@ -1,6 +1,9 @@
 # local 용 포트 개방
 services:
   mysql-master:
+    image: bitnami/mysql            # 로컬은 기존 시드 데이터가 있는 bitnami 유지
+    volumes:
+      - mysql_primary_data:/bitnami/mysql/data
     ports:
       - '127.0.0.1:3307:3306'
   redis:
@@ -23,3 +26,26 @@ services:
     ports:
       - '127.0.0.1:1025:1025'
       - '127.0.0.1:8025:8025'
+  influxdb:
+    image: influxdb:1.8
+    ports:
+      - '8086:8086'
+    environment:
+      - INFLUXDB_DB=k6
+      - INFLUXDB_ADMIN_ENABLED=true
+      - INFLUXDB_ADMIN_USER=${K6_USER}
+      - INFLUXDB_ADMIN_PASSWORD=${K6_PASSWORD}
+      - INFLUXDB_USER=k6
+      - INFLUXDB_USER_PASSWORD=${K6_PASSWORD}
+  grafana:
+    image: grafana/grafana
+    ports:
+      - '3000:3000'
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+    depends_on:
+      - influxdb
+
+volumes:
+  mysql_primary_data:
