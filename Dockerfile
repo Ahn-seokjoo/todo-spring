@@ -17,6 +17,7 @@ FROM eclipse-temurin:17-jre
 WORKDIR /app
 COPY --from=build /app/build/libs/*.jar /app/todo.jar
 
-ENV JAVA_OPTS="-Xms256m -Xmx768m"
+# 컨테이너 기본 타임존은 UTC → LocalDateTime.now()가 KST(MySQL TZ)와 9시간 어긋나지 않도록 JVM 타임존 지정
+ENV JAVA_OPTS="-Xms256m -Xmx768m -Duser.timezone=Asia/Seoul"
 EXPOSE 8080
 ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar /app/todo.jar"]
