@@ -16,7 +16,7 @@ enum class TodoExceptionType(
     UNAUTHORIZED_TODO_ACCESS(
         message = "자신의 Todo만 접근할 수 있습니다.",
         errorCode = "T003_GET_TODO_AUTHORIZATION",
-        httpStatusCode = 401
+        httpStatusCode = 403
     ),
 
     // CATEGORY
