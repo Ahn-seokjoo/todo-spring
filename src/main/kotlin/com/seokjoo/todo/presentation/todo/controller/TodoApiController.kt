@@ -1,5 +1,7 @@
 package com.seokjoo.todo.presentation.todo.controller
 
+import com.seokjoo.todo.common.exception.TodoException
+import com.seokjoo.todo.common.exception.TodoExceptionType
 import com.seokjoo.todo.common.jwt.getBearerToken
 import com.seokjoo.todo.domain.service.auth.TodoAuthService
 import com.seokjoo.todo.domain.service.todo.TodoRetryableService
@@ -75,9 +77,14 @@ class TodoApiController(
     @GetMapping("/todos/{id}")
     @Operation(summary = "특정 id todo 조회", description = "id를 이용해 todo 한개를 조회합니다.")
     fun getTodoById(
+        servletRequest: HttpServletRequest,
         @PathVariable id: Long,
     ): ResponseEntity<TodoResponse> {
+        val userId = authService.getSubject(servletRequest.getBearerToken())
         val todo = todoService.getTodoById(id).toResponse()
+        if (todo.owner != userId) {
+            throw TodoException.of(TodoExceptionType.NOT_EXISTED_TODO)
+        }
         return ResponseEntity.ok(todo)
     }
 

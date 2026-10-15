@@ -23,7 +23,6 @@ class JwtAuthFilter(
                 "/api/v1/auth/login",
                 "/api/v1/auth/signup",
                 "/api/v1/auth/refresh",
-                "/api/v1/auth/delete",
                 "/swagger-ui",
                 "/v3/api-docs",
             )

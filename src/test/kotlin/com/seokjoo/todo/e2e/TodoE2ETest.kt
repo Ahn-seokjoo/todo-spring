@@ -3,6 +3,7 @@ package com.seokjoo.todo.e2e
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.seokjoo.todo.annotation.TodoTest
+import com.seokjoo.todo.common.exception.TodoExceptionType
 import com.seokjoo.todo.domain.repository.todo.TodoRepository
 import com.seokjoo.todo.domain.repository.todouser.TodoAuthRepository
 import com.seokjoo.todo.domain.service.auth.TodoAuthService
@@ -10,6 +11,7 @@ import com.seokjoo.todo.domain.service.auth.TodoAuthServiceLoginResponse
 import com.seokjoo.todo.domain.service.todo.TodoCreateServiceRequestDTO
 import com.seokjoo.todo.domain.service.todo.TodoService
 import com.seokjoo.todo.domain.service.todo.TodoServiceResponseDTO
+import com.seokjoo.todo.presentation.auth.dto.TodoAuthDeleteRequest
 import com.seokjoo.todo.presentation.error.ApiErrorResponse
 import com.seokjoo.todo.presentation.todo.dto.request.TodoPatchRequest
 import com.seokjoo.todo.presentation.todo.dto.request.TodoRequest
@@ -257,6 +259,54 @@ class TodoE2ETest @Autowired constructor(
         assertThat(err.errorCode).isEqualTo("C001_VALIDATION_BAD_REQUEST")
     }
 
+    @Test
+    fun `GET Todo by id 다른 사용자의 todo를 조회하면 없는 todo와 같은 404를 받는다`() {
+        val otherHeader = signUpAndCreateHeader("other")
+        try {
+            val url = "http://localhost:$port/api/v1/todos/${todoResponse.id}"
+
+            val result: Pair<Int, String>? =
+                RestClient.create()
+                    .get()
+                    .uri(url)
+                    .headers { it.addAll(otherHeader) }
+                    .exchange { _, res -> res.statusCode.value() to res.bodyTo(String::class.java).orEmpty() }
+
+            // "남의 것"과 "없는 것"을 같은 응답으로 돌려줘 다른 사용자의 todo 존재 여부가 드러나지 않게 한다
+            assertThat(result?.first).isEqualTo(TodoExceptionType.NOT_EXISTED_TODO.httpStatusCode)
+            val err = objectMapper.readValue<ApiErrorResponse>(result?.second.orEmpty())
+            assertThat(err.errorCode).isEqualTo(TodoExceptionType.NOT_EXISTED_TODO.errorCode)
+        } finally {
+            loginService.delete("other", "other")
+        }
+    }
+
+    @Test
+    fun `회원 탈퇴는 다른 사용자의 토큰으로 할 수 없다`() {
+        val otherHeader = signUpAndCreateHeader("other")
+        try {
+            val url = "http://localhost:$port/api/v1/auth/delete"
+            // other 의 토큰으로 pita 계정 탈퇴를 시도한다 (비밀번호는 맞게 넣는다)
+            val request = TodoAuthDeleteRequest(userId = "pita", password = "pita")
+
+            val result: Pair<Int, String>? =
+                RestClient.create()
+                    .method(HttpMethod.DELETE)
+                    .uri(url)
+                    .headers { it.addAll(otherHeader) }
+                    .body(request)
+                    .exchange { _, res -> res.statusCode.value() to res.bodyTo(String::class.java).orEmpty() }
+
+            assertThat(result?.first).isEqualTo(TodoExceptionType.AUTH_WRONG_USER_ACCESS.httpStatusCode)
+            val err = objectMapper.readValue<ApiErrorResponse>(result?.second.orEmpty())
+            assertThat(err.errorCode).isEqualTo(TodoExceptionType.AUTH_WRONG_USER_ACCESS.errorCode)
+            // pita 계정은 그대로 남아 있어야 한다
+            assertThat(userRepository.findUserByUserId("pita")).isNotNull
+        } finally {
+            loginService.delete("other", "other")
+        }
+    }
+
     @BeforeEach
     fun beforeEach() {
         val user = userRepository.findUserByUserId("pita") ?: error("올수 없음")
@@ -283,6 +333,15 @@ class TodoE2ETest @Autowired constructor(
     fun beforeAll() {
         loginService.signUp("pita", "pita", email = "abc@nav.com")
         createHeader(loginService.login("pita", "pita"))
+    }
+
+    private fun signUpAndCreateHeader(userId: String): HttpHeaders {
+        loginService.signUp(userId, userId, email = "$userId@nav.com")
+        val login = loginService.login(userId, userId)
+        return HttpHeaders().apply {
+            set("Authorization", "Bearer ${login.accessToken}")
+            contentType = MediaType.APPLICATION_JSON
+        }
     }
 
     private fun createHeader(login: TodoAuthServiceLoginResponse) {

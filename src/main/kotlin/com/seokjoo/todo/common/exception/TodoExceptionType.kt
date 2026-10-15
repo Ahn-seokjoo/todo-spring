@@ -16,7 +16,7 @@ enum class TodoExceptionType(
     UNAUTHORIZED_TODO_ACCESS(
         message = "자신의 Todo만 접근할 수 있습니다.",
         errorCode = "T003_GET_TODO_AUTHORIZATION",
-        httpStatusCode = 401
+        httpStatusCode = 403
     ),
 
     // CATEGORY
@@ -49,6 +49,11 @@ enum class TodoExceptionType(
     AUTH_FORBIDDEN_USER_ACCESS(
         message = "본인 계좌에만 접근할 수 있습니다.",
         errorCode = "A006_FORBIDDEN_USER_ACCESS",
+        httpStatusCode = 403
+    ),
+    AUTH_WRONG_USER_ACCESS(
+        message = "본인 계정에만 접근할 수 있습니다.",
+        errorCode = "A007_AUTH_WRONG_USER_ACCESS",
         httpStatusCode = 403
     ),
 

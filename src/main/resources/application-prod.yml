@@ -9,7 +9,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
-    show-sql: true
+    show-sql: false
     properties:
       hibernate.format_sql: true
     database: mysql
@@ -27,11 +27,13 @@ spring:
   cache:
     type: redis
 
-logging:
-  level:
-    org.springframework.cache: trace
-
 jwt:
   secret: ${JWT_SECRETS}
   accessTokenExpiration: ${JWT_ACCESS_TOKEN_EXPIRED_TIME}
   refreshTokenExpiration: ${JWT_REFRESH_TOKEN_EXPIRED_TIME}
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false

@@ -1,13 +1,15 @@
 package com.seokjoo.todo.presentation.auth.controller
 
+import com.seokjoo.todo.common.exception.TodoException
+import com.seokjoo.todo.common.exception.TodoExceptionType
 import com.seokjoo.todo.common.jwt.getBearerToken
 import com.seokjoo.todo.domain.service.auth.TodoAuthService
 import com.seokjoo.todo.presentation.auth.dto.TodoAuthDeleteRequest
 import com.seokjoo.todo.presentation.auth.dto.TodoAuthLoginRequest
-import com.seokjoo.todo.presentation.auth.dto.TodoAuthSignUpRequest
 import com.seokjoo.todo.presentation.auth.dto.TodoAuthLoginResponse
 import com.seokjoo.todo.presentation.auth.dto.TodoAuthRefreshTokenRequest
 import com.seokjoo.todo.presentation.auth.dto.TodoAuthRefreshTokenResponse
+import com.seokjoo.todo.presentation.auth.dto.TodoAuthSignUpRequest
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.servlet.http.HttpServletRequest
@@ -64,8 +66,14 @@ class TodoAuthApiController(
 
     @DeleteMapping("/delete")
     fun deleteUser(
+        servletRequest: HttpServletRequest,
         @RequestBody @Valid request: TodoAuthDeleteRequest,
     ): ResponseEntity<String> {
+        val tokenUserId = authService.getSubject(servletRequest.getBearerToken())
+        if (tokenUserId != request.userId) {
+            throw TodoException.of(TodoExceptionType.AUTH_WRONG_USER_ACCESS)
+        }
+
         authService.delete(request.userId, request.password)
         return ResponseEntity.ok("삭제 성공")
     }
