@@ -10,7 +10,7 @@ local-down:
 prod-up:
 	docker compose -f docker-compose.yml -f docker-compose.prod.yml pull server
 	docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-    docker compose -f docker-compose.yml -f docker-compose.prod.yml restart nginx
+	docker compose -f docker-compose.yml -f docker-compose.prod.yml restart nginx
 
 prod-down:
 	docker compose -f docker-compose.yml -f docker-compose.prod.yml down
