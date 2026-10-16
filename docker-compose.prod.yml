@@ -31,7 +31,7 @@ services:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       USER_EMAIL: ${USER_EMAIL}
       USER_APP_PASSWORD: ${USER_APP_PASSWORD}
-    image: seokzoo/todo:latest
+    image: seokzoo/todo:${IMAGE_TAG:?check_.env}
     depends_on:
       mysql-master:
         condition: service_healthy   # MySQL healthcheck 통과 후 기동

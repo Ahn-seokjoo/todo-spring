@@ -68,14 +68,14 @@ flowchart LR
 ## 5. 알려진 한계
 
 - 자동 테스트는 H2 인메모리 DB로 돌아갑니다. H2는 MySQL(InnoDB)과 잠금 동작이 달라, 데드락과 원자적 UPDATE의 실제 동작은 로컬 MySQL 부하 테스트(k6)로 확인했습니다. MySQL 기반 테스트로 옮기는 것이 다음 과제입니다.
-- Kafka 경로와 메일 테스트용 서버(Mailpit)는 로컬 환경에만 구성되어 있습니다.
+- 운영 Kafka는 단일 브로커(복제 1)라 브로커 장애에 대한 이중화는 없습니다. 메일 테스트용 서버(Mailpit)는 로컬 전용입니다.
 - DLT로 분리된 이벤트를 운영자가 확인하고 처리하는 절차는 아직 없습니다.
 - 캐시는 변경이 생기면 사용자 구분 없이 전체를 비우고 있어, 사용자 단위 무효화로 바꿀 예정입니다.
-- Docker Compose에 다중 인스턴스, Swarm 설정이 있지만 학습 목적이며 오토스케일링이나 고가용성을 검증한 것은 아닙니다.
+- 운영 배포는 단일 서버 Docker Compose입니다. Docker Swarm은 다중 인스턴스 실험(아웃박스 크래시 복구)에만 사용했으며, 오토스케일링이나 고가용성을 검증한 것은 아닙니다.
 
 ## 6. 실행 방법
 
-실행 시 `.env` 파일이 필요합니다.
+실행 시 `.env` 파일이 필요합니다. 필요한 키는 `.env.example`을 참고합니다.
 
 ### 로컬 개발
 
@@ -91,15 +91,30 @@ Kafka 모드로 실행하려면 `kafka` 프로필을 켭니다. 메일은 Mailpi
 ./gradlew bootRun --args='--spring.profiles.active=kafka,mailpit'
 ```
 
-### 프로덕션 배포용 (테스트 겸용)
+### 프로덕션 배포
+
+이미지는 develop에 PR이 머지되면 GitHub Actions가 빌드해 `latest`와 머지 커밋 sha(40자 전체) 태그로 Docker Hub에 올립니다. 서버는 `.env`의 `IMAGE_TAG`에 적힌 sha 이미지만 실행합니다.
 
 | 명령어 | 설명 |
 | --- | --- |
-| `make prod-up` | 서버 이미지 pull 후 프로덕션 컨테이너 실행 |
+| `make prod-up` | `.env`의 `IMAGE_TAG` 이미지를 pull 후 프로덕션 컨테이너 실행 |
 | `make prod-down` | 프로덕션 컨테이너 종료 및 삭제 |
 | `make restart-prod` | 프로덕션 컨테이너 재시작 |
 
-### Docker Swarm 스택 (학습 목적)
+배포와 롤백은 같은 절차입니다.
+
+```bash
+# 서버 ~/todo 에서
+vi .env            # IMAGE_TAG=<배포할 커밋 sha 40자>  (롤백이면 이전 sha)
+make prod-up      # IMAGE_TAG가 비어 있으면 실행되지 않음
+docker compose -f docker-compose.yml -f docker-compose.prod.yml ps   # IMAGE 칸에서 sha 확인
+```
+
+롤백은 이미지만 되돌립니다. 이미 적용된 Flyway 마이그레이션은 되돌아가지 않으므로, 컬럼 삭제·이름 변경은 추가 → 배포 → 삭제 순서로 나눠 진행합니다.
+
+### 다중 인스턴스 실험용 (Docker Swarm)
+
+아웃박스 크래시 복구 실험(서버 3대 중 1대 종료)에 사용했습니다. 운영 배포에는 사용하지 않습니다.
 
 | 명령어 | 설명 |
 | --- | --- |
