@@ -5,6 +5,12 @@ services:
       - mysql_data:/var/lib/mysql
     expose:
       - '3306'
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 30s
   redis:
     restart: unless-stopped
     expose:
@@ -27,9 +33,12 @@ services:
       USER_APP_PASSWORD: ${USER_APP_PASSWORD}
     image: seokzoo/todo:latest
     depends_on:
-      - redis
-      - mysql-master
-      - kafka
+      mysql-master:
+        condition: service_healthy   # MySQL healthcheck 통과 후 기동
+      redis:
+        condition: service_started
+      kafka:
+        condition: service_started
   kafka:
     image: apache/kafka:4.3.1
     container_name: todo-kafka
