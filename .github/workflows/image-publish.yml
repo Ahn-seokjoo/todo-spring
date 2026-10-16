@@ -42,3 +42,13 @@ jobs:
           labels: |
             org.opencontainers.image.revision=${{ github.event.pull_request.merge_commit_sha }}
           platforms: linux/amd64,linux/arm64/v8
+
+      - name: print image tag
+        run: |
+          echo "IMAGE_TAG=${{ github.event.pull_request.merge_commit_sha }}"
+          {
+            echo "### 배포용 이미지 태그"
+            echo '```'
+            echo "IMAGE_TAG=${{ github.event.pull_request.merge_commit_sha }}"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
