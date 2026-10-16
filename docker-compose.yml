@@ -4,10 +4,7 @@ services:
     container_name: redis
 
   mysql-master:
-    image: bitnami/mysql
     container_name: mysql-master
-    volumes:
-      - mysql_primary_data:/bitnami/mysql/data
     restart: always
     environment:
       TZ: Asia/Seoul
@@ -15,6 +12,3 @@ services:
       MYSQL_USER: $MYSQL_USERNAME
       MYSQL_PASSWORD: $MYSQL_PASSWORD
       MYSQL_DATABASE: $MYSQL_DATABASE
-
-volumes:
-  mysql_primary_data:
