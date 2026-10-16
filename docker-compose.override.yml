@@ -13,7 +13,7 @@ services:
     image: redis
     container_name: redis-test
     ports:
-      - '6380:6379'
+      - '127.0.0.1:6380:6379'
 
   kafka:
     image: apache/kafka:4.3.1
@@ -29,7 +29,7 @@ services:
   influxdb:
     image: influxdb:1.8
     ports:
-      - '8086:8086'
+      - '127.0.0.1:8086:8086'
     environment:
       - INFLUXDB_DB=k6
       - INFLUXDB_ADMIN_ENABLED=true
@@ -40,7 +40,7 @@ services:
   grafana:
     image: grafana/grafana
     ports:
-      - '3000:3000'
+      - '127.0.0.1:3000:3000'
     environment:
       - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN}
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
