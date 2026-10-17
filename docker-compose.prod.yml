@@ -90,8 +90,8 @@ services:
     ports:
       - '127.0.0.1:3000:3000'
     environment:
-      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN}
-      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN?GRAFANA_ADMIN_required}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD?GRAFANA_PASSWORD_required}
       GF_USERS_ALLOW_SIGN_UP: 'false'
     volumes:
       - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
