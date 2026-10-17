@@ -321,10 +321,10 @@ class TodoE2ETest @Autowired constructor(
                     Triple(res.statusCode.value(), res.headers.allow, res.bodyTo(String::class.java).orEmpty())
                 }
 
-        assertThat(result?.first).isEqualTo(TodoExceptionType.COMMON_METHOD_NOT_ALLOWED.httpStatusCode)
+        assertThat(result?.first).isEqualTo(405)
         assertThat(result?.second).contains(HttpMethod.GET, HttpMethod.POST)
         val err = objectMapper.readValue<ApiErrorResponse>(result?.third.orEmpty())
-        assertThat(err.errorCode).isEqualTo(TodoExceptionType.COMMON_METHOD_NOT_ALLOWED.errorCode)
+        assertThat(err.errorCode).isEqualTo("C002_METHOD_NOT_ALLOWED")
     }
 
     @Test
@@ -340,9 +340,9 @@ class TodoE2ETest @Autowired constructor(
                 .body(malformedBody)
                 .exchange { _, res -> res.statusCode.value() to res.bodyTo(String::class.java).orEmpty() }
 
-        assertThat(result?.first).isEqualTo(TodoExceptionType.COMMON_BAD_REQUEST.httpStatusCode)
+        assertThat(result?.first).isEqualTo(400)
         val err = objectMapper.readValue<ApiErrorResponse>(result?.second.orEmpty())
-        assertThat(err.errorCode).isEqualTo(TodoExceptionType.COMMON_BAD_REQUEST.errorCode)
+        assertThat(err.errorCode).isEqualTo("C000_BAD_REQUEST")
     }
 
     @BeforeEach
