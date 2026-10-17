@@ -4,6 +4,8 @@ import com.seokjoo.todo.common.exception.TodoException
 import com.seokjoo.todo.common.exception.TodoExceptionType
 import org.slf4j.LoggerFactory
 import org.springframework.http.ResponseEntity
+import org.springframework.http.converter.HttpMessageNotReadableException
+import org.springframework.web.HttpRequestMethodNotSupportedException
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
@@ -86,5 +88,32 @@ class ApiExceptionHandler {
                     message = "일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요.",
                 )
             )
+    }
+
+    @ExceptionHandler
+    fun handleMethodNotSupported(
+        exception: HttpRequestMethodNotSupportedException,
+    ): ResponseEntity<ApiErrorResponse> {
+        logger.info("Method not supported {}", exception.message)
+        val error = TodoExceptionType.COMMON_METHOD_NOT_ALLOWED
+
+        return ResponseEntity
+            .status(error.httpStatusCode)
+            .headers(exception.headers)
+            .body(
+                ApiErrorResponse(
+                    errorCode = error.errorCode,
+                    message = error.message,
+                )
+            )
+    }
+
+    @ExceptionHandler
+    fun handleNotReadable(exception: HttpMessageNotReadableException): ResponseEntity<ApiErrorResponse> {
+        logger.info(exception.message)
+        val error = TodoExceptionType.COMMON_BAD_REQUEST
+        return ResponseEntity
+            .status(error.httpStatusCode)
+            .body(ApiErrorResponse(errorCode = error.errorCode, message = error.message))
     }
 }

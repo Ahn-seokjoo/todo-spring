@@ -307,6 +307,44 @@ class TodoE2ETest @Autowired constructor(
         }
     }
 
+    @Test
+    fun `지원하지 않는 HTTP 메서드로 요청하면 405와 Allow 헤더를 받는다`() {
+        // /api/v1/todos 는 GET, POST 만 매핑되어 있다
+        val url = "http://localhost:$port/api/v1/todos"
+
+        val result: Triple<Int, Set<HttpMethod>, String>? =
+            RestClient.create()
+                .method(HttpMethod.DELETE)
+                .uri(url)
+                .headers { it.addAll(header) }
+                .exchange { _, res ->
+                    Triple(res.statusCode.value(), res.headers.allow, res.bodyTo(String::class.java).orEmpty())
+                }
+
+        assertThat(result?.first).isEqualTo(TodoExceptionType.COMMON_METHOD_NOT_ALLOWED.httpStatusCode)
+        assertThat(result?.second).contains(HttpMethod.GET, HttpMethod.POST)
+        val err = objectMapper.readValue<ApiErrorResponse>(result?.third.orEmpty())
+        assertThat(err.errorCode).isEqualTo(TodoExceptionType.COMMON_METHOD_NOT_ALLOWED.errorCode)
+    }
+
+    @Test
+    fun `JSON 형식이 깨진 본문으로 요청하면 400을 받는다`() {
+        val url = "http://localhost:$port/api/v1/todos"
+        val malformedBody = """{"todo": "spring", "price": """
+
+        val result: Pair<Int, String>? =
+            RestClient.create()
+                .post()
+                .uri(url)
+                .headers { it.addAll(header) }
+                .body(malformedBody)
+                .exchange { _, res -> res.statusCode.value() to res.bodyTo(String::class.java).orEmpty() }
+
+        assertThat(result?.first).isEqualTo(TodoExceptionType.COMMON_BAD_REQUEST.httpStatusCode)
+        val err = objectMapper.readValue<ApiErrorResponse>(result?.second.orEmpty())
+        assertThat(err.errorCode).isEqualTo(TodoExceptionType.COMMON_BAD_REQUEST.errorCode)
+    }
+
     @BeforeEach
     fun beforeEach() {
         val user = userRepository.findUserByUserId("pita") ?: error("올수 없음")
