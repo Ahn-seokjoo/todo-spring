@@ -34,6 +34,11 @@ enum class TodoExceptionType(
         errorCode = "C001_VALIDATION_BAD_REQUEST",
         httpStatusCode = 400
     ),
+    COMMON_METHOD_NOT_ALLOWED(
+        message = "지원하지 않는 HTTP 메서드입니다",
+        errorCode = "C002_METHOD_NOT_ALLOWED",
+        httpStatusCode = 405,
+    ),
 
     // AUTH
     AUTH_USER_NOT_EXIST(message = "회원이 아닙니다", errorCode = "A000_NOT_EXIST", httpStatusCode = 400),
@@ -112,7 +117,7 @@ enum class TodoExceptionType(
     // SALES
     SALES_INVALID_DATE_RANGE(
         message = "조회 시작일(from)은 종료일(to)보다 앞서야 합니다.",
-        errorCode = "S000_INVALID_DATE_RANGE",
+        errorCode = "SA000_INVALID_DATE_RANGE",
         httpStatusCode = 400,
     ),
 
