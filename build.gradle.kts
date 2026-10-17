@@ -38,6 +38,7 @@ dependencies {
 
     runtimeOnly("com.mysql:mysql-connector-j")
     runtimeOnly("com.h2database:h2")
+    runtimeOnly("io.micrometer:micrometer-registry-prometheus")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     testImplementation("org.mockito.kotlin:mockito-kotlin:5.4.0")
