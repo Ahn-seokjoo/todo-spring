@@ -202,4 +202,6 @@ gradle-app.setting
 # oh-my-claudecode
 .omc/
 
+nginx/certs/
+
 # End of https://www.toptal.com/developers/gitignore/api/maven,gradle,intellij+all,macos,kotlin,redis
