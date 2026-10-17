@@ -1,5 +1,6 @@
 package com.seokjoo.todo.presentation.todo.dto.response
 
+import com.seokjoo.todo.domain.entity.todo.TodoStatus
 import com.seokjoo.todo.domain.service.todo.TodoServiceResponseDTO
 import io.swagger.v3.oas.annotations.media.Schema
 
@@ -13,6 +14,7 @@ data class TodoResponse(
     val categories: List<String>,
     val owner: String,
     val price: Long,
+    val status: TodoStatus,
 )
 
 fun TodoServiceResponseDTO.toResponse() = TodoResponse(
@@ -22,4 +24,5 @@ fun TodoServiceResponseDTO.toResponse() = TodoResponse(
     categories = categories.map { it },
     owner = ownerId,
     price = price,
+    status = status,
 )
