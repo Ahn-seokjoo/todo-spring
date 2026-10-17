@@ -28,6 +28,10 @@ spring:
   cache:
     type: redis
 
+management:
+  server:
+    address: 0.0.0.0
+
 jwt:
   secret: ${JWT_SECRETS}
   accessTokenExpiration: ${JWT_ACCESS_TOKEN_EXPIRED_TIME}

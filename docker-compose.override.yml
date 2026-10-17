@@ -38,14 +38,33 @@ services:
       - INFLUXDB_USER=k6
       - INFLUXDB_USER_PASSWORD=${K6_PASSWORD}
   grafana:
-    image: grafana/grafana
+    image: grafana/grafana:13.2.3
     ports:
       - '127.0.0.1:3000:3000'
     environment:
       - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN}
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/etc/grafana/dashboards:ro
     depends_on:
       - influxdb
+      - prometheus
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    ports:
+      - '127.0.0.1:9090:9090'
+    volumes:
+      - ./monitoring/prometheus/prometheus.local.yml:/etc/prometheus/prometheus.yml:ro
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'   # 컨테이너에서 맥(호스트)을 가리키는 주소
+
+  kafka-exporter:
+    image: danielqsj/kafka-exporter:v1.10.0
+    command: [ '--kafka.server=localhost:9092' ]
+    network_mode: 'service:kafka'
+    depends_on:
+      - kafka
 
 volumes:
   mysql_primary_data:
