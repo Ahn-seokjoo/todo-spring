@@ -312,8 +312,17 @@
     document.querySelectorAll('.tab').forEach((t) => t.setAttribute('aria-selected', String(t.dataset.tab === name)));
     document.querySelectorAll('.panel').forEach((p) => { p.hidden = p.dataset.panel !== name; });
     history.replaceState(null, '', `#${name}`);
+    autoLoad(name);
   }
   document.querySelectorAll('.tab').forEach((t) => t.addEventListener('click', () => selectTab(t.dataset.tab)));
+
+  // 탭을 열면 로그인한 경우에만 바로 조회한다 (로그인 전에는 안내 박스를 띄우지 않음)
+  function autoLoad(name) {
+    if (!sessionStorage.getItem('userId')) return;
+    if (name === 'wallet') loadBalance();
+    if (name === 'todos') loadTodos(currentPage).then((ok) => { if (ok) $('todos-result').hidden = true; });
+    if (name === 'sales') loadSales();
+  }
 
   // ---------- 공통 ----------
   async function api(method, path, body) {
@@ -452,7 +461,7 @@
   });
 
   // ---------- 잔액 ----------
-  $('balance-btn').addEventListener('click', async () => {
+  async function loadBalance() {
     const out = $('balance-result');
     const userId = requireLogin(out);
     if (!userId) return;
@@ -465,7 +474,8 @@
         showResponse(out, 200, res);
       }
     } catch (err) { showFetchError(out, err); }
-  });
+  }
+  $('balance-btn').addEventListener('click', loadBalance);
 
   $('charge-chips').addEventListener('click', (e) => {
     const amount = e.target.dataset?.amount;
@@ -611,7 +621,7 @@
   $('sales-from').value = localDate(-7);
   $('sales-to').value = localDate(0);
 
-  $('sales-btn').addEventListener('click', async () => {
+  async function loadSales() {
     const out = $('sales-result');
     const tbody = $('sales-body');
     if (!requireLogin(out)) return;
@@ -642,7 +652,8 @@
         return tr;
       }));
     } catch (err) { showFetchError(out, err); }
-  });
+  }
+  $('sales-btn').addEventListener('click', loadSales);
 
   // ---------- 시작 ----------
   renderWhoami();
