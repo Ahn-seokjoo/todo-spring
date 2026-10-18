@@ -59,7 +59,7 @@ class TodoApiControllerTest {
             categories = listOf(),
             ownerId = "pita",
             price = 0L,
-            status = TodoStatus.AVAILABLE,
+            status = TodoStatus.PENDING_APPROVAL,
         )
         given(authService.findUser(any())).willReturn(user)
         given(todoService.getPagedTodos(eq(user.userId), any())).willReturn(
@@ -73,6 +73,8 @@ class TodoApiControllerTest {
             .andDo { print() }
             .andExpect {
                 status { isOk() }
+                // 기본값(AVAILABLE)이 아닌 상태가 응답까지 그대로 매핑되는지 확인한다
+                jsonPath("$.todoList[0].status") { value("PENDING_APPROVAL") }
             }
     }
 
