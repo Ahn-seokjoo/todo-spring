@@ -65,6 +65,10 @@ services:
     network_mode: 'service:kafka'
     depends_on:
       - kafka
+  web:
+    image: nginx:1.27-alpine
+    ports: [ '127.0.0.1:8088:80' ]
+    volumes: [ './web:/usr/share/nginx/html:ro' ]
 
 volumes:
   mysql_primary_data:

@@ -14,7 +14,7 @@ data class TodoServiceResponseDTO(
     val categories: List<String> = emptyList(),
     val ownerId: String,
     val price: Long,
-    val status: TodoStatus = TodoStatus.AVAILABLE,
+    val status: TodoStatus,
 ) {
     companion object {
         fun from(todo: Todo) = TodoServiceResponseDTO(

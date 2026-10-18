@@ -2,6 +2,7 @@ package com.seokjoo.todo.domain.service.todo
 
 import com.seokjoo.todo.annotation.TodoTest
 import com.seokjoo.todo.common.exception.TodoException
+import com.seokjoo.todo.domain.entity.todo.TodoStatus
 import com.seokjoo.todo.domain.entity.todouser.User
 import com.seokjoo.todo.domain.repository.category.CategoryRepository
 import com.seokjoo.todo.domain.repository.categorytodo.TodoCategoryRepository
@@ -64,6 +65,7 @@ class TodoServiceSpringBootTest @Autowired constructor(
                     id = 0L,
                     ownerId = user.userId,
                     price = request.price,
+                    status = TodoStatus.AVAILABLE,
                 )
             )
     }
@@ -84,6 +86,7 @@ class TodoServiceSpringBootTest @Autowired constructor(
                     categories = listOf("drama"),
                     ownerId = "pita",
                     price = 0L,
+                    status = TodoStatus.AVAILABLE,
                 )
             )
     }
@@ -115,6 +118,7 @@ class TodoServiceSpringBootTest @Autowired constructor(
                         categories = listOf("drama"),
                         ownerId = "pita",
                         price = 0L,
+                        status = TodoStatus.AVAILABLE,
                     ),
                     TodoServiceResponseDTO(
                         id = 2L,
@@ -123,6 +127,7 @@ class TodoServiceSpringBootTest @Autowired constructor(
                         categories = listOf(),
                         ownerId = "pita",
                         price = 100L,
+                        status = TodoStatus.AVAILABLE,
                     ),
                 )
             )
@@ -148,6 +153,7 @@ class TodoServiceSpringBootTest @Autowired constructor(
                     categories = listOf("horror"),
                     ownerId = "pita",
                     price = 400L,
+                    status = TodoStatus.AVAILABLE,
                 ),
             )
     }

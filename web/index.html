@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>todo 테스트 콘솔</title>
+  <style>
+    :root { --bg: #f7f7f8; --card: #fff; --line: #e4e4e7; --text: #18181b; --muted: #71717a; --accent: #2563eb; --err: #dc2626; --ok: #16a34a; --warn: #d97706; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif; background: var(--bg); color: var(--text); }
+    main { max-width: 760px; margin: 0 auto; padding: 24px 16px 48px; }
+    header { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+    h1 { font-size: 20px; margin: 0 0 4px; }
+    .muted { color: var(--muted); font-size: 13px; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; margin-top: 16px; }
+    .card h2 { font-size: 15px; margin: 0 0 12px; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .row + .row { margin-top: 8px; }
+    input { flex: 1; min-width: 110px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; font-size: 14px; }
+    input.narrow { flex: 0 1 140px; }
+    input.date { flex: 0 0 auto; width: 160px; }
+    button { padding: 8px 14px; border: 0; border-radius: 6px; background: var(--accent); color: #fff; font-size: 14px; cursor: pointer; white-space: nowrap; }
+    button.ghost { background: transparent; color: var(--accent); border: 1px solid var(--line); }
+    button.small { padding: 4px 8px; font-size: 12px; }
+    button.danger { background: var(--err); }
+    button:disabled { opacity: .4; cursor: default; }
+    pre { margin: 12px 0 0; padding: 10px; background: #fafafa; border: 1px solid var(--line); border-radius: 6px; font-size: 12px; white-space: pre-wrap; word-break: break-all; }
+    .err { color: var(--err); }
+    .ok { color: var(--ok); }
+    .table-wrap { overflow-x: auto; margin-top: 12px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+    th { color: var(--muted); font-weight: 500; }
+    .badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 11px; background: #eef2ff; color: var(--accent); }
+    .badge.pending { background: #fef3c7; color: var(--warn); }
+    .pager { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1>todo 테스트 콘솔</h1>
+      <div class="muted">API: <span id="api-base"></span></div>
+    </div>
+    <div class="row">
+      <span class="muted" id="whoami">로그인 안 됨</span>
+      <button class="ghost small" id="logout-btn" type="button">로그아웃</button>
+    </div>
+  </header>
+
+  <section class="card">
+    <h2>회원가입</h2>
+    <form id="signup-form" class="row">
+      <label class="sr-only" for="signup-user-id">회원가입 아이디</label>
+      <input id="signup-user-id" name="user_id" placeholder="user_id" required>
+      <label class="sr-only" for="signup-password">회원가입 비밀번호</label>
+      <input id="signup-password" name="password" type="password" placeholder="password" required>
+      <label class="sr-only" for="signup-email">회원가입 이메일</label>
+      <input id="signup-email" name="email" type="email" placeholder="email (구매 확정 메일 수신)" required>
+      <button type="submit">가입</button>
+    </form>
+    <pre id="signup-result">아직 요청 없음</pre>
+  </section>
+
+  <section class="card">
+    <h2>로그인</h2>
+    <form id="login-form" class="row">
+      <label class="sr-only" for="login-user-id">로그인 아이디</label>
+      <input id="login-user-id" name="user_id" placeholder="user_id" required>
+      <label class="sr-only" for="login-password">로그인 비밀번호</label>
+      <input id="login-password" name="password" type="password" placeholder="password" required>
+      <button type="submit">로그인</button>
+    </form>
+    <pre id="login-result">아직 요청 없음</pre>
+  </section>
+
+  <section class="card">
+    <h2>잔액 · 충전</h2>
+    <div class="row">
+      <button id="balance-btn" type="button" class="ghost">잔액 조회</button>
+      <label class="sr-only" for="charge-amount">충전 금액</label>
+      <input id="charge-amount" class="narrow" type="number" min="0" placeholder="충전 금액">
+      <button id="charge-btn" type="button">충전</button>
+    </div>
+    <pre id="balance-result">아직 요청 없음</pre>
+  </section>
+
+  <section class="card">
+    <h2>투두 등록 (판매용)</h2>
+    <form id="create-form" class="row">
+      <label class="sr-only" for="create-todo">투두 내용</label>
+      <input id="create-todo" name="todo" placeholder="내용" required>
+      <label class="sr-only" for="create-price">투두 가격</label>
+      <input id="create-price" name="price" class="narrow" type="number" min="0" placeholder="가격" value="0">
+      <label class="sr-only" for="create-categories">카테고리</label>
+      <input id="create-categories" name="categories" placeholder="카테고리 (쉼표 구분, 선택)">
+      <button type="submit">등록</button>
+    </form>
+    <pre id="create-result">아직 요청 없음</pre>
+  </section>
+
+  <section class="card">
+    <h2>내 투두</h2>
+    <div class="row">
+      <button id="todos-btn" type="button" class="ghost">목록 불러오기</button>
+      <span class="muted">구매 요청이 들어온 투두(승인 대기)에 승인/거절 버튼이 보여요</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>id</th><th>내용</th><th>가격</th><th>상태</th><th>카테고리</th><th></th></tr></thead>
+        <tbody id="todos-body"><tr><td colspan="6" class="muted">아직 불러오지 않음</td></tr></tbody>
+      </table>
+    </div>
+    <div class="pager">
+      <button id="prev-btn" type="button" class="ghost small" disabled>← 이전</button>
+      <span class="muted" id="page-label">-</span>
+      <button id="next-btn" type="button" class="ghost small" disabled>다음 →</button>
+    </div>
+    <pre id="todos-result">아직 요청 없음</pre>
+  </section>
+
+  <section class="card">
+    <h2>구매 (다른 사용자의 투두)</h2>
+    <div class="row">
+      <label class="sr-only" for="purchase-id">구매할 투두 id</label>
+      <input id="purchase-id" class="narrow" type="number" min="1" placeholder="투두 id">
+      <button id="purchase-btn" type="button">구매 요청</button>
+      <button id="cancel-btn" type="button" class="ghost">요청 취소</button>
+    </div>
+    <pre id="purchase-result">아직 요청 없음</pre>
+  </section>
+
+  <section class="card">
+    <h2>일일 매출 (내가 판매한 것)</h2>
+    <div class="row">
+      <label class="sr-only" for="sales-from">매출 조회 시작일</label>
+      <input id="sales-from" class="date" type="date">
+      <span class="muted">~</span>
+      <label class="sr-only" for="sales-to">매출 조회 종료일</label>
+      <input id="sales-to" class="date" type="date">
+      <span class="muted">(둘 다 포함)</span>
+      <button id="sales-btn" type="button">조회</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>날짜</th><th>건수</th><th>금액</th></tr></thead>
+        <tbody id="sales-body"><tr><td colspan="3" class="muted">아직 조회하지 않음</td></tr></tbody>
+      </table>
+    </div>
+    <pre id="sales-result">아직 요청 없음</pre>
+  </section>
+</main>
+
+<script>
+  // 페이지(web)와 API(todo)는 출처가 다르다 → 브라우저의 CORS 검사 대상
+  const API_BASE = location.hostname === 'localhost'
+    ? 'http://localhost:8080'
+    : 'https://todo.pita-pat.com';
+  const PAGE_SIZE = 5;
+  let currentPage = 0;
+
+  const $ = (id) => document.getElementById(id);
+  $('api-base').textContent = API_BASE;
+
+  // ---------- 공통 ----------
+  async function api(method, path, body) {
+    const headers = {};
+    if (body) headers['Content-Type'] = 'application/json';
+    const token = sessionStorage.getItem('accessToken');
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const res = await fetch(API_BASE + path, {
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    const text = await res.text();
+    let data;
+    try { data = JSON.parse(text); } catch { data = text; }
+    return { status: res.status, data, headers: res.headers };
+  }
+
+  // 서버 응답은 항상 textContent 로만 화면에 넣는다 (innerHTML 금지 → XSS 방지)
+  function show(el, ok, content) {
+    el.className = ok ? 'ok' : 'err';
+    el.textContent = typeof content === 'string' ? content : JSON.stringify(content, null, 2);
+  }
+
+  function showResponse(el, okStatus, { status, data }) {
+    const body = typeof data === 'object' ? data : { body: data };
+    show(el, status === okStatus, { httpStatus: status, ...body });
+  }
+
+  function showFetchError(el, err) {
+    // CORS 로 막히면 응답 내용 없이 여기로 온다
+    show(el, false, `요청 실패: ${err.name}: ${err.message}\n→ 브라우저 콘솔(Console)과 Network 탭을 확인하세요`);
+  }
+
+  function requireLogin(el) {
+    const userId = sessionStorage.getItem('userId');
+    if (!userId) show(el, false, '먼저 로그인하세요');
+    return userId;
+  }
+
+  function renderWhoami() {
+    const userId = sessionStorage.getItem('userId');
+    $('whoami').textContent = userId ? `${userId} 로그인 중` : '로그인 안 됨';
+  }
+
+  function cell(text) {
+    const td = document.createElement('td');
+    td.textContent = text;
+    return td;
+  }
+
+  function emptyRow(tbody, colspan, message) {
+    const tr = document.createElement('tr');
+    const td = cell(message);
+    td.colSpan = colspan;
+    td.className = 'muted';
+    tr.appendChild(td);
+    tbody.replaceChildren(tr);
+  }
+
+  function formatDate(d) {
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  }
+
+  function localDate(offsetDays = 0) {
+    const d = new Date();
+    d.setDate(d.getDate() + offsetDays);
+    return formatDate(d);
+  }
+
+  function nextDay(yyyyMmDd) {
+    const d = new Date(`${yyyyMmDd}T00:00:00`);
+    d.setDate(d.getDate() + 1);
+    return formatDate(d);
+  }
+
+  // ---------- 회원가입 / 로그인 ----------
+  $('signup-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const out = $('signup-result');
+    const form = new FormData(e.target);
+    try {
+      const res = await api('POST', '/api/v1/auth/signup', {
+        user_id: form.get('user_id'),
+        password: form.get('password'),
+        email: form.get('email'),
+      });
+      showResponse(out, 200, res);
+    } catch (err) { showFetchError(out, err); }
+  });
+
+  $('login-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const out = $('login-result');
+    const form = new FormData(e.target);
+    try {
+      const { status, data } = await api('POST', '/api/v1/auth/login', {
+        user_id: form.get('user_id'),
+        password: form.get('password'),
+      });
+      if (status === 200) {
+        // 토큰 저장은 브라우저가 자동으로 해주지 않는다 → JS가 직접 저장
+        sessionStorage.setItem('accessToken', data.accessToken);
+        sessionStorage.setItem('userId', form.get('user_id'));
+        show(out, true, `로그인 성공 (status ${status})`);
+        renderWhoami();
+      } else {
+        showResponse(out, 200, { status, data });
+      }
+    } catch (err) { showFetchError(out, err); }
+  });
+
+  $('logout-btn').addEventListener('click', () => {
+    sessionStorage.removeItem('accessToken');
+    sessionStorage.removeItem('userId');
+    renderWhoami();
+  });
+
+  // ---------- 잔액 / 충전 ----------
+  $('balance-btn').addEventListener('click', async () => {
+    const out = $('balance-result');
+    const userId = requireLogin(out);
+    if (!userId) return;
+    try {
+      showResponse(out, 200, await api('GET', `/api/v1/current/${encodeURIComponent(userId)}`));
+    } catch (err) { showFetchError(out, err); }
+  });
+
+  $('charge-btn').addEventListener('click', async () => {
+    const out = $('balance-result');
+    const userId = requireLogin(out);
+    if (!userId) return;
+    const amount = Number($('charge-amount').value);
+    try {
+      showResponse(out, 200, await api('POST', `/api/v1/charge/${encodeURIComponent(userId)}`, { amount }));
+    } catch (err) { showFetchError(out, err); }
+  });
+
+  // ---------- 투두 등록 ----------
+  $('create-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const out = $('create-result');
+    if (!requireLogin(out)) return;
+    const form = new FormData(e.target);
+    const categories = String(form.get('categories') || '')
+      .split(',').map((s) => s.trim()).filter(Boolean);
+    try {
+      const res = await api('POST', '/api/v1/todos', {
+        todo: form.get('todo'),
+        price: Number(form.get('price') || 0),
+        categories,
+      });
+      // CORS 실험: 서버는 201 응답에 Location 헤더를 넣는다. JS에서 읽힐까?
+      const location = res.headers.get('Location');
+      const body = typeof res.data === 'object' ? res.data : { body: res.data };
+      show(out, res.status === 201, { httpStatus: res.status, locationHeader: location, ...body });
+    } catch (err) { showFetchError(out, err); }
+  });
+
+  // ---------- 내 투두 (이전/다음 페이지) ----------
+  async function loadTodos(page) {
+    const out = $('todos-result');
+    const tbody = $('todos-body');
+    if (!requireLogin(out)) return;
+    try {
+      const res = await api('GET', `/api/v1/todos?pageNumber=${page}&pageSize=${PAGE_SIZE}`);
+      if (res.status !== 200) {
+        showResponse(out, 200, res);
+        return;
+      }
+      currentPage = page;
+      const { isLast, todoList } = res.data;
+      show(out, true, `status 200 · ${todoList.length}건`);
+      $('page-label').textContent = `${page + 1} 페이지`;
+      $('prev-btn').disabled = page === 0;
+      $('next-btn').disabled = isLast;
+
+      if (todoList.length === 0) {
+        emptyRow(tbody, 6, '투두가 없어요');
+        return;
+      }
+      const rows = todoList.map((t) => {
+        const tr = document.createElement('tr');
+        tr.append(cell(t.id), cell(t.todo), cell(t.price));
+
+        const statusTd = document.createElement('td');
+        const badge = document.createElement('span');
+        const pending = t.status === 'PENDING_APPROVAL';
+        badge.className = pending ? 'badge pending' : 'badge';
+        badge.textContent = pending ? '승인 대기' : (t.status ?? '-');
+        statusTd.appendChild(badge);
+        tr.appendChild(statusTd);
+
+        tr.appendChild(cell((t.categories || []).join(', ')));
+
+        const actionTd = document.createElement('td');
+        if (pending) {
+          const approve = document.createElement('button');
+          approve.className = 'small';
+          approve.textContent = '승인';
+          approve.onclick = () => decide(t.id, 'approve');
+          const reject = document.createElement('button');
+          reject.className = 'small danger';
+          reject.textContent = '거절';
+          reject.style.marginLeft = '4px';
+          reject.onclick = () => decide(t.id, 'reject');
+          actionTd.append(approve, reject);
+        }
+        tr.appendChild(actionTd);
+        return tr;
+      });
+      tbody.replaceChildren(...rows);
+    } catch (err) { showFetchError(out, err); }
+  }
+
+  async function decide(todoId, action) {
+    const out = $('todos-result');
+    try {
+      const res = await api('POST', `/api/v1/purchase/${todoId}/${action}`);
+      showResponse(out, 200, res);
+      if (res.status === 200) await loadTodos(currentPage);
+    } catch (err) { showFetchError(out, err); }
+  }
+
+  $('todos-btn').addEventListener('click', () => loadTodos(0));
+  $('prev-btn').addEventListener('click', () => loadTodos(currentPage - 1));
+  $('next-btn').addEventListener('click', () => loadTodos(currentPage + 1));
+
+  // ---------- 구매 ----------
+  async function purchase(suffix) {
+    const out = $('purchase-result');
+    if (!requireLogin(out)) return;
+    const todoId = $('purchase-id').value;
+    if (!todoId) { show(out, false, '투두 id를 입력하세요'); return; }
+    try {
+      showResponse(out, 200, await api('POST', `/api/v1/purchase/${encodeURIComponent(todoId)}${suffix}`));
+    } catch (err) { showFetchError(out, err); }
+  }
+
+  $('purchase-btn').addEventListener('click', () => purchase(''));
+  $('cancel-btn').addEventListener('click', () => purchase('/cancel'));
+
+  // ---------- 일일 매출 ----------
+  $('sales-from').value = localDate(-7);
+  $('sales-to').value = localDate(0);
+
+  $('sales-btn').addEventListener('click', async () => {
+    const out = $('sales-result');
+    const tbody = $('sales-body');
+    if (!requireLogin(out)) return;
+    const from = $('sales-from').value;
+    const toInclusive = $('sales-to').value;
+    if (!from || !toInclusive) { show(out, false, '시작일과 종료일을 모두 선택하세요'); return; }
+    if (from > toInclusive) { show(out, false, '시작일이 종료일보다 늦어요'); return; }
+    // 서버는 [from, to) 구간(to 미포함)으로 조회한다 → 화면에서 고른 마지막 날을 포함하려고 하루 더해서 보낸다
+    const to = nextDay(toInclusive);
+    try {
+      const res = await api('GET', `/api/v1/sales/daily?from=${from}&to=${to}`);
+      if (res.status !== 200) {
+        showResponse(out, 200, res);
+        return;
+      }
+      show(out, true, `status 200 · ${res.data.length}일`);
+      if (res.data.length === 0) {
+        emptyRow(tbody, 3, '매출이 없어요');
+        return;
+      }
+      tbody.replaceChildren(...res.data.map((d) => {
+        const tr = document.createElement('tr');
+        tr.append(cell(d.date), cell(d.count), cell(d.amount));
+        return tr;
+      }));
+    } catch (err) { showFetchError(out, err); }
+  });
+
+  renderWhoami();
+</script>
+</body>
+</html>

@@ -2,6 +2,7 @@ package com.seokjoo.todo.presentation.todo.controller
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.seokjoo.todo.common.exception.TodoExceptionType
+import com.seokjoo.todo.domain.entity.todo.TodoStatus
 import com.seokjoo.todo.domain.entity.todouser.User
 import com.seokjoo.todo.domain.service.auth.TodoAuthService
 import com.seokjoo.todo.domain.service.todo.TodoPageServiceResponseDTO
@@ -58,6 +59,7 @@ class TodoApiControllerTest {
             categories = listOf(),
             ownerId = "pita",
             price = 0L,
+            status = TodoStatus.PENDING_APPROVAL,
         )
         given(authService.findUser(any())).willReturn(user)
         given(todoService.getPagedTodos(eq(user.userId), any())).willReturn(
@@ -71,6 +73,8 @@ class TodoApiControllerTest {
             .andDo { print() }
             .andExpect {
                 status { isOk() }
+                // 기본값(AVAILABLE)이 아닌 상태가 응답까지 그대로 매핑되는지 확인한다
+                jsonPath("$.todoList[0].status") { value("PENDING_APPROVAL") }
             }
     }
 
@@ -133,6 +137,7 @@ class TodoApiControllerTest {
             categories = listOf(),
             ownerId = "pita",
             price = 0L,
+            status = TodoStatus.AVAILABLE,
         )
         given(authService.findUser(any())).willReturn(user)
         given(todoService.createTodo(any(), eq(user))).willReturn(mockResponse)
@@ -176,6 +181,7 @@ class TodoApiControllerTest {
             categories = listOf(),
             ownerId = user.userId,
             price = 200L,
+            status = TodoStatus.AVAILABLE,
         )
         given(authService.findUser(any())).willReturn(user)
         given(
@@ -234,6 +240,7 @@ class TodoApiControllerTest {
             categories = listOf(),
             ownerId = user.userId,
             price = 500L,
+            status = TodoStatus.AVAILABLE,
         )
         given(authService.findUser(any())).willReturn(user)
         given(

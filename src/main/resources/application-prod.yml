@@ -46,3 +46,6 @@ springdoc:
 logging:
   level:
     org.springframework.cache: info
+
+cors:
+  allowed-origins: https://web.pita-pat.com

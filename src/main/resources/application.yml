@@ -79,3 +79,6 @@ outbox:
 email:
   reconciler:
     fixed-delay: 300000 # 5분 - markSentAt 기록 실패로 READY에 멈춘 레코드를 SENT로 되돌리는 배치 주기
+
+cors:
+  allowed-origins: http://localhost:8088

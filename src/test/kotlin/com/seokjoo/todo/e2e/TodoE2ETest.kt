@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.seokjoo.todo.annotation.TodoTest
 import com.seokjoo.todo.common.exception.TodoExceptionType
+import com.seokjoo.todo.domain.entity.todo.TodoStatus
 import com.seokjoo.todo.domain.repository.todo.TodoRepository
 import com.seokjoo.todo.domain.repository.todouser.TodoAuthRepository
 import com.seokjoo.todo.domain.service.auth.TodoAuthService
@@ -73,6 +74,7 @@ class TodoE2ETest @Autowired constructor(
                     categories = emptyList(),
                     owner = "pita",
                     price = 10L,
+                    status = TodoStatus.AVAILABLE,
                 )
             )
         )
@@ -101,6 +103,7 @@ class TodoE2ETest @Autowired constructor(
             categories = emptyList(),
             owner = "pita",
             price = 10L,
+            status = TodoStatus.AVAILABLE,
         )
 
         val response: ResponseEntity<String> = restTemplate.exchange(
@@ -128,6 +131,7 @@ class TodoE2ETest @Autowired constructor(
             categories = listOf("drama"),
             owner = "pita",
             price = 10L,
+            status = TodoStatus.AVAILABLE,
         )
         val request =
             TodoRequest(todo = "Android", isDone = true, categories = listOf("drama"), price = 10L)
@@ -141,7 +145,7 @@ class TodoE2ETest @Autowired constructor(
         val result = objectMapper.readValue<TodoResponse>(response.body.orEmpty())
 
         assertThat(response.statusCode.value()).isEqualTo(201)
-        assertThat(response.headers.location).isEqualTo(URI.create("/todos/${expectedId}"))
+        assertThat(response.headers.location).isEqualTo(URI.create("/api/v1/todos/${expectedId}"))
         assertThat(result)
             .usingRecursiveComparison()
             .isEqualTo(expected)
@@ -174,6 +178,7 @@ class TodoE2ETest @Autowired constructor(
             categories = listOf("drama"),
             owner = "pita",
             price = 10L,
+            status = TodoStatus.AVAILABLE,
         )
         val request =
             TodoPatchRequest(todo = "node", isDone = true, categories = listOf("drama"), price = null)
@@ -201,6 +206,7 @@ class TodoE2ETest @Autowired constructor(
             categories = listOf("drama"),
             owner = "pita",
             price = 10L,
+            status = TodoStatus.AVAILABLE,
         )
         val request =
             TodoPatchRequest(todo = "node", isDone = true, categories = listOf("drama"), price = 10)
