@@ -145,7 +145,7 @@ class TodoE2ETest @Autowired constructor(
         val result = objectMapper.readValue<TodoResponse>(response.body.orEmpty())
 
         assertThat(response.statusCode.value()).isEqualTo(201)
-        assertThat(response.headers.location).isEqualTo(URI.create("/todos/${expectedId}"))
+        assertThat(response.headers.location).isEqualTo(URI.create("/api/v1/todos/${expectedId}"))
         assertThat(result)
             .usingRecursiveComparison()
             .isEqualTo(expected)

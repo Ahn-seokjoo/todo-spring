@@ -101,7 +101,7 @@ class TodoApiController(
     ): ResponseEntity<TodoResponse> {
         val user = authService.findUser(servletRequest.getBearerToken())
         val todo = todoService.createTodo(request = request.toCreateRequest(), user).toResponse()
-        return ResponseEntity.created(URI.create("/todos/${todo.id}")).body(todo)
+        return ResponseEntity.created(URI.create("/api/v1/todos/${todo.id}")).body(todo)
     }
 
     @PatchMapping("/todos/{id}")
