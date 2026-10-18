@@ -20,6 +20,7 @@ class WebCorsConfig(
             allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "PATCH")
             allowedHeaders = listOf("Authorization", "Content-Type")
             maxAge = 3600L
+            exposedHeaders = listOf("Location")
         }
         val source = UrlBasedCorsConfigurationSource().apply {
             registerCorsConfiguration("/api/**", config)
