@@ -4,6 +4,9 @@ Spring Boot(Kotlin) 기반 백엔드 프로젝트입니다. 할 일 관리에 "�
 
 1인 프로젝트이며, 안드로이드 개발자로 일하며 백엔드로 방향을 바꾸기 위해 시작했습니다.
 
+- 웹 콘솔 (테스트용): https://web.pita-pat.com
+- API: https://todo.pita-pat.com
+
 ---
 
 ## 1. 주요 기능
@@ -13,8 +16,27 @@ Spring Boot(Kotlin) 기반 백엔드 프로젝트입니다. 할 일 관리에 "�
 - 포인트 충전, 다른 사용자의 할 일 구매 요청 → 판매자 승인/거절 → 구매자 취소
 - 구매 요청, 승인, 거절 시 이메일 알림
 - 자주 조회되는 데이터는 Redis 캐시
+- 테스트용 웹 콘솔: 회원가입, 충전, 투두 등록, 구매 요청과 승인, 일일 매출을 브라우저에서 실행
 
 ## 2. 구조
+
+### 운영 구성
+
+```mermaid
+flowchart LR
+    User[브라우저] --> CF[Cloudflare<br/>HTTPS 프록시]
+    CF --> Nginx[nginx]
+    Nginx -->|web.pita-pat.com| Web[웹 콘솔<br/>정적 파일]
+    Nginx -->|todo.pita-pat.com| App[Spring Boot]
+    App --> MySQL[(MySQL)]
+    App --> Redis[(Redis)]
+    App --> Kafka[(Kafka)]
+    Prom[Prometheus] -.->|수집| App
+    Prom -.->|수집| Exp[kafka-exporter]
+    Grafana[Grafana] --> Prom
+```
+
+### 구매 알림 흐름
 
 ```mermaid
 flowchart LR
@@ -46,13 +68,28 @@ flowchart LR
 
 관련 PR: [#103 구매 승인 방식 전환](https://github.com/Ahn-seokjoo/todo-spring/pull/103) · [#104 아웃박스 + 이메일 발송](https://github.com/Ahn-seokjoo/todo-spring/pull/104) · [#106 폴러, DLQ, 펜싱 토큰](https://github.com/Ahn-seokjoo/todo-spring/pull/106)
 
-### Kafka 전달 경로 (로컬 검증)
+### Kafka 전달 경로
 
 - 알림 전달 구간에 Kafka를 거치는 경로(릴레이 → Kafka → 컨슈머)를 추가했습니다. `outbox.delivery-mode` 설정으로 전환하며, 기본값은 기존 방식입니다.
 - 컨슈머는 아웃박스 id로 발송 기록을 먼저 선점해 같은 이벤트가 여러 번 와도 메일을 한 번만 보냅니다. 발송 결과를 확정할 수 없는 이벤트는 다시 보내지 않고 DLT로 분리합니다.
 - 토픽을 처음부터 다시 읽게 해도 추가 발송이 없는 것, 브로커가 멈춘 동안 들어온 요청이 복구 후 전달되는 것을 로컬에서 확인했습니다.
 
 관련 PR: [#111 Kafka 전달 경로](https://github.com/Ahn-seokjoo/todo-spring/pull/111)
+
+### 운영 배포와 관측
+
+- Oracle Cloud 단일 서버에 Docker Compose로 배포했습니다. 이미지는 머지 커밋 sha로 태깅해, 배포와 롤백을 `.env`의 태그 변경 한 번으로 처리합니다.
+- Cloudflare 프록시 뒤에 두고 원본 인증서로 구간 전체를 HTTPS로 연결했으며, nginx에서 Cloudflare IP 대역이 아닌 연결은 끊어 서버 IP로 직접 들어오는 요청을 막았습니다.
+- Prometheus와 Grafana로 컨슈머 lag, 토픽 발행 속도, DLT 누적 건수를 대시보드로 확인합니다. 컨슈머가 죽어도 lag을 볼 수 있도록 브로커 기준(kafka-exporter) 지표를 사용합니다.
+
+관련 PR: [#114 운영 배포 준비](https://github.com/Ahn-seokjoo/todo-spring/pull/114) · [#115 HTTPS, 원본 보호](https://github.com/Ahn-seokjoo/todo-spring/pull/115) · [#116 lag, DLT 모니터링](https://github.com/Ahn-seokjoo/todo-spring/pull/116)
+
+### 웹 콘솔과 CORS
+
+- 웹(`web.pita-pat.com`)과 API(`todo.pita-pat.com`)를 다른 출처로 분리해 CORS를 적용했습니다.
+- MVC 레벨 CORS 설정에서는 토큰이 없는 preflight가 JWT 필터에서 먼저 막히고, 필터가 만든 401 응답에도 CORS 헤더가 없어 브라우저가 응답을 버리는 문제를 확인했습니다. CORS 처리를 인증 필터 앞단의 `CorsFilter`로 옮겨 해결했습니다.
+
+관련 PR: [#118 CORS, 웹 콘솔](https://github.com/Ahn-seokjoo/todo-spring/pull/118)
 
 ## 4. 기술 스택
 
@@ -63,61 +100,32 @@ flowchart LR
 | 메시징 | Kafka |
 | 인증 | JWT |
 | 테스트 / 부하 테스트 | JUnit5, Kotest, MockK, k6 |
-| 배포 | Docker, Docker Compose |
+| 배포 / 인프라 | Docker, Docker Compose, Oracle Cloud, Cloudflare, nginx, GitHub Actions |
+| 관측 | Prometheus, Grafana |
 
-## 5. 알려진 한계
+## 5. 설계 선택과 다음 과제
 
 - 자동 테스트는 H2 인메모리 DB로 돌아갑니다. H2는 MySQL(InnoDB)과 잠금 동작이 달라, 데드락과 원자적 UPDATE의 실제 동작은 로컬 MySQL 부하 테스트(k6)로 확인했습니다. MySQL 기반 테스트로 옮기는 것이 다음 과제입니다.
-- 운영 Kafka는 단일 브로커(복제 1)라 브로커 장애에 대한 이중화는 없습니다. 메일 테스트용 서버(Mailpit)는 로컬 전용입니다.
-- DLT로 분리된 이벤트를 운영자가 확인하고 처리하는 절차는 아직 없습니다.
-- 캐시는 변경이 생기면 사용자 구분 없이 전체를 비우고 있어, 사용자 단위 무효화로 바꿀 예정입니다.
+- 운영 Kafka는 비용을 고려해 단일 브로커(복제 1)로 두었습니다. 브로커 장애 시 전달이 멈추지만, 아웃박스에 이벤트가 남아 있어 복구 후 이어서 전달됩니다.
 - 운영 배포는 단일 서버 Docker Compose입니다. Docker Swarm은 다중 인스턴스 실험(아웃박스 크래시 복구)에만 사용했으며, 오토스케일링이나 고가용성을 검증한 것은 아닙니다.
 
 ## 6. 실행 방법
 
 실행 시 `.env` 파일이 필요합니다. 필요한 키는 `.env.example`을 참고합니다.
 
-### 로컬 개발
-
-| 명령어 | 설명 |
-| --- | --- |
-| `make local-up` | 로컬 컨테이너 실행 (MySQL, Redis, Kafka, Mailpit) |
-| `make local-down` | 로컬 컨테이너 중지 및 삭제 |
-| `make restart-local` | 로컬 컨테이너 재시작 |
-
-Kafka 모드로 실행하려면 `kafka` 프로필을 켭니다. 메일은 Mailpit(http://localhost:8025)에서 확인할 수 있습니다.
-
 ```bash
+# 로컬: 인프라 컨테이너 실행 후 앱 실행 (Kafka 모드)
+make local-up
 ./gradlew bootRun --args='--spring.profiles.active=kafka,mailpit'
 ```
 
-### 프로덕션 배포
+웹 콘솔 http://localhost:8088 · Grafana http://localhost:3000 · Mailpit http://localhost:8025
 
-이미지는 develop에 PR이 머지되면 GitHub Actions가 빌드해 `latest`와 머지 커밋 sha(40자 전체) 태그로 Docker Hub에 올립니다. 서버는 `.env`의 `IMAGE_TAG`에 적힌 sha 이미지만 실행합니다.
-
-| 명령어 | 설명 |
-| --- | --- |
-| `make prod-up` | `.env`의 `IMAGE_TAG` 이미지를 pull 후 프로덕션 컨테이너 실행 |
-| `make prod-down` | 프로덕션 컨테이너 종료 및 삭제 |
-| `make restart-prod` | 프로덕션 컨테이너 재시작 |
-
-배포와 롤백은 같은 절차입니다.
+운영 배포와 롤백은 같은 절차입니다. PR이 머지되면 GitHub Actions가 머지 커밋 sha 태그로 이미지를 올리고, 서버에서는 `.env`의 `IMAGE_TAG`만 바꿔 실행합니다.
 
 ```bash
-# 서버 ~/todo 에서
-vi .env            # IMAGE_TAG=<배포할 커밋 sha 40자>  (롤백이면 이전 sha)
-make prod-up      # IMAGE_TAG가 비어 있으면 실행되지 않음
-docker compose -f docker-compose.yml -f docker-compose.prod.yml ps   # IMAGE 칸에서 sha 확인
+vi .env        # IMAGE_TAG=<배포할 커밋 sha>  (롤백이면 이전 sha)
+make prod-up
 ```
 
-롤백은 이미지만 되돌립니다. 이미 적용된 Flyway 마이그레이션은 되돌아가지 않으므로, 컬럼 삭제·이름 변경은 추가 → 배포 → 삭제 순서로 나눠 진행합니다.
-
-### 다중 인스턴스 실험용 (Docker Swarm)
-
-아웃박스 크래시 복구 실험(서버 3대 중 1대 종료)에 사용했습니다. 운영 배포에는 사용하지 않습니다.
-
-| 명령어 | 설명 |
-| --- | --- |
-| `make stack-up` | Docker Swarm 초기화 후 스택 배포 (`todo-stack`) |
-| `make stack-down` | Docker Swarm 모드 종료 |
-| `make stack-ps` | 스택 내 서비스 상태 확인 |
+롤백은 이미지만 되돌리므로, 컬럼 삭제·이름 변경 같은 마이그레이션은 추가 → 배포 → 삭제 순서로 나눠 진행합니다.
