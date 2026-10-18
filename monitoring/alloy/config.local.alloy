@@ -18,7 +18,7 @@ loki.source.docker "containers" {
   host          = "unix:///var/run/docker.sock"
   targets       = discovery.docker.containers.targets
   relabel_rules = discovery.relabel.containers.rules
-  forward_to    = [loki.write.local.receiver]
+  forward_to    = [loki.process.app.receiver]
 }
 
 // 로컬 앱(IntelliJ) 로그 파일 읽기 → Loki 로 보냄
@@ -28,12 +28,34 @@ local.file_match "app" {
 
 loki.source.file "app" {
   targets    = local.file_match.app.targets
-  forward_to = [loki.write.local.receiver]
+  forward_to = [loki.process.app.receiver]
 }
 
 // Loki 로 전송
 loki.write "local" {
   endpoint {
     url = "http://loki:3100/loki/api/v1/push"
+  }
+}
+
+loki.process "app" {
+  forward_to = [loki.write.local.receiver]
+
+  stage.match {
+    selector = `{container=~"todo-app-local|todo-server.*"}`
+
+    stage.multiline {
+      firstline     = `^\d{4}-\d{2}-\d{2}T`
+      max_wait_time = "3s"
+    }
+
+    stage.regex {
+      expression = `^\S+\s+(?P<level>TRACE|DEBUG|INFO|WARN|ERROR)\s`
+    }
+
+    // 추출한 값을 level 라벨로
+    stage.labels {
+      values = { level = "" }
+    }
   }
 }
