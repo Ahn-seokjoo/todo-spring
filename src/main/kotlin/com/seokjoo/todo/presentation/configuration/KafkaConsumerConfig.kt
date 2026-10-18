@@ -5,6 +5,7 @@ import com.seokjoo.todo.domain.service.outbox.service.consumer.UnconfirmedSendEx
 import com.seokjoo.todo.presentation.configuration.KafkaTopics.PURCHASE_EVENTS_DLT
 import org.apache.kafka.clients.admin.NewTopic
 import org.apache.kafka.common.TopicPartition
+import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -17,6 +18,7 @@ import org.springframework.util.backoff.FixedBackOff
 @Configuration
 @ConditionalOnProperty(prefix = "outbox", name = ["delivery-mode"], havingValue = "kafka")
 class KafkaConsumerConfig {
+    private val logger = LoggerFactory.getLogger(KafkaConsumerConfig::class.java)
 
     @Bean
     fun purchaseEventDltTopic(): NewTopic {
@@ -28,7 +30,11 @@ class KafkaConsumerConfig {
 
     @Bean
     fun kafkaErrorHandler(kafkaTemplate: KafkaTemplate<String, String>): DefaultErrorHandler {
-        val recoverer = DeadLetterPublishingRecoverer(kafkaTemplate) { record, _ ->
+        val recoverer = DeadLetterPublishingRecoverer(kafkaTemplate) { record, exception ->
+            logger.error(
+                "재시도 소진, DLT 로 이동: topic={}, partition={}, offset={}, key={}",
+                record.topic(), record.partition(), record.offset(), record.key(), exception,
+            )
             TopicPartition(PURCHASE_EVENTS_DLT, record.partition())
         }
         return DefaultErrorHandler(
@@ -39,6 +45,12 @@ class KafkaConsumerConfig {
                 UnconfirmedSendException::class.java, // 몇번 다시 시도해도 READY 라서 재시도 안함
                 JsonProcessingException::class.java,                   // 메시지 자체가 깨진 경우
             )
+            setRetryListeners({ record, ex, deliveryAttempt ->
+                logger.warn(
+                    "컨슈머 처리 실패 (시도 {}회): topic={}, offset={}, cause={}",
+                    deliveryAttempt, record.topic(), record.offset(), ex.cause?.message ?: ex.message,
+                )
+            })
         }
     }
 }
