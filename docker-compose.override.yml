@@ -50,6 +50,7 @@ services:
     depends_on:
       - influxdb
       - prometheus
+      - loki
   prometheus:
     image: prom/prometheus:v3.5.0
     ports:
@@ -70,5 +71,28 @@ services:
     ports: [ '127.0.0.1:8088:80' ]
     volumes: [ './web:/usr/share/nginx/html:ro' ]
 
+  loki:
+    image: grafana/loki:3.5.0
+    command: [ '-config.file=/etc/loki/config.yml' ]
+    ports: [ '127.0.0.1:3100:3100' ]
+    volumes:
+      - ./monitoring/loki/loki.yml:/etc/loki/config.yml:ro
+      - loki_data:/loki
+
+  alloy:
+    image: grafana/alloy:v1.9.0
+    command:
+      - run
+      - --server.http.listen-addr=0.0.0.0:12345
+      - --storage.path=/var/lib/alloy/data
+      - /etc/alloy/config.alloy
+    ports: [ '127.0.0.1:12345:12345' ]   # Alloy 상태 화면 (파이프라인 그래프)
+    volumes:
+      - ./monitoring/alloy/config.local.alloy:/etc/alloy/config.alloy:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./logs:/var/log/todo:ro
+    depends_on: [ loki ]
+
 volumes:
   mysql_primary_data:
+  loki_data:

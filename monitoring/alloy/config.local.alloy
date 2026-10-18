@@ -1,0 +1,39 @@
+// Docker 에 떠 있는 컨테이너 목록 찾기
+discovery.docker "containers" {
+  host = "unix:///var/run/docker.sock"
+}
+
+// 라벨 정리: Docker 컨테이너 이름("/todo-kafka-1")을 container 라벨로
+discovery.relabel "containers" {
+  targets = []
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.*)"
+    target_label  = "container"
+  }
+}
+
+// 컨테이너 로그 읽기 → Loki 로 보냄
+loki.source.docker "containers" {
+  host          = "unix:///var/run/docker.sock"
+  targets       = discovery.docker.containers.targets
+  relabel_rules = discovery.relabel.containers.rules
+  forward_to    = [loki.write.local.receiver]
+}
+
+// 로컬 앱(IntelliJ) 로그 파일 읽기 → Loki 로 보냄
+local.file_match "app" {
+  path_targets = [{"__path__" = "/var/log/todo/*.log", "container" = "todo-app-local"}]
+}
+
+loki.source.file "app" {
+  targets    = local.file_match.app.targets
+  forward_to = [loki.write.local.receiver]
+}
+
+// Loki 로 전송
+loki.write "local" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}
