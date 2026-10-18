@@ -1,20 +1,32 @@
 package com.seokjoo.todo.presentation.configuration
 
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.boot.web.servlet.FilterRegistrationBean
+import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.web.servlet.config.annotation.CorsRegistry
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
+import org.springframework.web.cors.CorsConfiguration
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource
+import org.springframework.web.filter.CorsFilter
 
 @Configuration
 class WebCorsConfig(
-    @param:Value("\${cors.allowed-origins}") private val allowedOrigins: List<String>,
-) : WebMvcConfigurer {
+    @param:Value("\${cors.allowed-origins}") private val allowedOriginList: List<String>,
+) {
 
-    override fun addCorsMappings(registry: CorsRegistry) {
-        registry.addMapping("/api/**")
-            .allowedOrigins(*allowedOrigins.toTypedArray())
-            .allowedMethods("GET", "PUT", "POST", "DELETE", "PATCH")
-            .allowedHeaders("Authorization", "Content-Type")
-            .maxAge(3600)
+    @Bean
+    fun corsFilter(): FilterRegistrationBean<CorsFilter> {
+        val config = CorsConfiguration().apply {
+            allowedOrigins = allowedOriginList
+            allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "PATCH")
+            allowedHeaders = listOf("Authorization", "Content-Type")
+            maxAge = 3600L
+        }
+        val source = UrlBasedCorsConfigurationSource().apply {
+            registerCorsConfiguration("/api/**", config)
+        }
+        return FilterRegistrationBean(CorsFilter(source)).apply {
+            addUrlPatterns("/*")
+            order = 0
+        }
     }
 }
