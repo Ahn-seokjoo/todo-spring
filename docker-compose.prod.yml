@@ -1,3 +1,9 @@
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: '10m'   # 파일 하나 최대 10MB
+    max-file: '3'     # 최대 3개까지 보관 → 컨테이너당 최대 약 30MB
+
 services:
   mysql-master:
     image: mysql:8.4                # prod는 공식 이미지
@@ -11,10 +17,12 @@ services:
       timeout: 3s
       retries: 20
       start_period: 30s
+    logging: *default-logging
   redis:
     restart: unless-stopped
     expose:
       - '6379'
+    logging: *default-logging
   server:
     restart: unless-stopped
     stop_grace_period: 30s
@@ -32,6 +40,7 @@ services:
       USER_EMAIL: ${USER_EMAIL}
       USER_APP_PASSWORD: ${USER_APP_PASSWORD}
     image: seokzoo/todo:${IMAGE_TAG:?check_.env}
+    logging: *default-logging
     depends_on:
       mysql-master:
         condition: service_healthy   # MySQL healthcheck 통과 후 기동
@@ -43,6 +52,7 @@ services:
     image: apache/kafka:4.3.1
     container_name: todo-kafka
     restart: unless-stopped
+    logging: *default-logging
     environment:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
@@ -62,6 +72,7 @@ services:
     image: nginx:1.27-alpine
     container_name: todo-nginx
     restart: unless-stopped
+    logging: *default-logging
     ports:
       - '80:80'
       - '443:443'
@@ -74,6 +85,7 @@ services:
   prometheus:
     image: prom/prometheus:v3.5.0
     restart: unless-stopped
+    logging: *default-logging
     volumes:
       - ./monitoring/prometheus/prometheus.prod.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
@@ -81,6 +93,7 @@ services:
   kafka-exporter:
     image: danielqsj/kafka-exporter:v1.10.0
     restart: unless-stopped
+    logging: *default-logging
     command: [ '--kafka.server=kafka:9092' ]
     depends_on:
       - kafka
@@ -88,6 +101,7 @@ services:
   grafana:
     image: grafana/grafana:13.2.3
     restart: unless-stopped
+    logging: *default-logging
     ports:
       - '127.0.0.1:3000:3000'
     environment:
@@ -100,9 +114,36 @@ services:
       - grafana_data:/var/lib/grafana
     depends_on:
       - prometheus
+      - loki
+
+  alloy:
+    image: grafana/alloy:v1.9.0
+    restart: unless-stopped
+    command:
+      - run
+      - --server.http.listen-addr=0.0.0.0:12345
+      - --storage.path=/var/lib/alloy/data
+      - /etc/alloy/config.alloy
+    volumes:
+      - ./monitoring/alloy/config.prod.alloy:/etc/alloy/config.alloy:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - alloy_data:/var/lib/alloy/data
+    depends_on: [ loki ]
+    logging: *default-logging
+
+  loki:
+    image: grafana/loki:3.5.0
+    restart: unless-stopped
+    command: [ '-config.file=/etc/loki/config.yml' ]
+    volumes:
+      - ./monitoring/loki/loki.yml:/etc/loki/config.yml:ro
+      - loki_data:/loki
+    logging: *default-logging
 
 volumes:
   kafka_data:
   mysql_data:
   prometheus_data:
   grafana_data:
+  loki_data:
+  alloy_data:
