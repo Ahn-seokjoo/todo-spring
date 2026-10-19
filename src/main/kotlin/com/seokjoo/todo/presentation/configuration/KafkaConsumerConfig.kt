@@ -32,7 +32,7 @@ class KafkaConsumerConfig {
     fun kafkaErrorHandler(kafkaTemplate: KafkaTemplate<String, String>): DefaultErrorHandler {
         val recoverer = DeadLetterPublishingRecoverer(kafkaTemplate) { record, exception ->
             logger.error(
-                "재시도 소진, DLT 로 이동: topic={}, partition={}, offset={}, key={}",
+                "재시도 소진, DLT 전송 시도: topic={}, partition={}, offset={}, key={}",
                 record.topic(), record.partition(), record.offset(), record.key(), exception,
             )
             TopicPartition(PURCHASE_EVENTS_DLT, record.partition())
