@@ -3,13 +3,19 @@ discovery.docker "containers" {
   host = "unix:///var/run/docker.sock"
 }
 
-// 라벨 정리: Docker 컨테이너 이름("/todo-kafka-1")을 container 라벨로
+// 라벨 정리: container(인스턴스 구분), service(compose 서비스 이름)
 discovery.relabel "containers" {
   targets = []
+  // 컨테이너 이름("/todo-server-1") → container 라벨 (인스턴스 구분용)
   rule {
     source_labels = ["__meta_docker_container_name"]
     regex         = "/(.*)"
     target_label  = "container"
+  }
+  // compose 서비스 이름("server") → service 라벨 (프로젝트명과 무관하게 고정)
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_service"]
+    target_label  = "service"
   }
 }
 
@@ -23,7 +29,7 @@ loki.source.docker "containers" {
 
 // 로컬 앱(IntelliJ) 로그 파일 읽기 → Loki 로 보냄
 local.file_match "app" {
-  path_targets = [{"__path__" = "/var/log/todo/*.log", "container" = "todo-app-local"}]
+  path_targets = [{"__path__" = "/var/log/todo/*.log", "container" = "todo-app-local", "service" = "server"}]
 }
 
 loki.source.file "app" {
@@ -42,7 +48,7 @@ loki.process "app" {
   forward_to = [loki.write.local.receiver]
 
   stage.match {
-    selector = `{container=~"todo-app-local|todo-server.*"}`
+    selector = `{service="server"}`
 
     stage.multiline {
       firstline     = `^\d{4}-\d{2}-\d{2}T`

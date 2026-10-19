@@ -4,10 +4,16 @@ discovery.docker "containers" {
 
 discovery.relabel "containers" {
   targets = []
+  // 컨테이너 이름("/todo-server-1") → container 라벨 (인스턴스 구분용)
   rule {
     source_labels = ["__meta_docker_container_name"]
     regex         = "/(.*)"
     target_label  = "container"
+  }
+  // compose 서비스 이름("server") → service 라벨 (프로젝트명과 무관하게 고정)
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_service"]
+    target_label  = "service"
   }
 }
 
@@ -29,7 +35,7 @@ loki.process "app" {
   forward_to = [loki.write.local.receiver]
 
   stage.match {
-    selector = `{container=~"todo-app-local|todo-server.*"}`
+    selector = `{service="server"}`
 
     stage.multiline {
       firstline     = `^\d{4}-\d{2}-\d{2}T`
