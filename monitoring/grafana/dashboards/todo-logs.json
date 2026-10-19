@@ -49,7 +49,7 @@
     {
       "id": 1,
       "type": "timeseries",
-      "title": "분당 에러·경고 건수",
+      "title": "에러·경고 건수 (구간별)",
       "datasource": {
         "type": "loki",
         "uid": "loki"
@@ -69,7 +69,7 @@
           },
           "editorMode": "code",
           "queryType": "range",
-          "expr": "sum by (level) (count_over_time({container=~\"todo-app-local|todo-server.*\", level=~\"WARN|ERROR\"}[$__auto]))",
+          "expr": "sum by (level) (count_over_time({service=\"server\", level=~\"WARN|ERROR\"}[$__auto]))",
           "legendFormat": "{{level}}"
         }
       ],
@@ -158,7 +158,7 @@
           },
           "editorMode": "code",
           "queryType": "range",
-          "expr": "{container=~\"todo-app-local|todo-server.*\", level=~\"WARN|ERROR\"}"
+          "expr": "{service=\"server\", level=~\"WARN|ERROR\"}"
         }
       ],
       "options": {
@@ -193,7 +193,7 @@
           },
           "editorMode": "code",
           "queryType": "range",
-          "expr": "{container=~\"todo-app-local|todo-server.*\"} |= \"$search\""
+          "expr": "{service=\"server\"} |= \"$search\""
         }
       ],
       "options": {
