@@ -1,5 +1,6 @@
 package com.seokjoo.todo.domain.service.outbox.delivery
 
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.seokjoo.todo.domain.entity.outbox.OutboxEvent
 import com.seokjoo.todo.domain.service.outbox.OutboxEventType
@@ -21,7 +22,7 @@ import java.util.concurrent.ExecutionException
 
 class KafkaPublishDeliveryTest {
     private val kafkaTemplate: KafkaTemplate<String, String> = mockk()
-    private val objectMapper = jacksonObjectMapper()
+    private val objectMapper = jacksonObjectMapper().registerModule(JavaTimeModule())
     private val delivery = KafkaPublishDelivery(kafkaTemplate, objectMapper)
 
     private val outboxEvent = OutboxEvent(
