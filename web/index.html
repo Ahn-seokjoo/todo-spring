@@ -3,290 +3,371 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>todo console</title>
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#fafafa" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+  <title>todo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" rel="stylesheet">
   <style>
+    /* 토큰: Vercel DESIGN.md(awesome-design-md) 기반, 앱 화면 규칙(taste-skill)으로 조정 */
     :root {
-      --bg: #f6f7fb; --surface: #ffffff; --surface-2: #f9fafc; --line: #e6e8ef;
-      --text: #0f172a; --muted: #64748b; --accent: #4f46e5; --accent-soft: #eef2ff;
-      --ok: #059669; --ok-soft: #ecfdf5; --err: #dc2626; --err-soft: #fef2f2;
-      --warn: #b45309; --warn-soft: #fffbeb;
-      --shadow: 0 1px 2px rgba(15, 23, 42, .04), 0 4px 16px rgba(15, 23, 42, .04);
-      --radius: 14px;
+      --bg: #fafafa;
+      --surface: #ffffff;
+      --surface-2: #f5f5f5;
+      --line: #ebebeb;
+      --line-strong: #d4d4d4;
+      --ink: #171717;
+      --text-2: #5c5c5c;
+      --text-3: #737373;
+      --on-ink: #ffffff;
+      --accent: #0070f3;
+      --ok: #0f7b3e; --ok-soft: #e6f4ea;
+      --warn: #8a4b08; --warn-soft: #ffefcf;
+      --err: #c50000; --err-soft: #fdecec;
+      --radius-sm: 6px;
+      --radius-md: 8px;
     }
     @media (prefers-color-scheme: dark) {
       :root {
-        --bg: #0b0d12; --surface: #12151c; --surface-2: #171b24; --line: #242a37;
-        --text: #e5e7eb; --muted: #94a3b8; --accent: #818cf8; --accent-soft: rgba(129, 140, 248, .14);
-        --ok: #34d399; --ok-soft: rgba(52, 211, 153, .1); --err: #f87171; --err-soft: rgba(248, 113, 113, .1);
-        --warn: #fbbf24; --warn-soft: rgba(251, 191, 36, .1);
-        --shadow: none;
+        --bg: #000000; --surface: #0f0f0f; --surface-2: #1a1a1a; --line: #262626; --line-strong: #3a3a3a;
+        --ink: #ededed; --text-2: #a8a8a8; --text-3: #8f8f8f; --on-ink: #000000;
+        --accent: #3291ff;
+        --ok: #4cc38a; --ok-soft: rgba(76, 195, 138, .14);
+        --warn: #f5b54a; --warn-soft: rgba(245, 166, 35, .16);
+        --err: #ff6b6b; --err-soft: rgba(255, 107, 107, .14);
       }
     }
+
     * { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
     body {
-      margin: 0; background: var(--bg); color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Apple SD Gothic Neo", "Segoe UI", sans-serif;
-      font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased;
+      margin: 0; background: var(--bg); color: var(--ink);
+      font-family: "Geist", "Pretendard Variable", Pretendard, -apple-system, "Apple SD Gothic Neo", system-ui, sans-serif;
+      font-size: 14px; line-height: 20px; letter-spacing: -.01em; word-break: keep-all;
+      -webkit-font-smoothing: antialiased; touch-action: manipulation; -webkit-tap-highlight-color: transparent;
     }
-    button, input { font: inherit; color: inherit; }
+    button, input { font: inherit; color: inherit; letter-spacing: inherit; }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .num { font-variant-numeric: tabular-nums; }
+    .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+    .skip { position: absolute; left: -9999px; }
+    .skip:focus { left: 16px; top: 8px; z-index: 30; background: var(--surface); padding: 6px 10px; border-radius: var(--radius-sm); }
 
-    /* ---------- 헤더 ---------- */
-    .topbar {
-      position: sticky; top: 0; z-index: 10;
-      background: color-mix(in srgb, var(--bg) 85%, transparent);
-      backdrop-filter: blur(10px); border-bottom: 1px solid var(--line);
-    }
-    .topbar-inner {
-      max-width: 960px; margin: 0 auto; padding: 14px 16px;
-      display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
-    }
-    .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 16px; letter-spacing: -.01em; }
-    .brand-mark {
-      width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center;
-      background: var(--accent); color: #fff; font-size: 14px;
-    }
-    .env { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); }
-    .user { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
-    .user strong { color: var(--text); font-weight: 600; }
-    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
-    .dot.on { background: var(--ok); }
-
-    /* ---------- 탭 ---------- */
-    main { max-width: 960px; margin: 0 auto; padding: 20px 16px 64px; }
-    .tabs {
-      display: flex; gap: 4px; padding: 4px; border-radius: 12px;
-      background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow);
-      overflow-x: auto;
-    }
+    /* ---------- 상단 바 ---------- */
+    .bar { position: sticky; top: 0; z-index: 10; background: var(--bg); border-bottom: 1px solid var(--line); }
+    .bar-inner { max-width: 1040px; margin: 0 auto; height: 56px; padding: 0 24px; display: flex; align-items: center; gap: 24px; }
+    .product { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 16px; letter-spacing: -.02em; }
+    .scope { font-size: 12px; font-weight: 500; color: var(--text-2); background: var(--surface-2); padding: 2px 8px; border-radius: 999px; letter-spacing: 0; }
+    .tabs { position: relative; display: flex; gap: 2px; flex: 1; overflow-x: auto; scrollbar-width: none; }
     .tab {
-      flex: 1; min-width: 84px; padding: 9px 12px; border: 0; border-radius: 9px;
-      background: transparent; color: var(--muted); font-weight: 600; cursor: pointer; white-space: nowrap;
+      height: 32px; padding: 0 12px; border: 0; border-radius: var(--radius-sm); background: transparent; cursor: pointer;
+      position: relative; z-index: 1; color: var(--text-2); font-weight: 500; white-space: nowrap; transition: color .2s;
     }
-    .tab:hover { color: var(--text); }
-    .tab[aria-selected="true"] { background: var(--accent-soft); color: var(--accent); }
-    .api-base { margin: 10px 2px 0; color: var(--muted); font-size: 12px; }
-    .api-base code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .tab:hover { color: var(--ink); }
+    .tab[aria-selected="true"] { color: var(--ink); }
+    /* 선택된 탭 뒤의 알약이 다음 탭으로 미끄러져 간다 */
+    .tab-pill {
+      position: absolute; left: 0; top: 0; height: 32px; width: 0; border-radius: var(--radius-sm);
+      background: var(--surface); box-shadow: 0 0 0 1px var(--line), 0 1px 2px rgba(0, 0, 0, .06);
+      transition: transform .38s cubic-bezier(.32, .72, 0, 1), width .38s cubic-bezier(.32, .72, 0, 1);
+    }
+    .tab-pill.instant { transition: none; }
+    .who { display: flex; align-items: center; gap: 12px; color: var(--text-2); white-space: nowrap; }
+    .who strong { color: var(--ink); font-weight: 500; }
+    @media (max-width: 720px) {
+      .bar-inner { height: auto; flex-wrap: wrap; padding: 10px 16px; gap: 8px 16px; }
+      .product { flex: 1; }
+      .tabs { order: 3; flex-basis: 100%; margin: 0 -4px; }
+    }
 
-    .panel { margin-top: 16px; display: grid; gap: 16px; }
+    /* ---------- 본문 ---------- */
+    main { max-width: 1040px; margin: 0 auto; padding: 32px 24px 96px; }
+    @media (max-width: 720px) { main { padding: 24px 16px 72px; } }
     .panel[hidden] { display: none; }
-    .grid-2 { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+    /* 탭을 바꾸면 내용이 이동 방향에서 차례로 들어온다 */
+    .panel.entering > * { animation: enter .42s cubic-bezier(.32, .72, 0, 1) both; }
+    .panel.entering > *:nth-child(2) { animation-delay: 50ms; }
+    .panel.entering > *:nth-child(3) { animation-delay: 100ms; }
+    .panel.entering > *:nth-child(n+4) { animation-delay: 150ms; }
+    @keyframes enter { from { opacity: 0; transform: translateX(var(--dx, 16px)); } }
+    .page-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-bottom: 24px; }
+    .page-head h1 { margin: 0; font-size: 24px; line-height: 32px; font-weight: 600; letter-spacing: -.03em; text-wrap: balance; }
+    .page-head p { margin: 4px 0 0; color: var(--text-2); }
 
-    /* ---------- 카드 ---------- */
-    .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
-    .card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 16px; }
-    .card h2 { margin: 0; font-size: 15px; font-weight: 700; letter-spacing: -.01em; }
-    .card p.desc { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
+    .sheet { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-md); }
+    .sheet + .sheet { margin-top: 16px; }
+    .sheet-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 16px 20px; border-bottom: 1px solid var(--line); }
+    .sheet-head h2 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: -.01em; }
+    .sheet-body { padding: 20px; }
+    .grid-2 { display: grid; gap: 16px; grid-template-columns: 3fr 2fr; align-items: start; }
+    .grid-2 > .sheet + .sheet { margin-top: 0; }
+    @media (max-width: 720px) { .grid-2 { grid-template-columns: 1fr; } }
 
     /* ---------- 폼 ---------- */
-    form, .stack { display: grid; gap: 12px; }
-    .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
-    .row > .field { flex: 1; min-width: 140px; }
+    form, .stack { display: grid; gap: 16px; }
     .field { display: grid; gap: 6px; }
-    .field > span { font-size: 12px; font-weight: 600; color: var(--muted); }
+    .field > span { font-weight: 500; }
+    .field > small { color: var(--text-3); font-size: 12px; line-height: 16px; }
     input {
-      width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line);
-      background: var(--surface-2); outline: none; transition: border-color .15s, box-shadow .15s;
+      height: 40px; width: 100%; padding: 0 12px; border: 1px solid var(--line-strong); border-radius: var(--radius-sm);
+      background: var(--surface); outline: none; transition: border-color .15s, box-shadow .15s;
     }
-    input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
-    .btn {
-      padding: 10px 16px; border-radius: 10px; border: 1px solid transparent; cursor: pointer;
-      font-weight: 600; white-space: nowrap; transition: opacity .15s, background .15s;
-    }
-    .btn-primary { background: var(--accent); color: #fff; }
-    .btn-primary:hover { opacity: .9; }
-    .btn-ghost { background: transparent; border-color: var(--line); color: var(--text); }
-    .btn-ghost:hover { background: var(--surface-2); }
-    .btn-danger { background: var(--err); color: #fff; }
-    .btn-sm { padding: 6px 10px; font-size: 12px; border-radius: 8px; }
-    .btn:disabled { opacity: .35; cursor: default; }
-    .btn[hidden] { display: none; }
-    .chips { display: flex; gap: 6px; flex-wrap: wrap; }
-    .chip {
-      padding: 5px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface-2);
-      font-size: 12px; font-weight: 600; cursor: pointer; color: var(--muted);
-    }
-    .chip:hover { color: var(--accent); border-color: var(--accent); }
+    input:hover { border-color: var(--text-3); }
+    input:focus { border-color: var(--ink); box-shadow: 0 0 0 3px var(--surface-2); }
+    input::placeholder { color: var(--text-3); }
+    .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; }
+    .row > .field { flex: 1; min-width: 160px; }
+    .row > .field.grow { flex: 3; }
 
-    /* ---------- 지표 ---------- */
-    .stat { padding: 16px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--line); }
-    .stat-label { font-size: 12px; color: var(--muted); font-weight: 600; }
-    .stat-value { margin-top: 4px; font-size: 26px; font-weight: 700; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
-    .stat-value small { font-size: 14px; color: var(--muted); font-weight: 600; margin-left: 2px; }
-    .stats { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+    .btn {
+      height: 40px; padding: 0 16px; border-radius: var(--radius-sm); border: 1px solid transparent; cursor: pointer;
+      font-weight: 500; white-space: nowrap; transition: background-color .15s, border-color .15s, color .15s, transform .1s;
+    }
+    .btn:active:not(:disabled) { transform: scale(.98); }
+    .btn-primary { background: var(--ink); color: var(--on-ink); }
+    .btn-primary:hover:not(:disabled) { background: color-mix(in srgb, var(--ink) 85%, var(--bg)); }
+    .btn-secondary { background: var(--surface); border-color: var(--line-strong); }
+    .btn-secondary:hover:not(:disabled) { border-color: var(--ink); }
+    .btn-danger { background: transparent; color: var(--err); }
+    .btn-danger:hover:not(:disabled) { background: var(--err-soft); }
+    .btn-sm { height: 32px; padding: 0 12px; }
+    .btn:disabled { opacity: .45; cursor: default; }
+    .btn[hidden] { display: none; }
+    .text-btn { border: 0; background: none; padding: 0; cursor: pointer; color: var(--text-2); font-weight: 500; transition: color .15s; }
+    .text-btn:hover { color: var(--ink); }
+    .text-btn[hidden] { display: none; }
+    .presets { display: flex; gap: 8px; flex-wrap: wrap; }
+    .preset { height: 32px; padding: 0 12px; border-radius: var(--radius-sm); border: 1px solid var(--line); background: var(--surface-2); cursor: pointer; font-weight: 500; transition: border-color .15s, transform .1s; }
+    .preset:hover { border-color: var(--line-strong); }
+    .preset:active { transform: scale(.97); }
+
+    /* ---------- 수치 ---------- */
+    .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); border-top: 1px solid var(--line); }
+    .kpi { padding: 20px; }
+    .kpi + .kpi { border-left: 1px solid var(--line); }
+    .kpi-label { color: var(--text-2); }
+    .kpi-value { margin-top: 6px; font-size: 32px; line-height: 40px; font-weight: 600; letter-spacing: -.04em; }
+    .kpi-value small { font-size: 16px; font-weight: 500; color: var(--text-2); margin-left: 2px; letter-spacing: 0; }
 
     /* ---------- 표 ---------- */
-    .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; }
-    table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    th, td { text-align: left; padding: 11px 14px; border-bottom: 1px solid var(--line); white-space: nowrap; }
-    th { background: var(--surface-2); color: var(--muted); font-weight: 600; font-size: 12px; }
+    .table-wrap { position: relative; overflow-x: auto; }
+    .title-meta { display: none; margin-top: 2px; font-size: 12px; line-height: 16px; font-weight: 400; color: var(--text-3); }
+    .sheet > .table-wrap + .table-wrap, .kpis + .table-wrap { border-top: 1px solid var(--line); }
+    table { width: 100%; border-collapse: collapse; }
+    th { text-align: left; font-size: 12px; line-height: 16px; font-weight: 500; color: var(--text-2); padding: 12px 20px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+    td { padding: 0 20px; height: 52px; border-bottom: 1px solid var(--line); vertical-align: middle; }
     tbody tr:last-child td { border-bottom: 0; }
-    td.num { font-variant-numeric: tabular-nums; }
-    td.empty { text-align: center; color: var(--muted); padding: 28px; }
-    .badge { display: inline-block; padding: 3px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; background: var(--ok-soft); color: var(--ok); }
-    .badge.pending { background: var(--warn-soft); color: var(--warn); }
-    .actions { display: flex; gap: 6px; }
-    .pager { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; color: var(--muted); font-size: 13px; }
+    th.r, td.r { text-align: right; }
+    td.id { color: var(--text-3); width: 1%; white-space: nowrap; }
+    td.title { font-weight: 500; min-width: 180px; overflow-wrap: anywhere; }
+    td.cats { color: var(--text-2); }
+    td.empty { height: auto; padding: 40px 20px; color: var(--text-2); text-align: center; }
+    tr.arrive { animation: arrive .24s ease-out both; }
+    @keyframes arrive { from { opacity: 0; transform: translateY(4px); } }
+    tr.leaving { transition: opacity .3s; opacity: .35; }
+    tbody tr:not(:has(td.empty)) { transition: background-color .15s; }
+    tbody tr:not(:has(td.empty)):hover { background: var(--bg); }
+    .pill { display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 999px; font-size: 12px; font-weight: 500; white-space: nowrap; letter-spacing: 0; }
+    .pill.ok { background: var(--ok-soft); color: var(--ok); }
+    .pill.wait { background: var(--warn-soft); color: var(--warn); }
+    .pill.wait::before { content: ""; width: 6px; height: 6px; margin-right: 6px; border-radius: 50%; background: currentColor; animation: pulse 1.6s ease-in-out infinite; }
+    @keyframes pulse { 50% { opacity: .3; } }
+    .actions { display: flex; gap: 4px; justify-content: flex-end; }
+    @media (max-width: 720px) {
+      th, td { padding-left: 12px; padding-right: 12px; }
+      .col-cats, .col-id, .col-status { display: none; }
+      .title-meta { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+      td.title { min-width: 0; padding-top: 10px; padding-bottom: 10px; }
+      .actions { flex-direction: column; align-items: stretch; }
+    }
+    .pager { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; border-top: 1px solid var(--line); color: var(--text-2); }
 
-    /* ---------- 응답 박스 ---------- */
-    .result { margin-top: 14px; border-radius: 10px; border: 1px solid var(--line); overflow: hidden; }
+    /* ---------- 결과 메시지 ---------- */
+    .result { margin-top: 16px; padding: 10px 12px; border-radius: var(--radius-sm); animation: notice .2s ease-out; }
+    .sheet > .result { margin: 0 20px 20px; }
     .result[hidden] { display: none; }
-    .result-head { padding: 8px 12px; font-size: 12px; font-weight: 700; }
-    .result.ok .result-head { background: var(--ok-soft); color: var(--ok); }
-    .result.err .result-head { background: var(--err-soft); color: var(--err); }
+    @keyframes notice { from { opacity: 0; transform: translateY(-4px); } }
+    .result.ok { background: var(--ok-soft); color: var(--ok); }
+    .result.err { background: var(--err-soft); color: var(--err); }
+    .result-line { display: flex; justify-content: space-between; gap: 12px; font-weight: 500; }
+    .result-line .code { font-weight: 400; opacity: .8; white-space: nowrap; }
+    .result details { margin-top: 6px; color: var(--text-2); }
+    .result summary { cursor: pointer; width: fit-content; font-size: 12px; }
     .result pre {
-      margin: 0; padding: 12px; max-height: 260px; overflow: auto; background: var(--surface-2);
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; white-space: pre-wrap; word-break: break-all;
+      margin: 8px 0 0; padding: 10px 12px; max-height: 240px; overflow: auto; border-radius: var(--radius-sm); background: var(--surface);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; line-height: 18px; color: var(--ink);
+      white-space: pre-wrap; word-break: break-all;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; }
     }
   </style>
 </head>
 <body>
-<header class="topbar">
-  <div class="topbar-inner">
-    <div class="brand">
-      <span class="brand-mark">✓</span>
-      <span>todo console</span>
-      <span class="env" id="env-badge">LOCAL</span>
+<a class="skip" href="#main">본문으로 건너뛰기</a>
+<header class="bar">
+  <div class="bar-inner">
+    <div class="product">
+      <span translate="no">todo</span>
+      <span class="scope" id="env-badge">로컬</span>
     </div>
-    <div class="user">
-      <span class="dot" id="user-dot"></span>
+    <nav class="tabs" role="tablist" aria-label="메뉴">
+      <span class="tab-pill instant" id="tab-pill" aria-hidden="true"></span>
+      <button class="tab" role="tab" type="button" data-tab="account" aria-selected="true">계정</button>
+      <button class="tab" role="tab" type="button" data-tab="wallet" aria-selected="false">잔액</button>
+      <button class="tab" role="tab" type="button" data-tab="todos" aria-selected="false">내 Todo</button>
+      <button class="tab" role="tab" type="button" data-tab="purchase" aria-selected="false">구매</button>
+      <button class="tab" role="tab" type="button" data-tab="sales" aria-selected="false">매출</button>
+    </nav>
+    <div class="who">
       <span id="whoami">로그인 안 됨</span>
-      <button class="btn btn-ghost btn-sm" id="logout-btn" type="button">로그아웃</button>
+      <button class="text-btn" id="logout-btn" type="button">로그아웃</button>
     </div>
   </div>
 </header>
 
-<main>
-  <nav class="tabs" role="tablist" aria-label="화면 전환">
-    <button class="tab" role="tab" type="button" data-tab="account" aria-selected="true">계정</button>
-    <button class="tab" role="tab" type="button" data-tab="wallet" aria-selected="false">잔액</button>
-    <button class="tab" role="tab" type="button" data-tab="todos" aria-selected="false">내 투두</button>
-    <button class="tab" role="tab" type="button" data-tab="purchase" aria-selected="false">구매</button>
-    <button class="tab" role="tab" type="button" data-tab="sales" aria-selected="false">매출</button>
-  </nav>
-  <div class="api-base">API <code id="api-base"></code></div>
-
+<main id="main">
   <!-- ===== 계정 ===== -->
   <section class="panel" data-panel="account" role="tabpanel">
+    <div class="page-head"><div><h1>계정</h1></div></div>
     <div class="grid-2">
-      <div class="card">
-        <div class="card-head"><div><h2>로그인</h2><p class="desc">토큰은 이 탭의 sessionStorage에만 저장돼요</p></div></div>
-        <form id="login-form">
-          <label class="field"><span>아이디</span><input id="login-user-id" name="user_id" autocomplete="username" required></label>
-          <label class="field"><span>비밀번호</span><input id="login-password" name="password" type="password" autocomplete="current-password" required></label>
-          <button class="btn btn-primary" type="submit">로그인</button>
-        </form>
-        <div class="result" id="login-result" hidden></div>
+      <div class="sheet">
+        <div class="sheet-head"><h2>로그인</h2></div>
+        <div class="sheet-body">
+          <form id="login-form">
+            <label class="field"><span>아이디</span><input id="login-user-id" name="user_id" autocomplete="username" spellcheck="false" autocapitalize="off" required></label>
+            <label class="field"><span>비밀번호</span><input id="login-password" name="password" type="password" autocomplete="current-password" required></label>
+            <div><button class="btn btn-primary" type="submit">로그인</button></div>
+          </form>
+          <div class="result" id="login-result" role="status" aria-live="polite" hidden></div>
+        </div>
       </div>
-
-      <div class="card">
-        <div class="card-head"><div><h2>회원가입</h2><p class="desc">이메일로 구매 확정 메일이 와요</p></div></div>
-        <form id="signup-form">
-          <label class="field"><span>아이디</span><input id="signup-user-id" name="user_id" autocomplete="username" required></label>
-          <label class="field"><span>비밀번호</span><input id="signup-password" name="password" type="password" autocomplete="new-password" required></label>
-          <label class="field"><span>이메일</span><input id="signup-email" name="email" type="email" autocomplete="email" required></label>
-          <button class="btn btn-ghost" type="submit">가입하기</button>
-        </form>
-        <div class="result" id="signup-result" hidden></div>
+      <div class="sheet">
+        <div class="sheet-head"><h2>회원가입</h2></div>
+        <div class="sheet-body">
+          <form id="signup-form">
+            <label class="field"><span>아이디</span><input id="signup-user-id" name="user_id" autocomplete="username" spellcheck="false" autocapitalize="off" required></label>
+            <label class="field"><span>비밀번호</span><input id="signup-password" name="password" type="password" autocomplete="new-password" required></label>
+            <label class="field"><span>이메일</span><input id="signup-email" name="email" type="email" autocomplete="email" spellcheck="false" required><small>구매 요청과 승인 알림이 이 주소로 갑니다.</small></label>
+            <div><button class="btn btn-secondary" type="submit">가입</button></div>
+          </form>
+          <div class="result" id="signup-result" role="status" aria-live="polite" hidden></div>
+        </div>
       </div>
     </div>
   </section>
 
   <!-- ===== 잔액 ===== -->
   <section class="panel" data-panel="wallet" role="tabpanel" hidden>
-    <div class="card">
-      <div class="card-head">
-        <div><h2>잔액</h2><p class="desc">충전하거나 판매가 승인되면 늘어나요</p></div>
-        <button class="btn btn-ghost btn-sm" id="balance-btn" type="button">새로고침</button>
+    <div class="page-head">
+      <div><h1>잔액</h1></div>
+      <button class="btn btn-secondary btn-sm" id="balance-btn" type="button">새로고침</button>
+    </div>
+    <div class="sheet">
+      <div class="kpi">
+        <div class="kpi-label">현재 잔액</div>
+        <div class="kpi-value num"><span id="balance-value">-</span><small>원</small></div>
       </div>
-      <div class="stat">
-        <div class="stat-label">현재 잔액</div>
-        <div class="stat-value"><span id="balance-value">-</span><small>원</small></div>
-      </div>
-      <div class="stack" style="margin-top: 16px;">
+    </div>
+    <div class="sheet">
+      <div class="sheet-head"><h2>충전</h2></div>
+      <div class="sheet-body stack">
         <div class="row">
-          <label class="field"><span>충전 금액</span><input id="charge-amount" type="text" inputmode="numeric" autocomplete="off" placeholder="0"></label>
+          <label class="field"><span>금액</span><input id="charge-amount" class="num" type="text" inputmode="numeric" autocomplete="off" placeholder="10,000"></label>
           <button class="btn btn-primary" id="charge-btn" type="button">충전</button>
         </div>
-        <div class="chips" id="charge-chips">
-          <button class="chip" type="button" data-amount="1000">+1,000</button>
-          <button class="chip" type="button" data-amount="10000">+10,000</button>
-          <button class="chip" type="button" data-amount="50000">+50,000</button>
+        <div class="presets" id="charge-chips">
+          <button class="preset num" type="button" data-amount="1000">+1,000</button>
+          <button class="preset num" type="button" data-amount="10000">+10,000</button>
+          <button class="preset num" type="button" data-amount="50000">+50,000</button>
         </div>
+        <div class="result" id="balance-result" role="status" aria-live="polite" hidden></div>
       </div>
-      <div class="result" id="balance-result" hidden></div>
     </div>
   </section>
 
-  <!-- ===== 내 투두 ===== -->
+  <!-- ===== 내 Todo ===== -->
   <section class="panel" data-panel="todos" role="tabpanel" hidden>
-    <div class="card">
-      <div class="card-head"><div><h2>투두 등록</h2><p class="desc">가격을 넣으면 다른 사용자가 구매할 수 있어요</p></div></div>
-      <form id="create-form">
-        <div class="row">
-          <label class="field" style="flex: 2;"><span>내용</span><input id="create-todo" name="todo" required></label>
-          <label class="field"><span>가격</span><input id="create-price" name="price" type="number" min="0" inputmode="numeric" value="0"></label>
-        </div>
-        <div class="row">
-          <label class="field"><span>카테고리 (쉼표로 구분, 선택)</span><input id="create-categories" name="categories" placeholder="study, backend"></label>
-          <button class="btn btn-primary" type="submit">등록</button>
-        </div>
-      </form>
-      <div class="result" id="create-result" hidden></div>
+    <div class="page-head">
+      <div><h1>내 Todo</h1><p>구매 요청이 들어온 Todo는 승인하거나 거절할 수 있습니다.</p></div>
+      <button class="btn btn-secondary btn-sm" id="todos-btn" type="button">새로고침</button>
     </div>
 
-    <div class="card">
-      <div class="card-head">
-        <div><h2>내 투두 목록</h2><p class="desc">승인 대기 중인 투두에 승인·거절 버튼이 나타나요</p></div>
-        <button class="btn btn-ghost btn-sm" id="todos-btn" type="button">불러오기</button>
-      </div>
+    <div class="sheet">
       <div class="table-wrap">
         <table>
-          <thead><tr><th>id</th><th>내용</th><th>가격</th><th>상태</th><th>카테고리</th><th></th></tr></thead>
-          <tbody id="todos-body"><tr><td colspan="6" class="empty">불러오기를 눌러 주세요</td></tr></tbody>
+          <thead><tr><th class="col-id">번호</th><th>내용</th><th class="col-cats">카테고리</th><th class="r">가격</th><th class="col-status">상태</th><th class="r"><span class="sr-only">처리</span></th></tr></thead>
+          <tbody id="todos-body"><tr><td colspan="6" class="empty">로그인하면 내 Todo가 표시됩니다.</td></tr></tbody>
         </table>
       </div>
       <div class="pager">
-        <button id="prev-btn" type="button" class="btn btn-ghost btn-sm" disabled>← 이전</button>
-        <span id="page-label">-</span>
-        <button id="next-btn" type="button" class="btn btn-ghost btn-sm" disabled>다음 →</button>
+        <button id="prev-btn" type="button" class="btn btn-secondary btn-sm" disabled>이전</button>
+        <span id="page-label" class="num">-</span>
+        <button id="next-btn" type="button" class="btn btn-secondary btn-sm" disabled>다음</button>
       </div>
-      <div class="result" id="todos-result" hidden></div>
+      <div class="result" id="todos-result" role="status" aria-live="polite" hidden></div>
+    </div>
+
+    <div class="sheet">
+      <div class="sheet-head"><h2>Todo 등록</h2></div>
+      <div class="sheet-body">
+        <form id="create-form">
+          <div class="row">
+            <label class="field grow"><span>내용</span><input id="create-todo" name="todo" autocomplete="off" placeholder="알고리즘 3문제 풀기" required></label>
+            <label class="field"><span>가격</span><input id="create-price" class="num" name="price" type="number" min="0" inputmode="numeric" autocomplete="off" value="0"></label>
+          </div>
+          <div class="row">
+            <label class="field grow"><span>카테고리</span><input id="create-categories" name="categories" autocomplete="off" placeholder="공부, 운동"><small>쉼표로 구분합니다. 비워 둬도 됩니다.</small></label>
+            <button class="btn btn-primary" type="submit">등록</button>
+          </div>
+        </form>
+        <div class="result" id="create-result" role="status" aria-live="polite" hidden></div>
+      </div>
     </div>
   </section>
 
   <!-- ===== 구매 ===== -->
   <section class="panel" data-panel="purchase" role="tabpanel" hidden>
-    <div class="card">
-      <div class="card-head"><div><h2>다른 사용자의 투두 구매</h2><p class="desc">판매자가 알려준 투두 id로 요청해요. 판매자가 승인하면 투두가 내 것이 돼요</p></div></div>
-      <div class="row">
-        <label class="field"><span>투두 id</span><input id="purchase-id" type="number" min="1" inputmode="numeric"></label>
-        <button id="purchase-btn" type="button" class="btn btn-primary">구매 요청</button>
-        <button id="cancel-btn" type="button" class="btn btn-ghost">요청 취소</button>
+    <div class="page-head"><div><h1>구매</h1><p>구매를 요청하면 금액이 먼저 차감되고, 판매자가 거절하면 환불됩니다.</p></div></div>
+    <div class="sheet">
+      <div class="sheet-body">
+        <div class="row">
+          <label class="field"><span>Todo 번호</span><input id="purchase-id" class="num" type="number" min="1" inputmode="numeric" autocomplete="off" placeholder="12"></label>
+          <button id="purchase-btn" type="button" class="btn btn-primary">구매 요청</button>
+          <button id="cancel-btn" type="button" class="btn btn-secondary">요청 취소</button>
+        </div>
+        <div class="result" id="purchase-result" role="status" aria-live="polite" hidden></div>
       </div>
-      <div class="result" id="purchase-result" hidden></div>
     </div>
   </section>
 
   <!-- ===== 매출 ===== -->
   <section class="panel" data-panel="sales" role="tabpanel" hidden>
-    <div class="card">
-      <div class="card-head"><div><h2>일일 매출</h2><p class="desc">내가 판매해서 승인된 거래 기준 (시작일·종료일 모두 포함)</p></div></div>
-      <div class="row">
-        <label class="field"><span>시작일</span><input id="sales-from" type="date"></label>
-        <label class="field"><span>종료일</span><input id="sales-to" type="date"></label>
-        <button id="sales-btn" type="button" class="btn btn-primary">조회</button>
+    <div class="page-head"><div><h1>매출</h1><p>승인된 판매만 집계합니다. 시작일과 종료일을 모두 포함합니다.</p></div></div>
+    <div class="sheet">
+      <div class="sheet-body">
+        <div class="row">
+          <label class="field"><span>시작일</span><input id="sales-from" type="date"></label>
+          <label class="field"><span>종료일</span><input id="sales-to" type="date"></label>
+          <button id="sales-btn" type="button" class="btn btn-primary">조회</button>
+        </div>
       </div>
-      <div class="stats" style="margin-top: 16px;">
-        <div class="stat"><div class="stat-label">판매 건수</div><div class="stat-value"><span id="sales-total-count">-</span><small>건</small></div></div>
-        <div class="stat"><div class="stat-label">매출 합계</div><div class="stat-value"><span id="sales-total-amount">-</span><small>원</small></div></div>
+      <div class="kpis">
+        <div class="kpi"><div class="kpi-label">판매 건수</div><div class="kpi-value num"><span id="sales-total-count">-</span><small>건</small></div></div>
+        <div class="kpi"><div class="kpi-label">매출</div><div class="kpi-value num"><span id="sales-total-amount">-</span><small>원</small></div></div>
       </div>
-      <div class="table-wrap" style="margin-top: 16px;">
+      <div class="table-wrap" style="border-top: 1px solid var(--line);">
         <table>
-          <thead><tr><th>날짜</th><th>건수</th><th>금액</th></tr></thead>
-          <tbody id="sales-body"><tr><td colspan="3" class="empty">기간을 고르고 조회해 주세요</td></tr></tbody>
+          <thead><tr><th>날짜</th><th class="r">건수</th><th class="r">금액</th></tr></thead>
+          <tbody id="sales-body"><tr><td colspan="3" class="empty">기간을 선택하고 조회하세요.</td></tr></tbody>
         </table>
       </div>
-      <div class="result" id="sales-result" hidden></div>
+      <div class="result" id="sales-result" role="status" aria-live="polite" hidden></div>
     </div>
   </section>
 </main>
@@ -296,25 +377,57 @@
   const IS_LOCAL = location.hostname === 'localhost';
   const API_BASE = IS_LOCAL ? 'http://localhost:8080' : 'https://todo.pita-pat.com';
   const PAGE_SIZE = 5;
+  const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   let currentPage = 0;
 
   const $ = (id) => document.getElementById(id);
-  const won = (n) => Number(n).toLocaleString('ko-KR');
+  const NUMBER = new Intl.NumberFormat('ko-KR');
+  const won = (n) => NUMBER.format(Number(n));
   // "12,000" 처럼 쉼표가 들어간 입력값을 숫자로 바꾼다
   const parseAmount = (s) => Number(String(s).replace(/[^0-9]/g, '') || 0);
-  $('api-base').textContent = API_BASE;
-  $('env-badge').textContent = IS_LOCAL ? 'LOCAL' : 'PROD';
+  const sleep = (ms) => new Promise((r) => setTimeout(r, REDUCED ? 0 : ms));
+  $('env-badge').textContent = IS_LOCAL ? '로컬' : '운영';
 
   // ---------- 탭 ----------
   const TABS = ['account', 'wallet', 'todos', 'purchase', 'sales'];
+  let currentTab = null;
+
+  function movePill(instant) {
+    const active = document.querySelector('.tab[aria-selected="true"]');
+    const pill = $('tab-pill');
+    if (!active) return;
+    pill.classList.toggle('instant', Boolean(instant));
+    pill.style.width = `${active.offsetWidth}px`;
+    pill.style.transform = `translateX(${active.offsetLeft}px)`;
+  }
+
   function selectTab(name) {
     if (!TABS.includes(name)) name = 'account';
+    const from = TABS.indexOf(currentTab);
+    const to = TABS.indexOf(name);
     document.querySelectorAll('.tab').forEach((t) => t.setAttribute('aria-selected', String(t.dataset.tab === name)));
-    document.querySelectorAll('.panel').forEach((p) => { p.hidden = p.dataset.panel !== name; });
+    document.querySelectorAll('.panel').forEach((p) => {
+      const show = p.dataset.panel === name;
+      p.hidden = !show;
+      // 처음 열 때는 움직이지 않고, 탭을 바꿀 때만 이동 방향(왼쪽/오른쪽)에서 들어온다
+      if (show && currentTab && currentTab !== name && !REDUCED) {
+        p.style.setProperty('--dx', `${to > from ? 16 : -16}px`);
+        p.classList.remove('entering');
+        void p.offsetWidth;
+        p.classList.add('entering');
+      }
+    });
+    movePill(currentTab === null);
+    currentTab = name;
     history.replaceState(null, '', `#${name}`);
     autoLoad(name);
   }
   document.querySelectorAll('.tab').forEach((t) => t.addEventListener('click', () => selectTab(t.dataset.tab)));
+  document.querySelectorAll('.panel').forEach((p) => p.addEventListener('animationend', (e) => {
+    if (e.target.parentElement === p && e.target === p.lastElementChild) p.classList.remove('entering');
+  }));
+  window.addEventListener('resize', () => movePill(true));
+  document.fonts?.ready.then(() => movePill(true));
 
   // 탭을 열면 로그인한 경우에만 바로 조회한다 (로그인 전에는 안내 박스를 띄우지 않음)
   function autoLoad(name) {
@@ -343,31 +456,62 @@
     return { status: res.status, data, headers: res.headers };
   }
 
+  // 요청 중에는 버튼에 "…"를 붙이고 잠근다
+  async function busy(btn, label, fn) {
+    if (!btn) return fn();
+    const original = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = `${label}…`;
+    try { return await fn(); } finally { btn.disabled = false; btn.textContent = original; }
+  }
+
   // 서버 응답은 항상 textContent 로만 화면에 넣는다 (innerHTML 금지 → XSS 방지)
-  function show(el, ok, content, label) {
-    const head = document.createElement('div');
-    head.className = 'result-head';
-    head.textContent = label ?? (ok ? '성공' : '실패');
-    const pre = document.createElement('pre');
-    pre.textContent = typeof content === 'string' ? content : JSON.stringify(content, null, 2);
+  function show(el, ok, content, message, code) {
+    const line = document.createElement('div');
+    line.className = 'result-line';
+    const msg = document.createElement('span');
+    msg.textContent = message ?? (ok ? '완료' : '실패');
+    line.append(msg);
+    if (code) {
+      const c = document.createElement('span');
+      c.className = 'code num';
+      c.textContent = code;
+      line.append(c);
+    }
+    const nodes = [line];
+    if (content !== undefined && content !== null && content !== '') {
+      const details = document.createElement('details');
+      const summary = document.createElement('summary');
+      summary.textContent = '응답 본문';
+      const pre = document.createElement('pre');
+      pre.textContent = typeof content === 'string' ? content : JSON.stringify(content, null, 2);
+      details.append(summary, pre);
+      nodes.push(details);
+    }
     el.className = `result ${ok ? 'ok' : 'err'}`;
-    el.replaceChildren(head, pre);
+    el.replaceChildren(...nodes);
     el.hidden = false;
   }
 
-  function showResponse(el, okStatus, { status, data }) {
+  function errorMessage(data) {
+    if (data && typeof data === 'object') return data.message || data.errorMessage || data.error;
+    return null;
+  }
+
+  function showResponse(el, okStatus, { status, data }, okMessage) {
     const body = typeof data === 'object' ? data : { body: data };
-    show(el, status === okStatus, body, `HTTP ${status}`);
+    const ok = status === okStatus;
+    show(el, ok, body, ok ? (okMessage ?? '완료') : (errorMessage(data) ?? '요청이 처리되지 않았습니다.'), `HTTP ${status}`);
   }
 
   function showFetchError(el, err) {
     // CORS 로 막히면 응답 내용 없이 여기로 온다
-    show(el, false, `${err.name}: ${err.message}\n→ 브라우저 Console 과 Network 탭을 확인하세요`, '요청 실패 (네트워크 또는 CORS)');
+    show(el, false, `${err.name}: ${err.message}\n브라우저 개발자 도구의 Console, Network 탭에서 원인을 확인하세요.`, '서버에 연결하지 못했습니다. 네트워크나 CORS 설정을 확인하세요.');
   }
 
   function requireLogin(el) {
     const userId = sessionStorage.getItem('userId');
-    if (!userId) show(el, false, '계정 탭에서 먼저 로그인하세요', '로그인 필요');
+    if (!userId) show(el, false, null, '로그인이 필요합니다. 계정 탭에서 로그인하세요.');
     return userId;
   }
 
@@ -377,12 +521,27 @@
     if (userId) {
       const strong = document.createElement('strong');
       strong.textContent = userId;
-      who.replaceChildren(strong, ' 로그인 중');
+      who.replaceChildren(strong);
     } else {
       who.textContent = '로그인 안 됨';
     }
-    $('user-dot').classList.toggle('on', Boolean(userId));
     $('logout-btn').hidden = !userId;
+  }
+
+  // 숫자가 바뀌면 이전 값에서 새 값으로 움직인다 (잔액, 매출 합계)
+  function setBalance(next) { animateNumber($('balance-value'), next); }
+  function animateNumber(el, next) {
+    const from = parseAmount(el.textContent);
+    if (REDUCED || el.textContent === '-' || from === next) { el.textContent = won(next); return; }
+    const start = performance.now();
+    const dur = 500;
+    const tick = (now) => {
+      const t = Math.min(1, (now - start) / dur);
+      const eased = 1 - Math.pow(1 - t, 3);
+      el.textContent = won(Math.round(from + (next - from) * eased));
+      if (t < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
   }
 
   function cell(text, className) {
@@ -398,6 +557,12 @@
     td.colSpan = colspan;
     tr.appendChild(td);
     tbody.replaceChildren(tr);
+  }
+
+  // 새로 들어온 행은 짧게 나타난다
+  function arrive(rows) {
+    rows.forEach((tr, i) => { tr.classList.add('arrive'); tr.style.animationDelay = `${i * 30}ms`; });
+    return rows;
   }
 
   function formatDate(d) {
@@ -422,34 +587,38 @@
     e.preventDefault();
     const out = $('signup-result');
     const form = new FormData(e.target);
-    try {
-      const res = await api('POST', '/api/v1/auth/signup', {
-        user_id: form.get('user_id'),
-        password: form.get('password'),
-        email: form.get('email'),
-      });
-      showResponse(out, 200, res);
-    } catch (err) { showFetchError(out, err); }
+    await busy(e.submitter, '가입 중', async () => {
+      try {
+        const res = await api('POST', '/api/v1/auth/signup', {
+          user_id: form.get('user_id'),
+          password: form.get('password'),
+          email: form.get('email'),
+        });
+        showResponse(out, 200, res, '가입이 완료됐습니다. 로그인하세요.');
+      } catch (err) { showFetchError(out, err); }
+    });
   });
 
   $('login-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const out = $('login-result');
     const form = new FormData(e.target);
-    try {
-      const { status, data } = await api('POST', '/api/v1/auth/login', {
-        user_id: form.get('user_id'),
-        password: form.get('password'),
-      });
-      if (status === 200) {
-        sessionStorage.setItem('accessToken', data.accessToken);
-        sessionStorage.setItem('userId', form.get('user_id'));
-        show(out, true, `${form.get('user_id')} 로 로그인했어요`, `HTTP ${status}`);
-        renderWhoami();
-      } else {
-        showResponse(out, 200, { status, data });
-      }
-    } catch (err) { showFetchError(out, err); }
+    await busy(e.submitter, '로그인 중', async () => {
+      try {
+        const { status, data } = await api('POST', '/api/v1/auth/login', {
+          user_id: form.get('user_id'),
+          password: form.get('password'),
+        });
+        if (status === 200) {
+          sessionStorage.setItem('accessToken', data.accessToken);
+          sessionStorage.setItem('userId', form.get('user_id'));
+          show(out, true, null, `${form.get('user_id')} 계정으로 로그인했습니다.`, `HTTP ${status}`);
+          renderWhoami();
+        } else {
+          showResponse(out, 200, { status, data });
+        }
+      } catch (err) { showFetchError(out, err); }
+    });
   });
 
   $('logout-btn').addEventListener('click', () => {
@@ -468,7 +637,7 @@
     try {
       const res = await api('GET', `/api/v1/current/${encodeURIComponent(userId)}`);
       if (res.status === 200) {
-        $('balance-value').textContent = won(res.data.balance);
+        setBalance(Number(res.data.balance));
         out.hidden = true;
       } else {
         showResponse(out, 200, res);
@@ -490,22 +659,25 @@
     e.target.value = n ? won(n) : '';
   });
 
-  $('charge-btn').addEventListener('click', async () => {
+  $('charge-btn').addEventListener('click', async (e) => {
     const out = $('balance-result');
     const userId = requireLogin(out);
     if (!userId) return;
     const amount = parseAmount($('charge-amount').value);
-    try {
-      const res = await api('POST', `/api/v1/charge/${encodeURIComponent(userId)}`, { amount });
-      showResponse(out, 200, res);
-      if (res.status === 200) {
-        $('balance-value').textContent = won(res.data.amount);
-        $('charge-amount').value = '';
-      }
-    } catch (err) { showFetchError(out, err); }
+    if (!amount) { show(out, false, null, '충전할 금액을 입력하세요.'); return; }
+    await busy(e.currentTarget, '충전 중', async () => {
+      try {
+        const res = await api('POST', `/api/v1/charge/${encodeURIComponent(userId)}`, { amount });
+        showResponse(out, 200, res, `${won(amount)}원을 충전했습니다.`);
+        if (res.status === 200) {
+          setBalance(Number(res.data.amount));
+          $('charge-amount').value = '';
+        }
+      } catch (err) { showFetchError(out, err); }
+    });
   });
 
-  // ---------- 투두 등록 ----------
+  // ---------- Todo 등록 ----------
   $('create-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const out = $('create-result');
@@ -513,21 +685,70 @@
     const form = new FormData(e.target);
     const categories = String(form.get('categories') || '')
       .split(',').map((s) => s.trim()).filter(Boolean);
-    try {
-      const res = await api('POST', '/api/v1/todos', {
-        todo: form.get('todo'),
-        price: Number(form.get('price') || 0),
-        categories,
-      });
-      // CORS: Location 은 Access-Control-Expose-Headers 로 노출해야 JS에서 읽힌다
-      const location = res.headers.get('Location');
-      const body = typeof res.data === 'object' ? res.data : { body: res.data };
-      show(out, res.status === 201, { locationHeader: location, ...body }, `HTTP ${res.status}`);
-      if (res.status === 201) e.target.reset();
-    } catch (err) { showFetchError(out, err); }
+    await busy(e.submitter, '등록 중', async () => {
+      try {
+        const res = await api('POST', '/api/v1/todos', {
+          todo: form.get('todo'),
+          price: Number(form.get('price') || 0),
+          categories,
+        });
+        // CORS: Location 은 Access-Control-Expose-Headers 로 노출해야 JS에서 읽힌다
+        const location = res.headers.get('Location');
+        const body = typeof res.data === 'object' ? res.data : { body: res.data };
+        const ok = res.status === 201;
+        show(out, ok, { locationHeader: location, ...body }, ok ? '등록했습니다.' : (errorMessage(res.data) ?? '등록하지 못했습니다.'), `HTTP ${res.status}`);
+        if (ok) {
+          e.target.reset();
+          loadTodos(0);
+        }
+      } catch (err) { showFetchError(out, err); }
+    });
   });
 
-  // ---------- 내 투두 (이전/다음 페이지) ----------
+  // ---------- 내 Todo (이전/다음 페이지) ----------
+  function todoRow(t) {
+    const pending = t.status === 'PENDING_APPROVAL';
+    const tr = document.createElement('tr');
+    const titleTd = cell(t.todo, 'title');
+    const meta = document.createElement('div');
+    meta.className = 'title-meta num';
+    meta.textContent = `${t.id}번`;
+    const metaPill = document.createElement('span');
+    metaPill.className = pending ? 'pill wait' : 'pill ok';
+    metaPill.textContent = pending ? '승인 대기' : '판매 중';
+    meta.append(metaPill);
+    titleTd.append(meta);
+    tr.append(cell(t.id, 'id num col-id'), titleTd, cell((t.categories || []).join(', ') || '-', 'cats col-cats'), cell(`${won(t.price)}원`, 'r num'));
+
+    const statusTd = document.createElement('td');
+    statusTd.className = 'col-status';
+    const pill = document.createElement('span');
+    pill.className = pending ? 'pill wait' : 'pill ok';
+    pill.textContent = pending ? '승인 대기' : '판매 중';
+    statusTd.appendChild(pill);
+    tr.appendChild(statusTd);
+
+    const actionTd = document.createElement('td');
+    if (pending) {
+      const wrap = document.createElement('div');
+      wrap.className = 'actions';
+      const approve = document.createElement('button');
+      approve.type = 'button';
+      approve.className = 'btn btn-secondary btn-sm';
+      approve.textContent = '승인';
+      approve.onclick = () => decide(t.id, 'approve', tr, approve);
+      const reject = document.createElement('button');
+      reject.type = 'button';
+      reject.className = 'btn btn-danger btn-sm';
+      reject.textContent = '거절';
+      reject.onclick = () => decide(t.id, 'reject', tr, reject);
+      wrap.append(approve, reject);
+      actionTd.appendChild(wrap);
+    }
+    tr.appendChild(actionTd);
+    return tr;
+  }
+
   async function loadTodos(page) {
     const out = $('todos-result');
     const tbody = $('todos-body');
@@ -540,47 +761,15 @@
       }
       currentPage = page;
       const { isLast, todoList } = res.data;
-      $('page-label').textContent = `${page + 1} 페이지`;
+      $('page-label').textContent = `${page + 1}페이지`;
       $('prev-btn').disabled = page === 0;
       $('next-btn').disabled = isLast;
 
       if (todoList.length === 0) {
-        emptyRow(tbody, 6, '투두가 없어요');
+        emptyRow(tbody, 6, page === 0 ? '등록한 Todo가 없습니다. 아래에서 첫 Todo를 등록하세요.' : '이 페이지에는 Todo가 없습니다.');
         return true;
       }
-      const rows = todoList.map((t) => {
-        const tr = document.createElement('tr');
-        tr.append(cell(t.id, 'num'), cell(t.todo), cell(won(t.price), 'num'));
-
-        const statusTd = document.createElement('td');
-        const badge = document.createElement('span');
-        const pending = t.status === 'PENDING_APPROVAL';
-        badge.className = pending ? 'badge pending' : 'badge';
-        badge.textContent = pending ? '승인 대기' : '판매 가능';
-        statusTd.appendChild(badge);
-        tr.appendChild(statusTd);
-
-        tr.appendChild(cell((t.categories || []).join(', ') || '-'));
-
-        const actionTd = document.createElement('td');
-        if (pending) {
-          const wrap = document.createElement('div');
-          wrap.className = 'actions';
-          const approve = document.createElement('button');
-          approve.className = 'btn btn-primary btn-sm';
-          approve.textContent = '승인';
-          approve.onclick = () => decide(t.id, 'approve');
-          const reject = document.createElement('button');
-          reject.className = 'btn btn-danger btn-sm';
-          reject.textContent = '거절';
-          reject.onclick = () => decide(t.id, 'reject');
-          wrap.append(approve, reject);
-          actionTd.appendChild(wrap);
-        }
-        tr.appendChild(actionTd);
-        return tr;
-      });
-      tbody.replaceChildren(...rows);
+      tbody.replaceChildren(...arrive(todoList.map(todoRow)));
       return true;
     } catch (err) {
       showFetchError(out, err);
@@ -588,13 +777,30 @@
     }
   }
 
-  async function decide(todoId, action) {
+  async function decide(todoId, action, tr, btn) {
     const out = $('todos-result');
+    // 거절은 구매자에게 환불되고 되돌릴 수 없으니 한 번 더 확인한다
+    if (action === 'reject' && !window.confirm(`${todoId}번 구매 요청을 거절할까요? 구매자에게 환불됩니다.`)) return;
+    tr.querySelectorAll('button').forEach((b) => { b.disabled = true; });
+    btn.textContent = action === 'approve' ? '승인 중…' : '거절 중…';
+    const restore = () => {
+      tr.querySelectorAll('button').forEach((b) => { b.disabled = false; });
+      btn.textContent = action === 'approve' ? '승인' : '거절';
+    };
     try {
       const res = await api('POST', `/api/v1/purchase/${todoId}/${action}`);
-      if (res.status === 200) await loadTodos(currentPage);
-      showResponse(out, 200, res);
-    } catch (err) { showFetchError(out, err); }
+      if (res.status === 200) {
+        tr.classList.add('leaving');
+        await sleep(300);
+        await loadTodos(currentPage);
+      } else {
+        restore();
+      }
+      showResponse(out, 200, res, action === 'approve' ? `${todoId}번 판매를 승인했습니다.` : `${todoId}번 구매 요청을 거절했습니다.`);
+    } catch (err) {
+      restore();
+      showFetchError(out, err);
+    }
   }
 
   $('todos-btn').addEventListener('click', async () => {
@@ -604,18 +810,22 @@
   $('next-btn').addEventListener('click', () => loadTodos(currentPage + 1));
 
   // ---------- 구매 ----------
-  async function purchase(suffix) {
+  async function purchase(suffix, btn) {
     const out = $('purchase-result');
     if (!requireLogin(out)) return;
     const todoId = $('purchase-id').value;
-    if (!todoId) { show(out, false, '투두 id를 입력하세요', '입력 필요'); return; }
-    try {
-      showResponse(out, 200, await api('POST', `/api/v1/purchase/${encodeURIComponent(todoId)}${suffix}`));
-    } catch (err) { showFetchError(out, err); }
+    if (!todoId) { show(out, false, null, 'Todo 번호를 입력하세요.'); return; }
+    if (suffix && !window.confirm(`${todoId}번 구매 요청을 취소할까요?`)) return;
+    await busy(btn, suffix ? '취소 중' : '요청 중', async () => {
+      try {
+        const res = await api('POST', `/api/v1/purchase/${encodeURIComponent(todoId)}${suffix}`);
+        showResponse(out, 200, res, suffix ? `${todoId}번 구매 요청을 취소했습니다.` : `${todoId}번 구매를 요청했습니다. 판매자가 승인하면 완료됩니다.`);
+      } catch (err) { showFetchError(out, err); }
+    });
   }
 
-  $('purchase-btn').addEventListener('click', () => purchase(''));
-  $('cancel-btn').addEventListener('click', () => purchase('/cancel'));
+  $('purchase-btn').addEventListener('click', (e) => purchase('', e.currentTarget));
+  $('cancel-btn').addEventListener('click', (e) => purchase('/cancel', e.currentTarget));
 
   // ---------- 매출 ----------
   $('sales-from').value = localDate(-7);
@@ -627,8 +837,8 @@
     if (!requireLogin(out)) return;
     const from = $('sales-from').value;
     const toInclusive = $('sales-to').value;
-    if (!from || !toInclusive) { show(out, false, '시작일과 종료일을 모두 선택하세요', '입력 필요'); return; }
-    if (from > toInclusive) { show(out, false, '시작일이 종료일보다 늦어요', '입력 오류'); return; }
+    if (!from || !toInclusive) { show(out, false, null, '시작일과 종료일을 모두 선택하세요.'); return; }
+    if (from > toInclusive) { show(out, false, null, '시작일이 종료일보다 늦습니다. 날짜를 다시 선택하세요.'); return; }
     // 서버는 [from, to) 구간(to 미포함)으로 조회한다 → 화면에서 고른 마지막 날을 포함하려고 하루 더해서 보낸다
     const to = nextDay(toInclusive);
     try {
@@ -640,17 +850,17 @@
       out.hidden = true;
       const totalCount = res.data.reduce((sum, d) => sum + Number(d.count), 0);
       const totalAmount = res.data.reduce((sum, d) => sum + Number(d.amount), 0);
-      $('sales-total-count').textContent = won(totalCount);
-      $('sales-total-amount').textContent = won(totalAmount);
+      animateNumber($('sales-total-count'), totalCount);
+      animateNumber($('sales-total-amount'), totalAmount);
       if (res.data.length === 0) {
-        emptyRow(tbody, 3, '이 기간에는 매출이 없어요');
+        emptyRow(tbody, 3, '이 기간에는 매출이 없습니다.');
         return;
       }
-      tbody.replaceChildren(...res.data.map((d) => {
+      tbody.replaceChildren(...arrive(res.data.map((d) => {
         const tr = document.createElement('tr');
-        tr.append(cell(d.date), cell(won(d.count), 'num'), cell(won(d.amount), 'num'));
+        tr.append(cell(d.date, 'num'), cell(`${won(d.count)}건`, 'r num'), cell(`${won(d.amount)}원`, 'r num'));
         return tr;
-      }));
+      })));
     } catch (err) { showFetchError(out, err); }
   }
   $('sales-btn').addEventListener('click', loadSales);
