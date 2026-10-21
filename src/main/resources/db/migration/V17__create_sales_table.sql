@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS daily_sales_stats(
     sales_date              DATE         NOT NULL COMMENT '판매 날짜 (승인 시각 기준, KST)',
     created_at              DATETIME(6)  NOT NULL,
     updated_at              DATETIME(6)  NOT NULL,
-    PRIMARY KEY (sales_date, seller_id)
+    PRIMARY KEY (seller_id, sales_date)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     COMMENT='TODO 판매 통계';
 
