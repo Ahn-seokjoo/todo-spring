@@ -8,6 +8,7 @@ import com.seokjoo.todo.presentation.configuration.KafkaTopics
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.stereotype.Component
+import java.time.ZoneId
 import java.util.concurrent.TimeUnit
 
 @Component
@@ -30,6 +31,7 @@ class KafkaPublishDelivery(
             eventId = outboxEvent.id,
             eventType = outboxEvent.eventType,
             payload = outboxEvent.serializedEvent,
+            occurredAt = outboxEvent.publicationDate.atZone(ZoneId.of("Asia/Seoul")).toInstant(),
         )
 
         kafkaTemplate.send(KafkaTopics.PURCHASE_EVENT, key, objectMapper.writeValueAsString(message))

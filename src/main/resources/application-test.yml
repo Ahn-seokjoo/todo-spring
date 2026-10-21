@@ -5,7 +5,7 @@ spring:
     name: todo
   datasource:
     driver-class-name: org.h2.Driver
-    url: jdbc:h2:mem:test?serverTimezone=Asia/Seoul # 인메모리 모드를 통해 빠르게 데이터 로드 가능
+    url: jdbc:h2:mem:test;MODE=MySQL # 인메모리 + MySQL 호환 모드 (INSERT IGNORE, ON DUPLICATE KEY UPDATE 등 네이티브 쿼리용)
     username: sa
     password:
   jpa:

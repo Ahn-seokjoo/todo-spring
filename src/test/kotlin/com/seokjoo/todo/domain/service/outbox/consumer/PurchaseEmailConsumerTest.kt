@@ -22,6 +22,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Import
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory
 import org.springframework.kafka.core.KafkaTemplate
+import org.springframework.kafka.support.KafkaHeaders
 import org.springframework.kafka.test.EmbeddedKafkaBroker
 import org.springframework.kafka.test.context.EmbeddedKafka
 import org.springframework.kafka.test.utils.KafkaTestUtils
@@ -76,9 +77,15 @@ class PurchaseEmailConsumerTest @Autowired constructor(
         DefaultKafkaConsumerFactory(props, StringDeserializer(), StringDeserializer())
             .createConsumer().use { consumer ->
                 embeddedKafka.consumeFromAnEmbeddedTopic(consumer, KafkaTopics.PURCHASE_EVENTS_DLT)
-                val record =
-                    KafkaTestUtils.getSingleRecord(consumer, KafkaTopics.PURCHASE_EVENTS_DLT, Duration.ofSeconds(10))
-                assertThat(record.value()).isEqualTo("not-a-json")
+
+                val records = KafkaTestUtils.getRecords(consumer, Duration.ofSeconds(10), 2)   // 최소 2건 기다림
+                    .records(KafkaTopics.PURCHASE_EVENTS_DLT)
+                    .toList()
+
+                assertThat(records).hasSize(2)
+                assertThat(records.map { it.value() }).containsOnly("not-a-json")
+                assertThat(records.map { String(it.headers().lastHeader(KafkaHeaders.DLT_ORIGINAL_CONSUMER_GROUP).value()) })
+                    .containsExactlyInAnyOrder("email-notifier", "sales-stats")
             }
         verify(mailSender, never()).send(any<SimpleMailMessage>())
     }
