@@ -68,6 +68,8 @@
       position: relative; z-index: 1; color: var(--text-2); font-weight: 500; white-space: nowrap; transition: color .2s;
     }
     .tab:hover { color: var(--ink); }
+    /* 탭 영역이 가로 스크롤이라 바깥 테두리가 잘린다 → 포커스 테두리를 안쪽에 그린다 */
+    .tab:focus-visible { outline-offset: -2px; }
     .tab[aria-selected="true"] { color: var(--ink); }
     /* 선택된 탭 뒤의 알약이 다음 탭으로 미끄러져 간다 */
     .tab-pill {
@@ -204,7 +206,7 @@
     }
 
     @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; }
+      *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
     }
   </style>
 </head>
@@ -218,11 +220,11 @@
     </div>
     <nav class="tabs" role="tablist" aria-label="메뉴">
       <span class="tab-pill instant" id="tab-pill" aria-hidden="true"></span>
-      <button class="tab" role="tab" type="button" data-tab="account" aria-selected="true">계정</button>
-      <button class="tab" role="tab" type="button" data-tab="wallet" aria-selected="false">잔액</button>
-      <button class="tab" role="tab" type="button" data-tab="todos" aria-selected="false">내 Todo</button>
-      <button class="tab" role="tab" type="button" data-tab="purchase" aria-selected="false">구매</button>
-      <button class="tab" role="tab" type="button" data-tab="sales" aria-selected="false">매출</button>
+      <button class="tab" id="tab-account" role="tab" type="button" data-tab="account" aria-controls="panel-account" aria-selected="true" tabindex="0">계정</button>
+      <button class="tab" id="tab-wallet" role="tab" type="button" data-tab="wallet" aria-controls="panel-wallet" aria-selected="false" tabindex="-1">잔액</button>
+      <button class="tab" id="tab-todos" role="tab" type="button" data-tab="todos" aria-controls="panel-todos" aria-selected="false" tabindex="-1">내 Todo</button>
+      <button class="tab" id="tab-purchase" role="tab" type="button" data-tab="purchase" aria-controls="panel-purchase" aria-selected="false" tabindex="-1">구매</button>
+      <button class="tab" id="tab-sales" role="tab" type="button" data-tab="sales" aria-controls="panel-sales" aria-selected="false" tabindex="-1">매출</button>
     </nav>
     <div class="who">
       <span id="whoami">로그인 안 됨</span>
@@ -233,7 +235,7 @@
 
 <main id="main">
   <!-- ===== 계정 ===== -->
-  <section class="panel" data-panel="account" role="tabpanel">
+  <section class="panel" id="panel-account" data-panel="account" role="tabpanel" aria-labelledby="tab-account">
     <div class="page-head"><div><h1>계정</h1></div></div>
     <div class="grid-2">
       <div class="sheet">
@@ -263,7 +265,7 @@
   </section>
 
   <!-- ===== 잔액 ===== -->
-  <section class="panel" data-panel="wallet" role="tabpanel" hidden>
+  <section class="panel" id="panel-wallet" data-panel="wallet" role="tabpanel" aria-labelledby="tab-wallet" hidden>
     <div class="page-head">
       <div><h1>잔액</h1></div>
       <button class="btn btn-secondary btn-sm" id="balance-btn" type="button">새로고침</button>
@@ -292,7 +294,7 @@
   </section>
 
   <!-- ===== 내 Todo ===== -->
-  <section class="panel" data-panel="todos" role="tabpanel" hidden>
+  <section class="panel" id="panel-todos" data-panel="todos" role="tabpanel" aria-labelledby="tab-todos" hidden>
     <div class="page-head">
       <div><h1>내 Todo</h1><p>구매 요청이 들어온 Todo는 승인하거나 거절할 수 있습니다.</p></div>
       <button class="btn btn-secondary btn-sm" id="todos-btn" type="button">새로고침</button>
@@ -332,7 +334,7 @@
   </section>
 
   <!-- ===== 구매 ===== -->
-  <section class="panel" data-panel="purchase" role="tabpanel" hidden>
+  <section class="panel" id="panel-purchase" data-panel="purchase" role="tabpanel" aria-labelledby="tab-purchase" hidden>
     <div class="page-head"><div><h1>구매</h1><p>구매를 요청하면 금액이 먼저 차감되고, 판매자가 거절하면 환불됩니다.</p></div></div>
     <div class="sheet">
       <div class="sheet-body">
@@ -347,7 +349,7 @@
   </section>
 
   <!-- ===== 매출 ===== -->
-  <section class="panel" data-panel="sales" role="tabpanel" hidden>
+  <section class="panel" id="panel-sales" data-panel="sales" role="tabpanel" aria-labelledby="tab-sales" hidden>
     <div class="page-head"><div><h1>매출</h1><p>승인된 판매만 집계합니다. 시작일과 종료일을 모두 포함합니다.</p></div></div>
     <div class="sheet">
       <div class="sheet-body">
@@ -405,7 +407,12 @@
     if (!TABS.includes(name)) name = 'account';
     const from = TABS.indexOf(currentTab);
     const to = TABS.indexOf(name);
-    document.querySelectorAll('.tab').forEach((t) => t.setAttribute('aria-selected', String(t.dataset.tab === name)));
+    // 선택된 탭만 Tab 키 순서에 넣고(roving tabindex), 나머지는 화살표 키로 이동한다
+    document.querySelectorAll('.tab').forEach((t) => {
+      const selected = t.dataset.tab === name;
+      t.setAttribute('aria-selected', String(selected));
+      t.tabIndex = selected ? 0 : -1;
+    });
     document.querySelectorAll('.panel').forEach((p) => {
       const show = p.dataset.panel === name;
       p.hidden = !show;
@@ -423,6 +430,15 @@
     autoLoad(name);
   }
   document.querySelectorAll('.tab').forEach((t) => t.addEventListener('click', () => selectTab(t.dataset.tab)));
+  // 화살표 ←/→ 로 이전·다음 탭, Home/End 로 처음·마지막 탭
+  document.querySelector('.tabs').addEventListener('keydown', (e) => {
+    const i = TABS.indexOf(currentTab);
+    const next = { ArrowRight: (i + 1) % TABS.length, ArrowLeft: (i - 1 + TABS.length) % TABS.length, Home: 0, End: TABS.length - 1 }[e.key];
+    if (next === undefined) return;
+    e.preventDefault();
+    selectTab(TABS[next]);
+    $(`tab-${TABS[next]}`).focus();
+  });
   document.querySelectorAll('.panel').forEach((p) => p.addEventListener('animationend', (e) => {
     if (e.target.parentElement === p && e.target === p.lastElementChild) p.classList.remove('entering');
   }));
@@ -654,9 +670,23 @@
   });
 
   // 금액 입력칸: 숫자만 받고, 앞자리 0을 없애고, 입력하는 동안 천 단위 쉼표를 붙인다
+  // 쉼표를 다시 붙여도 커서가 끝으로 튀지 않게, 커서 앞에 있던 숫자 개수만큼 뒤에 커서를 다시 둔다
   ['charge-amount', 'create-price'].forEach((id) => $(id).addEventListener('input', (e) => {
-    const n = parseAmount(e.target.value);
-    e.target.value = n ? won(n) : '';
+    const el = e.target;
+    const digitsBeforeCaret = el.value.slice(0, el.selectionStart ?? el.value.length).replace(/[^0-9]/g, '').length;
+    const raw = el.value.replace(/[^0-9]/g, '');
+    const n = parseAmount(el.value);
+    el.value = n ? won(n) : '';
+    // 앞자리 0이 지워진 만큼 커서 위치도 당긴다
+    const removedZeros = raw.length - String(n || '').length;
+    const target = Math.max(0, digitsBeforeCaret - removedZeros);
+    let pos = 0;
+    let seen = 0;
+    while (pos < el.value.length && seen < target) {
+      if (/[0-9]/.test(el.value[pos])) seen++;
+      pos++;
+    }
+    el.setSelectionRange(pos, pos);
   }));
 
   $('charge-btn').addEventListener('click', async (e) => {
