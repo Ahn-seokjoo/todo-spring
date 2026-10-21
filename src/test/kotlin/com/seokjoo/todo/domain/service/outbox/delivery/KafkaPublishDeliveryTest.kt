@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.kafka.support.SendResult
+import java.time.Instant
 import java.time.LocalDateTime
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutionException
@@ -33,11 +34,11 @@ class KafkaPublishDeliveryTest {
                 sellerId = "s", buyerId = "b", todoId = 1L, price = 100L, purchaseId = 42L,
             )
         ),
-        publicationDate = LocalDateTime.now(),
+        publicationDate = LocalDateTime.of(2026, 10, 19, 0, 0), // KST 기준 승인 시각 (고정값)
     ).apply { id = "outbox-1" }
 
     @Test
-    fun `purchaseId를 key로, outbox id를 eventId로 담아 발행한다`() {
+    fun `purchaseId를 key로, outbox id를 eventId로, 아웃박스 생성 시각을 occurredAt으로 담아 발행한다`() {
         val value = slot<String>()
         every { kafkaTemplate.send(KafkaTopics.PURCHASE_EVENT, "42", capture(value)) } returns
             CompletableFuture.completedFuture(mockk<SendResult<String, String>>())
@@ -48,6 +49,8 @@ class KafkaPublishDeliveryTest {
         assertThat(message.eventId).isEqualTo("outbox-1")
         assertThat(message.eventType).isEqualTo(OutboxEventType.PURCHASE_APPROVED)
         assertThat(message.payload).isEqualTo(outboxEvent.serializedEvent)
+        // KST 2026-10-19 00:00 = UTC 2026-10-18 15:00
+        assertThat(message.occurredAt).isEqualTo(Instant.parse("2026-10-18T15:00:00Z"))
     }
 
     @Test
