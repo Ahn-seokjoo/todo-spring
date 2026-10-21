@@ -319,7 +319,7 @@
         <form id="create-form">
           <div class="row">
             <label class="field grow"><span>내용</span><input id="create-todo" name="todo" autocomplete="off" placeholder="알고리즘 3문제 풀기" required></label>
-            <label class="field"><span>가격</span><input id="create-price" class="num" name="price" type="number" min="0" inputmode="numeric" autocomplete="off" value="0"></label>
+            <label class="field"><span>가격</span><input id="create-price" class="num" name="price" type="text" inputmode="numeric" autocomplete="off" placeholder="0"></label>
           </div>
           <div class="row">
             <label class="field grow"><span>카테고리</span><input id="create-categories" name="categories" autocomplete="off" placeholder="공부, 운동"><small>쉼표로 구분합니다. 비워 둬도 됩니다.</small></label>
@@ -653,11 +653,11 @@
     input.value = won(parseAmount(input.value) + Number(amount));
   });
 
-  // 입력하는 동안 천 단위 쉼표를 붙인다
-  $('charge-amount').addEventListener('input', (e) => {
+  // 금액 입력칸: 숫자만 받고, 앞자리 0을 없애고, 입력하는 동안 천 단위 쉼표를 붙인다
+  ['charge-amount', 'create-price'].forEach((id) => $(id).addEventListener('input', (e) => {
     const n = parseAmount(e.target.value);
     e.target.value = n ? won(n) : '';
-  });
+  }));
 
   $('charge-btn').addEventListener('click', async (e) => {
     const out = $('balance-result');
@@ -689,7 +689,7 @@
       try {
         const res = await api('POST', '/api/v1/todos', {
           todo: form.get('todo'),
-          price: Number(form.get('price') || 0),
+          price: parseAmount(form.get('price')),
           categories,
         });
         // CORS: Location 은 Access-Control-Expose-Headers 로 노출해야 JS에서 읽힌다
