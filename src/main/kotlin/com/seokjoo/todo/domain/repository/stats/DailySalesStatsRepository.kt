@@ -1,5 +1,6 @@
 package com.seokjoo.todo.domain.repository.stats
 
+import com.seokjoo.todo.domain.entity.purchase.DailySalesRow
 import com.seokjoo.todo.domain.entity.stats.DailySalesStats
 import com.seokjoo.todo.domain.entity.stats.DailySalesStatsId
 import org.springframework.data.jpa.repository.JpaRepository
@@ -21,4 +22,21 @@ interface DailySalesStatsRepository : JpaRepository<DailySalesStats, DailySalesS
         """
     )
     fun upsertDailySalesStats(amount: Long, sellerId: String, salesDate: LocalDate): Int
+
+    @Query(
+        nativeQuery = true,
+        value = """
+            SELECT sales_date AS salesDate, sales_count as salesCount, sales_amount AS salesAmount
+            FROM daily_sales_stats
+            WHERE seller_id = :sellerId
+            AND sales_date >= :from
+            AND sales_date < :to
+            ORDER BY sales_date
+        """
+    )
+    fun findDailySalesStats(
+        sellerId: String,
+        from: LocalDate,
+        to: LocalDate,
+    ): List<DailySalesRow>
 }
