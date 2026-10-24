@@ -147,6 +147,23 @@
     .preset:hover { border-color: var(--line-strong); }
     .preset:active { transform: scale(.97); }
 
+    /* ---------- 집계 방식 전환 (매출) ---------- */
+    .segmented { position: relative; display: inline-flex; padding: 3px; margin-bottom: 8px; border-radius: var(--radius-md); background: var(--surface-2); }
+    .segmented[hidden] { display: none; }
+    .segmented button {
+      position: relative; z-index: 1; height: 30px; padding: 0 14px; border: 0; border-radius: var(--radius-sm);
+      background: none; cursor: pointer; font-weight: 500; color: var(--text-2); white-space: nowrap; transition: color .2s;
+    }
+    .segmented button:hover, .segmented button[aria-pressed="true"] { color: var(--ink); }
+    .segmented button:focus-visible { outline-offset: -2px; }
+    .seg-thumb {
+      position: absolute; top: 3px; left: 0; height: 30px; width: 0; border-radius: var(--radius-sm);
+      background: var(--surface); box-shadow: 0 0 0 1px var(--line), 0 1px 2px rgba(0, 0, 0, .06);
+      transition: transform .32s cubic-bezier(.32, .72, 0, 1), width .32s cubic-bezier(.32, .72, 0, 1);
+    }
+    .seg-thumb.instant { transition: none; }
+    .source-note { margin: 0 0 16px; color: var(--text-2); }
+
     /* ---------- 수치 ---------- */
     .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); border-top: 1px solid var(--line); }
     .kpi { padding: 20px; }
@@ -353,6 +370,12 @@
     <div class="page-head"><div><h1>매출</h1><p>승인된 판매만 집계합니다. 시작일과 종료일을 모두 포함합니다.</p></div></div>
     <div class="sheet">
       <div class="sheet-body">
+        <div class="segmented" id="sales-source" role="group" aria-label="집계 방식">
+          <span class="seg-thumb instant" id="sales-source-thumb" aria-hidden="true"></span>
+          <button type="button" data-source="daily" aria-pressed="true">원본 집계</button>
+          <button type="button" data-source="daily-stats" aria-pressed="false">통계 테이블</button>
+        </div>
+        <p class="source-note" id="sales-source-note"></p>
         <div class="row">
           <label class="field"><span>시작일</span><input id="sales-from" type="date"></label>
           <label class="field"><span>종료일</span><input id="sales-to" type="date"></label>
@@ -362,6 +385,7 @@
       <div class="kpis">
         <div class="kpi"><div class="kpi-label">판매 건수</div><div class="kpi-value num"><span id="sales-total-count">-</span><small>건</small></div></div>
         <div class="kpi"><div class="kpi-label">매출</div><div class="kpi-value num"><span id="sales-total-amount">-</span><small>원</small></div></div>
+        <div class="kpi"><div class="kpi-label">응답 시간 (브라우저 기준)</div><div class="kpi-value num"><span id="sales-elapsed">-</span><small>ms</small></div></div>
       </div>
       <div class="table-wrap" style="border-top: 1px solid var(--line);">
         <table>
@@ -379,6 +403,13 @@
   const IS_LOCAL = location.hostname === 'localhost';
   const API_BASE = IS_LOCAL ? 'http://localhost:8080' : 'https://todo.pita-pat.com';
   const PAGE_SIZE = 5;
+  // 매출 API 비교용. 배포할 때 하나만 남기면 전환 버튼이 사라진다 (예: ['daily-stats'])
+  const SALES_SOURCES = ['daily', 'daily-stats'];
+  const SALES_NOTES = {
+    daily: '구매 기록을 조회할 때마다 날짜별로 집계합니다. 날짜는 구매 요청일 기준입니다. (GET /api/v1/sales/daily)',
+    'daily-stats': '승인 이벤트로 미리 집계해 둔 통계를 읽습니다. 날짜는 승인일 기준입니다. (GET /api/v1/sales/daily-stats)',
+  };
+  let salesSource = SALES_SOURCES[0];
   const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   let currentPage = 0;
 
@@ -425,6 +456,7 @@
       }
     });
     movePill(currentTab === null);
+    if (name === 'sales') moveSourceThumb(true);
     currentTab = name;
     history.replaceState(null, '', `#${name}`);
     autoLoad(name);
@@ -858,6 +890,33 @@
   $('cancel-btn').addEventListener('click', (e) => purchase('/cancel', e.currentTarget));
 
   // ---------- 매출 ----------
+  // ---------- 매출: 집계 방식 전환 ----------
+  function moveSourceThumb(instant) {
+    const active = document.querySelector('#sales-source button[aria-pressed="true"]');
+    const thumb = $('sales-source-thumb');
+    if (!active || !active.offsetWidth) return;
+    thumb.classList.toggle('instant', Boolean(instant));
+    thumb.style.width = `${active.offsetWidth}px`;
+    thumb.style.transform = `translateX(${active.offsetLeft}px)`;
+  }
+  function selectSource(source) {
+    salesSource = source;
+    document.querySelectorAll('#sales-source button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.source === source)));
+    $('sales-source-note').textContent = SALES_NOTES[source];
+    moveSourceThumb(false);
+  }
+  document.querySelectorAll('#sales-source button').forEach((b) => {
+    if (!SALES_SOURCES.includes(b.dataset.source)) b.remove();
+    b.addEventListener('click', () => {
+      if (b.dataset.source === salesSource) return;
+      selectSource(b.dataset.source);
+      if (sessionStorage.getItem('userId')) loadSales();
+    });
+  });
+  $('sales-source').hidden = SALES_SOURCES.length < 2;
+  selectSource(salesSource);
+  window.addEventListener('resize', () => moveSourceThumb(true));
+
   $('sales-from').value = localDate(-7);
   $('sales-to').value = localDate(0);
 
@@ -872,7 +931,9 @@
     // 서버는 [from, to) 구간(to 미포함)으로 조회한다 → 화면에서 고른 마지막 날을 포함하려고 하루 더해서 보낸다
     const to = nextDay(toInclusive);
     try {
-      const res = await api('GET', `/api/v1/sales/daily?from=${from}&to=${to}`);
+      const started = performance.now();
+      const res = await api('GET', `/api/v1/sales/${salesSource}?from=${from}&to=${to}`);
+      $('sales-elapsed').textContent = won(Math.round(performance.now() - started));
       if (res.status !== 200) {
         showResponse(out, 200, res);
         return;
