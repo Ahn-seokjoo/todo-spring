@@ -9,6 +9,8 @@ const VUS = Number(__ENV.VUS || 10);
 const DURATION = __ENV.DURATION || '30s';
 const FROM = __ENV.FROM || '2026-09-14';
 const TO = __ENV.TO || '2026-10-14';
+// 비교할 API: daily(원본 todo_purchase 집계) 또는 daily-stats(선계산 통계 테이블)
+const ENDPOINT = __ENV.ENDPOINT || 'daily';
 
 export const options = {
     setupTimeout: '180s',
@@ -19,7 +21,7 @@ export const options = {
     thresholds: {
         checks: ['rate>0.99'],
         // setup(가입/로그인) 요청을 빼고 조회 요청만의 응답시간을 요약에 따로 찍기 위한 항목
-        'http_req_duration{name:sales_daily}': ['p(99)<60000'],
+        [`http_req_duration{name:${ENDPOINT}}`]: ['p(99)<60000'],
     },
 };
 
@@ -49,9 +51,9 @@ export function setup() {
 // 무작위 판매자로 30일 통계 조회 (sleep 없음: 이 VU 수로 낼 수 있는 최대 처리량 측정)
 export default function (data) {
     const token = data.tokens[Math.floor(Math.random() * data.tokens.length)];
-    const res = http.get(`${BASE_URL}/api/v1/sales/daily?from=${FROM}&to=${TO}`, {
+    const res = http.get(`${BASE_URL}/api/v1/sales/${ENDPOINT}?from=${FROM}&to=${TO}`, {
         headers: { Authorization: `Bearer ${token}` },
-        tags: { name: 'sales_daily' },
+        tags: { name: ENDPOINT },
     });
     check(res, {
         'status 200': (r) => r.status === 200,
