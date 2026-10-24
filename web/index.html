@@ -404,7 +404,7 @@
   const API_BASE = IS_LOCAL ? 'http://localhost:8080' : 'https://todo.pita-pat.com';
   const PAGE_SIZE = 5;
   // 매출 API 비교용. 배포할 때 하나만 남기면 전환 버튼이 사라진다 (예: ['daily-stats'])
-  const SALES_SOURCES = ['daily', 'daily-stats'];
+  const SALES_SOURCES = ['daily-stats'];
   const SALES_NOTES = {
     daily: '구매 기록을 조회할 때마다 날짜별로 집계합니다. 날짜는 구매 요청일 기준입니다. (GET /api/v1/sales/daily)',
     'daily-stats': '승인 이벤트로 미리 집계해 둔 통계를 읽습니다. 날짜는 승인일 기준입니다. (GET /api/v1/sales/daily-stats)',
