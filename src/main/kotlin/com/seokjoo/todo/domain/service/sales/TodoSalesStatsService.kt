@@ -3,6 +3,7 @@ package com.seokjoo.todo.domain.service.sales
 import com.seokjoo.todo.common.exception.TodoException
 import com.seokjoo.todo.common.exception.TodoExceptionType
 import com.seokjoo.todo.domain.repository.purchase.TodoPurchaseRepository
+import com.seokjoo.todo.domain.repository.stats.DailySalesStatsRepository
 import com.seokjoo.todo.presentation.sales.dto.DailySalesResponse
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -11,6 +12,7 @@ import java.time.LocalDate
 @Service
 class TodoSalesStatsService(
     private val todoPurchaseRepository: TodoPurchaseRepository,
+    private val dailySalesStatsRepository: DailySalesStatsRepository,
 ) {
 
     @Transactional(readOnly = true)
@@ -21,6 +23,22 @@ class TodoSalesStatsService(
         }
         return todoPurchaseRepository
             .findDailySales(sellerId, from.atStartOfDay(), to.atStartOfDay())
+            .map {
+                DailySalesResponse(
+                    date = it.salesDate,
+                    count = it.salesCount,
+                    amount = it.salesAmount,
+                )
+            }
+    }
+
+    @Transactional(readOnly = true)
+    fun getDailySalesStats(sellerId: String, from: LocalDate, to: LocalDate): List<DailySalesResponse> {
+        if (!from.isBefore(to)) {
+            throw TodoException.of(TodoExceptionType.SALES_INVALID_DATE_RANGE)
+        }
+        return dailySalesStatsRepository
+            .findDailySalesStats(sellerId, from, to)
             .map {
                 DailySalesResponse(
                     date = it.salesDate,

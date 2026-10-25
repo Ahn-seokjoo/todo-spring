@@ -30,4 +30,15 @@ class TodoSalesStatsController(
         val dailySales = salesStatsService.getDailySales(sellerId, from, to)
         return ResponseEntity.ok(dailySales)
     }
+
+    @GetMapping("/daily-stats")
+    fun getDailySalesStats(
+        servletRequest: HttpServletRequest,
+        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) from: LocalDate,
+        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) to: LocalDate,
+    ): ResponseEntity<List<DailySalesResponse>> {
+        val sellerId = authService.getSubject(servletRequest.getBearerToken())
+        val dailyStats = salesStatsService.getDailySalesStats(sellerId, from, to)
+        return ResponseEntity.ok(dailyStats)
+    }
 }
