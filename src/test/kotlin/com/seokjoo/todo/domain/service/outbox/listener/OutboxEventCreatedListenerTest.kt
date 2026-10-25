@@ -88,7 +88,7 @@ class OutboxEventCreatedListenerTest : BehaviorSpec({
         Given(case.description) {
             val outboxEvent = outboxEventOf(case.eventType, case.event)
 
-            every { outboxService.claimOutbox(any()) } returns ClaimSuccess(outboxEvent)
+            every { outboxService.claimOutbox(outboxEvent.id) } returns ClaimSuccess(outboxEvent)
             every { authService.findUserByUserId(seller.userId) } returns seller
             every { authService.findUserByUserId(buyer.userId) } returns buyer
             every { outboxService.updateOutboxSuccess(any()) } just Runs
@@ -100,9 +100,10 @@ class OutboxEventCreatedListenerTest : BehaviorSpec({
             every { mailService.sendEmail(to = capture(toSlot), subject = any(), content = any()) } just Runs
 
             When("리스너가 이벤트를 처리하면") {
-                listener.eventListener(OutboxEventCreatedEvent(outboxEventId = "dummy-outbox-id"))
+                listener.eventListener(OutboxEventCreatedEvent(outboxEventId = outboxEvent.id))
 
                 Then("올바른 수신자에게 메일이 발송되고 outbox가 성공 처리된다") {
+                    verify(exactly = 1) { outboxService.claimOutbox(outboxEvent.id) }
                     toSlot.captured shouldBe case.expectedRecipient.email
                     verify(exactly = 1) { outboxService.updateOutboxSuccess(outboxEvent) }
                     verify(exactly = 0) { outboxService.updateOutboxFail(any(), any(), any()) }
@@ -118,16 +119,17 @@ class OutboxEventCreatedListenerTest : BehaviorSpec({
         )
         val outboxEvent = outboxEventOf(OutboxEventType.PURCHASE_REQUEST, purchaseRequestEvent)
 
-        every { outboxService.claimOutbox(any()) } returns ClaimSuccess(outboxEvent)
+        every { outboxService.claimOutbox(outboxEvent.id) } returns ClaimSuccess(outboxEvent)
         every { authService.findUserByUserId(sellerWithoutEmail.userId) } returns sellerWithoutEmail
         every { outboxService.updateOutboxSuccess(any()) } just Runs
         every { outboxService.updateOutboxFail(any(), any(), any()) } just Runs
         every { mailService.deleteSentRecord(any()) } just Runs
 
         When("리스너가 이벤트를 처리하면") {
-            listener.eventListener(OutboxEventCreatedEvent(outboxEventId = "dummy-outbox-id"))
+            listener.eventListener(OutboxEventCreatedEvent(outboxEventId = outboxEvent.id))
 
             Then("메일 발송을 시도하지 않고 outbox가 실패 처리된다") {
+                verify(exactly = 1) { outboxService.claimOutbox(outboxEvent.id) }
                 verify(exactly = 0) { mailService.sendEmail(any(), any(), any()) }
                 verify(exactly = 1) {
                     outboxService.updateOutboxFail(
