@@ -8,7 +8,6 @@ import com.seokjoo.todo.domain.service.auth.TodoAuthService
 import com.seokjoo.todo.domain.service.email.EmailService
 import com.seokjoo.todo.domain.service.outbox.ClaimSuccess
 import com.seokjoo.todo.domain.service.outbox.OutboxEventType
-import com.seokjoo.todo.domain.service.outbox.OutboxListenerType
 import com.seokjoo.todo.domain.service.outbox.PublishableEvent
 import com.seokjoo.todo.domain.service.outbox.event.TodoPurchaseEmailEvent
 import com.seokjoo.todo.domain.service.outbox.service.OutboxEventProcessor
@@ -44,7 +43,6 @@ class TodoPurchaseEmailEventListenerTest : BehaviorSpec({
 
     fun outboxEventOf(eventType: OutboxEventType, event: PublishableEvent): OutboxEvent {
         return OutboxEvent(
-            listenerType = OutboxListenerType.EMAIL_NOTIFICATION,
             eventType = eventType,
             serializedEvent = objectMapper.writeValueAsString(event),
             publicationDate = LocalDateTime.now(),

@@ -4,7 +4,6 @@ import com.seokjoo.todo.annotation.TodoTest
 import com.seokjoo.todo.domain.entity.outbox.OutboxEvent
 import com.seokjoo.todo.domain.entity.outbox.OutboxStatus
 import com.seokjoo.todo.domain.service.outbox.OutboxEventType
-import com.seokjoo.todo.domain.service.outbox.OutboxListenerType
 import com.seokjoo.todo.domain.service.outbox.repository.OutboxRepository
 import com.seokjoo.todo.domain.service.outbox.repository.OutboxRepository.Companion.MAX_ATTEMPTS
 import org.assertj.core.api.Assertions.assertThat
@@ -26,7 +25,6 @@ class OutboxRepositoryTest @Autowired constructor(
     fun `PENDING, FAILED, RESUBMMITED 상태인 row는 claim에 성공한다`(status: OutboxStatus) {
         val event = outboxRepository.save(
             OutboxEvent(
-                listenerType = OutboxListenerType.EMAIL_NOTIFICATION,
                 eventType = OutboxEventType.PURCHASE_REQUEST,
                 serializedEvent = "dummy",
                 publicationDate = LocalDateTime.now(),
@@ -46,7 +44,6 @@ class OutboxRepositoryTest @Autowired constructor(
     fun `completionAttempts가 max 보다 작다에 매칭되지 않으면 업데이트 하지 않는다`() {
         val event = outboxRepository.save(
             OutboxEvent(
-                listenerType = OutboxListenerType.EMAIL_NOTIFICATION,
                 eventType = OutboxEventType.PURCHASE_REQUEST,
                 serializedEvent = "dummy",
                 publicationDate = LocalDateTime.now(),
@@ -67,7 +64,6 @@ class OutboxRepositoryTest @Autowired constructor(
     fun `completionAttempts가 max 보다 1 작은 값은 성공한다 (경계값 테스트)`() {
         val event = outboxRepository.save(
             OutboxEvent(
-                listenerType = OutboxListenerType.EMAIL_NOTIFICATION,
                 eventType = OutboxEventType.PURCHASE_REQUEST,
                 serializedEvent = "dummy",
                 publicationDate = LocalDateTime.now(),
@@ -88,7 +84,6 @@ class OutboxRepositoryTest @Autowired constructor(
     fun `completionAttempts가 Processing 중이라면 폴러가 재수행 했을 때 effectedCount 는 0이다`() {
         val event = outboxRepository.save(
             OutboxEvent(
-                listenerType = OutboxListenerType.EMAIL_NOTIFICATION,
                 eventType = OutboxEventType.PURCHASE_REQUEST,
                 serializedEvent = "dummy",
                 publicationDate = LocalDateTime.now(),
@@ -113,7 +108,6 @@ class OutboxRepositoryTest @Autowired constructor(
     fun `failed 를 세팅하면서 시도 횟수는 1회 증가하고, 메시지와 시간이 같이 저장된다`() {
         val event = outboxRepository.save(
             OutboxEvent(
-                listenerType = OutboxListenerType.EMAIL_NOTIFICATION,
                 eventType = OutboxEventType.PURCHASE_REQUEST,
                 serializedEvent = "dummy",
                 publicationDate = LocalDateTime.now(),
@@ -153,7 +147,6 @@ class OutboxRepositoryTest @Autowired constructor(
     fun `claimedAt이 최신 processingStartedDate와 다르면 업데이트하지 않는다`() {
         val event = outboxRepository.save(
             OutboxEvent(
-                listenerType = OutboxListenerType.EMAIL_NOTIFICATION,
                 eventType = OutboxEventType.PURCHASE_REQUEST,
                 serializedEvent = "dummy",
                 publicationDate = LocalDateTime.now(),
@@ -189,7 +182,6 @@ class OutboxRepositoryTest @Autowired constructor(
         val time = LocalDateTime.now()
         val event = outboxRepository.save(
             OutboxEvent(
-                listenerType = OutboxListenerType.EMAIL_NOTIFICATION,
                 eventType = OutboxEventType.PURCHASE_REQUEST,
                 serializedEvent = "dummy",
                 publicationDate = time,
@@ -213,7 +205,6 @@ class OutboxRepositoryTest @Autowired constructor(
         val time = LocalDateTime.now()
         val event = outboxRepository.save(
             OutboxEvent(
-                listenerType = OutboxListenerType.EMAIL_NOTIFICATION,
                 eventType = OutboxEventType.PURCHASE_REQUEST,
                 serializedEvent = "dummy",
                 publicationDate = time,
@@ -236,7 +227,6 @@ class OutboxRepositoryTest @Autowired constructor(
         val oldTime = LocalDateTime.now().minusMinutes(10)
         val event = outboxRepository.save(
             OutboxEvent(
-                listenerType = OutboxListenerType.EMAIL_NOTIFICATION,
                 eventType = OutboxEventType.PURCHASE_REQUEST,
                 serializedEvent = "dummy",
                 publicationDate = oldTime,
@@ -296,7 +286,6 @@ class OutboxRepositoryTest @Autowired constructor(
         status: OutboxStatus = OutboxStatus.PENDING,
     ): OutboxEvent {
         return OutboxEvent(
-            listenerType = OutboxListenerType.EMAIL_NOTIFICATION,
             eventType = OutboxEventType.PURCHASE_REQUEST,
             serializedEvent = "dummy",
             publicationDate = LocalDateTime.now(),

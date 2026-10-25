@@ -1,7 +1,6 @@
 package com.seokjoo.todo.domain.entity.outbox
 
 import com.seokjoo.todo.domain.service.outbox.OutboxEventType
-import com.seokjoo.todo.domain.service.outbox.OutboxListenerType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
@@ -19,10 +18,6 @@ import java.time.LocalDateTime
 class OutboxEventArchive(
     // 기존 Outbox Event의 id를 물려받음
     id: String,
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "listener_type", nullable = false, length = 50)
-    val listenerType: OutboxListenerType,
 
     @Enumerated(EnumType.STRING)
     @Column(name = "event_type", nullable = false, length = 50)
@@ -73,7 +68,6 @@ class OutboxEventArchive(
         fun from(outboxEvent: OutboxEvent): OutboxEventArchive {
             return OutboxEventArchive(
                 id = outboxEvent.id,
-                listenerType = outboxEvent.listenerType,
                 eventType = outboxEvent.eventType,
                 serializedEvent = outboxEvent.serializedEvent,
                 publicationDate = outboxEvent.publicationDate,
@@ -88,7 +82,6 @@ class OutboxEventArchive(
         fun from(dlqEvent: OutboxEventDLQ): OutboxEventArchive {
             return OutboxEventArchive(
                 id = dlqEvent.id,
-                listenerType = dlqEvent.listenerType,
                 eventType = dlqEvent.eventType,
                 serializedEvent = dlqEvent.serializedEvent,
                 publicationDate = dlqEvent.publicationDate,

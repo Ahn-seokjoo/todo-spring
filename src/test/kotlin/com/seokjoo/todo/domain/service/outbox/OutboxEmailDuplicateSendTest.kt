@@ -60,7 +60,6 @@ class OutboxEmailDuplicateSendTest @Autowired constructor(
         )
         val outboxEvent = outboxService.saveOutbox(
             OutboxEvent(
-                listenerType = OutboxListenerType.EMAIL_NOTIFICATION,
                 eventType = OutboxEventType.PURCHASE_REQUEST,
                 serializedEvent = objectMapper.writeValueAsString(event),
                 publicationDate = LocalDateTime.now(),

@@ -53,7 +53,6 @@ class OutboxEventProcessorTest : BehaviorSpec({
 
         When("ClaimFailure.CheckDLQ 가 들어오면") {
             val outboxEvent = OutboxEvent(
-                listenerType = OutboxListenerType.EMAIL_NOTIFICATION,
                 eventType = OutboxEventType.PURCHASE_REQUEST,
                 serializedEvent = "dummy",
                 publicationDate = LocalDateTime.now(),
@@ -80,7 +79,6 @@ class OutboxEventProcessorTest : BehaviorSpec({
 
         When("NotClaimable 로 들어오면") {
             val outboxEvent = OutboxEvent(
-                listenerType = OutboxListenerType.EMAIL_NOTIFICATION,
                 eventType = OutboxEventType.PURCHASE_REQUEST,
                 serializedEvent = "dummy",
                 publicationDate = LocalDateTime.now(),
@@ -146,7 +144,6 @@ class OutboxEventProcessorTest : BehaviorSpec({
         noEmailCases.forEach { case ->
             When(case.description) {
                 val outboxEvent = OutboxEvent(
-                    listenerType = OutboxListenerType.EMAIL_NOTIFICATION,
                     eventType = case.eventType,
                     serializedEvent = objectMapper.writeValueAsString(case.event),
                     publicationDate = LocalDateTime.now(),
@@ -193,7 +190,6 @@ class OutboxEventProcessorTest : BehaviorSpec({
 
         When("saveEmailSentRecordToReady는 성공했지만 sendEmail이 진짜로 실패하면") {
             val outboxEvent = OutboxEvent(
-                listenerType = OutboxListenerType.EMAIL_NOTIFICATION,
                 eventType = OutboxEventType.PURCHASE_REQUEST,
                 serializedEvent = objectMapper.writeValueAsString(
                     PublishableEvent.PurchaseRequestEvent(
@@ -244,7 +240,6 @@ class OutboxEventProcessorTest : BehaviorSpec({
             } throws (TodoException.of(TodoExceptionType.OUTBOX_UPDATE_ERROR))
 
             val outboxEvent = OutboxEvent(
-                listenerType = OutboxListenerType.EMAIL_NOTIFICATION,
                 eventType = OutboxEventType.PURCHASE_REQUEST,
                 serializedEvent = objectMapper.writeValueAsString(
                     PublishableEvent.PurchaseRequestEvent(
@@ -281,7 +276,6 @@ class OutboxEventProcessorTest : BehaviorSpec({
         When("DataIntegrityViolationException 에러를 받앗을 때") {
             every { mailService.saveEmailSentRecordToReady(any()) } throws DataIntegrityViolationException("abx")
             val outboxEvent = OutboxEvent(
-                listenerType = OutboxListenerType.EMAIL_NOTIFICATION,
                 eventType = OutboxEventType.PURCHASE_REQUEST,
                 serializedEvent = objectMapper.writeValueAsString(
                     PublishableEvent.PurchaseRequestEvent(

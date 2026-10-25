@@ -8,7 +8,6 @@ import com.seokjoo.todo.domain.entity.todo.TodoStatus
 import com.seokjoo.todo.domain.repository.purchase.TodoPurchaseRepository
 import com.seokjoo.todo.domain.service.auth.TodoAuthService
 import com.seokjoo.todo.domain.service.balance.TodoBalanceService
-import com.seokjoo.todo.domain.service.outbox.OutboxListenerType
 import com.seokjoo.todo.domain.service.outbox.PublishableEvent
 import com.seokjoo.todo.domain.service.outbox.event.TodoPurchaseEmailEvent
 import com.seokjoo.todo.domain.service.outbox.service.OutboxService
@@ -159,8 +158,7 @@ class TodoPurchaseTxService(
     }
 
     private fun createEmailOutboxEvent(purchaseEvent: PublishableEvent) {
-        val event =
-            outboxService.createOutboxEvent(event = purchaseEvent, listener = OutboxListenerType.EMAIL_NOTIFICATION)
+        val event = outboxService.createOutboxEvent(event = purchaseEvent)
         val outboxEvent = outboxService.saveOutbox(event = event)
         eventPublisher.publishEvent(TodoPurchaseEmailEvent(outboxEventId = outboxEvent.id))
     }

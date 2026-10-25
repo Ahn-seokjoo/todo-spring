@@ -5,7 +5,6 @@ import com.seokjoo.todo.domain.entity.email.EmailSentStatus
 import com.seokjoo.todo.domain.entity.outbox.OutboxEventArchive
 import com.seokjoo.todo.domain.entity.outbox.OutboxStatus
 import com.seokjoo.todo.domain.service.outbox.OutboxEventType
-import com.seokjoo.todo.domain.service.outbox.OutboxListenerType
 import com.seokjoo.todo.domain.service.outbox.repository.OutboxArchiveRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertThrows
@@ -100,7 +99,6 @@ class EmailServiceTest @Autowired constructor(
         outboxArchiveRepository.save(
             OutboxEventArchive(
                 id = id,
-                listenerType = OutboxListenerType.EMAIL_NOTIFICATION,
                 eventType = OutboxEventType.PURCHASE_REQUEST,
                 serializedEvent = "dummy",
                 publicationDate = LocalDateTime.now(),
