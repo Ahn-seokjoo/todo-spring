@@ -4,7 +4,6 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.seokjoo.todo.domain.entity.outbox.OutboxEvent
 import com.seokjoo.todo.domain.service.outbox.OutboxEventType
-import com.seokjoo.todo.domain.service.outbox.OutboxListenerType
 import com.seokjoo.todo.domain.service.outbox.PublishableEvent
 import com.seokjoo.todo.domain.service.outbox.service.producer.KafkaPublishDelivery
 import com.seokjoo.todo.presentation.configuration.KafkaTopics
@@ -27,7 +26,6 @@ class KafkaPublishDeliveryTest {
     private val delivery = KafkaPublishDelivery(kafkaTemplate, objectMapper)
 
     private val outboxEvent = OutboxEvent(
-        listenerType = OutboxListenerType.EMAIL_NOTIFICATION,
         eventType = OutboxEventType.PURCHASE_APPROVED,
         serializedEvent = objectMapper.writeValueAsString(
             PublishableEvent.PurchaseApprovedEvent(

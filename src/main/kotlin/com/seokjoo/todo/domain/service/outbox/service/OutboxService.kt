@@ -10,7 +10,6 @@ import com.seokjoo.todo.domain.entity.outbox.OutboxStatus
 import com.seokjoo.todo.domain.service.outbox.ClaimFailure
 import com.seokjoo.todo.domain.service.outbox.ClaimSuccess
 import com.seokjoo.todo.domain.service.outbox.OutboxEventClaimType
-import com.seokjoo.todo.domain.service.outbox.OutboxListenerType
 import com.seokjoo.todo.domain.service.outbox.PublishableEvent
 import com.seokjoo.todo.domain.service.outbox.repository.OutboxArchiveRepository
 import com.seokjoo.todo.domain.service.outbox.repository.OutboxDLQRepository
@@ -109,9 +108,8 @@ class OutboxService(
         outboxRepository.updateAllResubmittedOutbox(cutoff = cutoff)
     }
 
-    fun createOutboxEvent(event: PublishableEvent, listener: OutboxListenerType): OutboxEvent {
+    fun createOutboxEvent(event: PublishableEvent): OutboxEvent {
         return OutboxEvent(
-            listenerType = listener,
             eventType = event.eventType,
             serializedEvent = objectMapper.writeValueAsString(event),
             publicationDate = LocalDateTime.now(),

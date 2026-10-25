@@ -8,9 +8,8 @@ import com.seokjoo.todo.domain.entity.todo.TodoStatus
 import com.seokjoo.todo.domain.repository.purchase.TodoPurchaseRepository
 import com.seokjoo.todo.domain.service.auth.TodoAuthService
 import com.seokjoo.todo.domain.service.balance.TodoBalanceService
-import com.seokjoo.todo.domain.service.outbox.OutboxListenerType
 import com.seokjoo.todo.domain.service.outbox.PublishableEvent
-import com.seokjoo.todo.domain.service.outbox.event.TodoPurchaseEmailEvent
+import com.seokjoo.todo.domain.service.outbox.event.OutboxEventCreatedEvent
 import com.seokjoo.todo.domain.service.outbox.service.OutboxService
 import com.seokjoo.todo.domain.service.todo.TodoService
 import org.springframework.context.ApplicationEventPublisher
@@ -53,7 +52,7 @@ class TodoPurchaseTxService(
             price = todo.price,
             purchaseId = purchase.id,
         )
-        createEmailOutboxEvent(purchaseEvent)
+        createPurchaseOutboxEvent(purchaseEvent)
     }
 
     @Transactional
@@ -94,7 +93,7 @@ class TodoPurchaseTxService(
             price = todo.price,
             purchaseId = purchase.id,
         )
-        createEmailOutboxEvent(purchaseEvent)
+        createPurchaseOutboxEvent(purchaseEvent)
     }
 
     @Transactional
@@ -128,7 +127,7 @@ class TodoPurchaseTxService(
             price = todo.price,
             purchaseId = purchase.id,
         )
-        createEmailOutboxEvent(purchaseEvent)
+        createPurchaseOutboxEvent(purchaseEvent)
     }
 
     @Transactional
@@ -158,10 +157,9 @@ class TodoPurchaseTxService(
         balanceService.increaseBalance(amount = todo.price, userId = purchase.buyerId)
     }
 
-    private fun createEmailOutboxEvent(purchaseEvent: PublishableEvent) {
-        val event =
-            outboxService.createOutboxEvent(event = purchaseEvent, listener = OutboxListenerType.EMAIL_NOTIFICATION)
+    private fun createPurchaseOutboxEvent(purchaseEvent: PublishableEvent) {
+        val event = outboxService.createOutboxEvent(event = purchaseEvent)
         val outboxEvent = outboxService.saveOutbox(event = event)
-        eventPublisher.publishEvent(TodoPurchaseEmailEvent(outboxEventId = outboxEvent.id))
+        eventPublisher.publishEvent(OutboxEventCreatedEvent(outboxEventId = outboxEvent.id))
     }
 }

@@ -20,7 +20,6 @@ class OutboxSchedulePollerTest : BehaviorSpec({
     val poller = OutboxSchedulePoller(outboxService, processor)
 
     fun eventOf(id: String) = OutboxEvent(
-        listenerType = OutboxListenerType.EMAIL_NOTIFICATION,
         eventType = OutboxEventType.PURCHASE_REQUEST,
         serializedEvent = "dummy",
         publicationDate = LocalDateTime.now(),

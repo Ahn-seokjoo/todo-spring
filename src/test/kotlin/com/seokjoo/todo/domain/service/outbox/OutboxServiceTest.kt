@@ -51,7 +51,6 @@ class OutboxServiceTest : BehaviorSpec({
         status: OutboxStatus = OutboxStatus.PENDING,
     ): OutboxEvent {
         return OutboxEvent(
-            listenerType = OutboxListenerType.EMAIL_NOTIFICATION,
             eventType = eventType,
             serializedEvent = objectMapper.writeValueAsString(event),
             publicationDate = LocalDateTime.now(),
@@ -310,20 +309,16 @@ class OutboxServiceTest : BehaviorSpec({
     }
 
     Given("createOutboxEvent 테스트") {
-        When("PublishableEvent와 listener를 받으면") {
+        When("PublishableEvent를 받으면") {
             val purchaseRequestEvent = PublishableEvent.PurchaseRequestEvent(
                 sellerId = seller.userId, buyerId = buyer.userId, todoId = 1L, price = 100L, purchaseId = 1L
             )
 
-            Then("listenerType/eventType/serializedEvent/publicationDate가 채워진 OutboxEvent가 만들어진다") {
+            Then("eventType/serializedEvent/publicationDate가 채워진 OutboxEvent가 만들어진다") {
                 val before = LocalDateTime.now()
-                val result = outboxService.createOutboxEvent(
-                    event = purchaseRequestEvent,
-                    listener = OutboxListenerType.EMAIL_NOTIFICATION,
-                )
+                val result = outboxService.createOutboxEvent(event = purchaseRequestEvent)
                 val after = LocalDateTime.now()
 
-                assertThat(result.listenerType).isEqualTo(OutboxListenerType.EMAIL_NOTIFICATION)
                 assertThat(result.eventType).isEqualTo(OutboxEventType.PURCHASE_REQUEST)
                 assertThat(result.serializedEvent).isEqualTo(objectMapper.writeValueAsString(purchaseRequestEvent))
                 assertThat(result.publicationDate).isBetween(before, after)
