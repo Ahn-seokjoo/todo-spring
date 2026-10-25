@@ -10,7 +10,7 @@ import com.seokjoo.todo.domain.service.balance.TodoBalanceService
 import com.seokjoo.todo.domain.service.charge.TodoChargeService
 import com.seokjoo.todo.domain.service.outbox.OutboxEventType
 import com.seokjoo.todo.domain.service.outbox.PublishableEvent
-import com.seokjoo.todo.domain.service.outbox.event.TodoPurchaseEmailEvent
+import com.seokjoo.todo.domain.service.outbox.event.OutboxEventCreatedEvent
 import com.seokjoo.todo.domain.service.outbox.repository.OutboxRepository
 import com.seokjoo.todo.domain.service.todo.TodoCreateServiceRequestDTO
 import com.seokjoo.todo.domain.service.todo.TodoPageServiceDTO
@@ -130,12 +130,12 @@ class TodoPurchaseServiceTest @Autowired constructor(
     }
 
     @Test
-    fun `구매 요청시에 TodoPurchaseEmailEvent, Request 이벤트가 발행된다`(applicationEvents: ApplicationEvents) {
+    fun `구매 요청시에 OutboxEventCreatedEvent, Request 이벤트가 발행된다`(applicationEvents: ApplicationEvents) {
         // given
         // when
         purchaseTxService.purchaseTodo(todo.id, "pita2")
 
-        val events = applicationEvents.stream(TodoPurchaseEmailEvent::class.java).toList()
+        val events = applicationEvents.stream(OutboxEventCreatedEvent::class.java).toList()
         assertThat(events).hasSize(1)
 
         val outboxEvent = outboxRepository.findByIdOrNull(events.first().outboxEventId)
@@ -143,13 +143,13 @@ class TodoPurchaseServiceTest @Autowired constructor(
     }
 
     @Test
-    fun `구매 요청 허락시에 TodoPurchaseEmailEvent, Approved 이벤트가 발행된다`(applicationEvents: ApplicationEvents) {
+    fun `구매 요청 허락시에 OutboxEventCreatedEvent, Approved 이벤트가 발행된다`(applicationEvents: ApplicationEvents) {
         // given
         // when
         purchaseTxService.purchaseTodo(todo.id, "pita2")
         purchaseTxService.approvePurchaseTodo(todo.id, "pita1")
 
-        val events = applicationEvents.stream(TodoPurchaseEmailEvent::class.java).toList()
+        val events = applicationEvents.stream(OutboxEventCreatedEvent::class.java).toList()
         assertThat(events).hasSize(2)
 
         val outboxEvent = outboxRepository.findByIdOrNull(events.last().outboxEventId)
@@ -165,13 +165,13 @@ class TodoPurchaseServiceTest @Autowired constructor(
     }
 
     @Test
-    fun `구매 요청 거절 시에 TodoPurchaseEmailEvent, Reject 이벤트가 발행된다`(applicationEvents: ApplicationEvents) {
+    fun `구매 요청 거절 시에 OutboxEventCreatedEvent, Reject 이벤트가 발행된다`(applicationEvents: ApplicationEvents) {
         // given
         // when
         purchaseTxService.purchaseTodo(todo.id, "pita2")
         purchaseTxService.rejectPurchaseTodo(todo.id, "pita1")
 
-        val events = applicationEvents.stream(TodoPurchaseEmailEvent::class.java).toList()
+        val events = applicationEvents.stream(OutboxEventCreatedEvent::class.java).toList()
         assertThat(events).hasSize(2)
 
         val outboxEvent = outboxRepository.findByIdOrNull(events.last().outboxEventId)

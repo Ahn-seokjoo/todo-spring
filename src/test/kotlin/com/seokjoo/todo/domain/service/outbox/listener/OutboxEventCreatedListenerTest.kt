@@ -9,7 +9,7 @@ import com.seokjoo.todo.domain.service.email.EmailService
 import com.seokjoo.todo.domain.service.outbox.ClaimSuccess
 import com.seokjoo.todo.domain.service.outbox.OutboxEventType
 import com.seokjoo.todo.domain.service.outbox.PublishableEvent
-import com.seokjoo.todo.domain.service.outbox.event.TodoPurchaseEmailEvent
+import com.seokjoo.todo.domain.service.outbox.event.OutboxEventCreatedEvent
 import com.seokjoo.todo.domain.service.outbox.service.OutboxEventProcessor
 import com.seokjoo.todo.domain.service.outbox.service.OutboxService
 import com.seokjoo.todo.domain.service.outbox.service.email.DirectEmailDelivery
@@ -25,7 +25,7 @@ import io.mockk.slot
 import io.mockk.verify
 import java.time.LocalDateTime
 
-class TodoPurchaseEmailEventListenerTest : BehaviorSpec({
+class OutboxEventCreatedListenerTest : BehaviorSpec({
     val outboxService: OutboxService = mockk()
     val authService: TodoAuthService = mockk()
     val mailService: EmailService = mockk()
@@ -36,7 +36,7 @@ class TodoPurchaseEmailEventListenerTest : BehaviorSpec({
         delivery = DirectEmailDelivery(PurchaseEmailSender(authService, objectMapper, mailService)),
     )
 
-    val listener = TodoPurchaseEmailEventListener(processor = processor)
+    val listener = OutboxEventCreatedListener(processor = processor)
 
     val seller = User(userId = "pita1", password = "pw", email = "seller@test.com")
     val buyer = User(userId = "pita2", password = "pw", email = "buyer@test.com")
@@ -100,7 +100,7 @@ class TodoPurchaseEmailEventListenerTest : BehaviorSpec({
             every { mailService.sendEmail(to = capture(toSlot), subject = any(), content = any()) } just Runs
 
             When("리스너가 이벤트를 처리하면") {
-                listener.eventListener(TodoPurchaseEmailEvent(outboxEventId = "dummy-outbox-id"))
+                listener.eventListener(OutboxEventCreatedEvent(outboxEventId = "dummy-outbox-id"))
 
                 Then("올바른 수신자에게 메일이 발송되고 outbox가 성공 처리된다") {
                     toSlot.captured shouldBe case.expectedRecipient.email
@@ -125,7 +125,7 @@ class TodoPurchaseEmailEventListenerTest : BehaviorSpec({
         every { mailService.deleteSentRecord(any()) } just Runs
 
         When("리스너가 이벤트를 처리하면") {
-            listener.eventListener(TodoPurchaseEmailEvent(outboxEventId = "dummy-outbox-id"))
+            listener.eventListener(OutboxEventCreatedEvent(outboxEventId = "dummy-outbox-id"))
 
             Then("메일 발송을 시도하지 않고 outbox가 실패 처리된다") {
                 verify(exactly = 0) { mailService.sendEmail(any(), any(), any()) }
