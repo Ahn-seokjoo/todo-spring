@@ -154,7 +154,7 @@ class TodoServiceMockTest : BehaviorSpec({
                 verify(exactly = 1) {
                     eventPublisher.publishEvent(
                         TodoCacheEvictEvent(
-                            todoIds = listOf(id),
+                            todoIds = setOf(id),
                             userIds = setOf(user.userId),
                         )
                     )

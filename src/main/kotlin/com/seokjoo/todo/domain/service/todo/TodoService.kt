@@ -62,7 +62,7 @@ class TodoService(
         todoRepository.save(todo)
 
         checkExistAndAddCategory(request, todo)
-        publishTodoCacheEvictEvent(todoIds = emptyList(), userIds = setOf(todo.owner.userId))
+        publishTodoCacheEvictEvent(todoIds = emptySet(), userIds = setOf(todo.owner.userId))
         return TodoServiceResponseDTO.from(todo)
     }
 
@@ -80,7 +80,7 @@ class TodoService(
         todoRepository.save(todo)
 
         replaceCategoryIfNotEmpty(request, todo)
-        publishTodoCacheEvictEvent(todoIds = listOf(todoId), userIds = setOf(todo.owner.userId))
+        publishTodoCacheEvictEvent(todoIds = setOf(todoId), userIds = setOf(todo.owner.userId))
         return TodoServiceResponseDTO.from(todo)
     }
 
@@ -94,7 +94,7 @@ class TodoService(
             throw TodoException.of(TodoExceptionType.PENDING)
         }
 
-        publishTodoCacheEvictEvent(todoIds = listOf(todoId), userIds = setOf(todo.owner.userId))
+        publishTodoCacheEvictEvent(todoIds = setOf(todoId), userIds = setOf(todo.owner.userId))
         todoDeleteService.deleteTodo(todo)
     }
 
@@ -108,7 +108,7 @@ class TodoService(
         todo.updateOwner(owner)
         todoRepository.save(todo)
 
-        publishTodoCacheEvictEvent(todoIds = listOf(todoId), userIds = setOf(previousOwnerId, owner.userId))
+        publishTodoCacheEvictEvent(todoIds = setOf(todoId), userIds = setOf(previousOwnerId, owner.userId))
         return TodoServiceResponseDTO.from(todo)
     }
 
@@ -125,7 +125,7 @@ class TodoService(
             TodoStatus.AVAILABLE -> todoRepository.updateTodoStatusAvailableIfPending(todoId)
         }
         if (successCount == 0) throw TodoException.of(TodoExceptionType.NOT_PENDING)
-        publishTodoCacheEvictEvent(todoIds = listOf(todoId), userIds = setOf(sellerId))
+        publishTodoCacheEvictEvent(todoIds = setOf(todoId), userIds = setOf(sellerId))
     }
 
     private fun checkExistAndAddCategory(
@@ -154,7 +154,7 @@ class TodoService(
 
     private fun isOwner(todoOwnerId: String, userId: String) = todoOwnerId == userId
 
-    private fun publishTodoCacheEvictEvent(todoIds: List<Long>, userIds: Set<String>) {
+    private fun publishTodoCacheEvictEvent(todoIds: Set<Long>, userIds: Set<String>) {
         eventPublisher.publishEvent(TodoCacheEvictEvent(todoIds = todoIds, userIds = userIds))
     }
 }
