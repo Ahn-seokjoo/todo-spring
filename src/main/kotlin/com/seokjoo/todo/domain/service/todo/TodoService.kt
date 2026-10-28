@@ -62,7 +62,7 @@ class TodoService(
         todoRepository.save(todo)
 
         checkExistAndAddCategory(request, todo)
-        eventPublisher.publishEvent(TodoCacheEvictEvent(isEvictAll = true))
+        publishTodoCacheEvictEvent(todoIds = emptyList(), userIds = setOf(todo.owner.userId))
         return TodoServiceResponseDTO.from(todo)
     }
 
@@ -80,7 +80,7 @@ class TodoService(
         todoRepository.save(todo)
 
         replaceCategoryIfNotEmpty(request, todo)
-        eventPublisher.publishEvent(TodoCacheEvictEvent(isEvictAll = true, todoIds = listOf(todoId)))
+        publishTodoCacheEvictEvent(todoIds = listOf(todoId), userIds = setOf(todo.owner.userId))
         return TodoServiceResponseDTO.from(todo)
     }
 
@@ -94,20 +94,21 @@ class TodoService(
             throw TodoException.of(TodoExceptionType.PENDING)
         }
 
-        eventPublisher.publishEvent(TodoCacheEvictEvent(isEvictAll = true, todoIds = listOf(todoId)))
+        publishTodoCacheEvictEvent(todoIds = listOf(todoId), userIds = setOf(todo.owner.userId))
         todoDeleteService.deleteTodo(todo)
     }
 
     @Transactional
     fun updateOwner(todoId: Long, owner: User): TodoServiceResponseDTO {
         val todo = todoRepository.findByIdOrNull(todoId) ?: throw TodoException.of(TodoExceptionType.NOT_EXISTED_TODO)
+        val previousOwnerId = todo.owner.userId
         check(todo.status == TodoStatus.AVAILABLE) {
             throw TodoException.of(TodoExceptionType.PENDING)
         }
         todo.updateOwner(owner)
         todoRepository.save(todo)
 
-        eventPublisher.publishEvent(TodoCacheEvictEvent(isEvictAll = true, todoIds = listOf(todoId)))
+        publishTodoCacheEvictEvent(todoIds = listOf(todoId), userIds = setOf(previousOwnerId, owner.userId))
         return TodoServiceResponseDTO.from(todo)
     }
 
@@ -118,13 +119,13 @@ class TodoService(
     }
 
     @Transactional
-    fun changeStatus(todoId: Long, status: TodoStatus) {
+    fun changeStatus(todoId: Long, sellerId: String, status: TodoStatus) {
         val successCount = when (status) {
             TodoStatus.PENDING_APPROVAL -> todoRepository.updateTodoStatusPendingIfAvailable(todoId)
             TodoStatus.AVAILABLE -> todoRepository.updateTodoStatusAvailableIfPending(todoId)
         }
         if (successCount == 0) throw TodoException.of(TodoExceptionType.NOT_PENDING)
-        eventPublisher.publishEvent(TodoCacheEvictEvent(isEvictAll = true, todoIds = listOf(todoId)))
+        publishTodoCacheEvictEvent(todoIds = listOf(todoId), userIds = setOf(sellerId))
     }
 
     private fun checkExistAndAddCategory(
@@ -152,4 +153,8 @@ class TodoService(
     }
 
     private fun isOwner(todoOwnerId: String, userId: String) = todoOwnerId == userId
+
+    private fun publishTodoCacheEvictEvent(todoIds: List<Long>, userIds: Set<String>) {
+        eventPublisher.publishEvent(TodoCacheEvictEvent(todoIds = todoIds, userIds = userIds))
+    }
 }
