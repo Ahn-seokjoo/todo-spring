@@ -3,12 +3,15 @@ package com.seokjoo.todo.domain.service.todo
 import com.seokjoo.todo.annotation.TodoTest
 import com.seokjoo.todo.common.exception.TodoException
 import com.seokjoo.todo.common.exception.TodoExceptionType
+import com.seokjoo.todo.domain.entity.todouser.User
 import com.seokjoo.todo.domain.service.auth.TodoAuthService
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.cache.CacheManager
@@ -28,13 +31,20 @@ class TodoCacheTest @Autowired constructor(
         authService.signUp("pita", "pita", "")
     }
 
+    // 테스트 안에서 추가로 가입시킨 사용자 (pita 외)
+    private val extraUserIds = mutableListOf<String>()
+
     @AfterEach
     fun after() {
         try {
-            authService.delete("pita", "pita")
-        } catch (e: TodoException) {
-            // 탈퇴 테스트처럼 이미 지워진 경우만 무시한다
-            if (e.errorCode != TodoExceptionType.AUTH_USER_NOT_EXIST.errorCode) throw e
+            (listOf("pita") + extraUserIds).forEach { userId ->
+                try {
+                    authService.delete(userId, userId)
+                } catch (e: TodoException) {
+                    // 탈퇴 테스트처럼 이미 지워진 경우만 무시한다
+                    if (e.errorCode != TodoExceptionType.AUTH_USER_NOT_EXIST.errorCode) throw e
+                }
+            }
         } finally {
             cacheManager.getCache("todos")?.clear()
             cacheManager.getCache("todo")?.clear()
@@ -156,6 +166,52 @@ class TodoCacheTest @Autowired constructor(
         assertThat(singleCache(todo.id)).isNotNull()
         assertThat(listCache("pita", 0, 10)).isNotNull()
         assertThat(todoService.getTodoById(todo.id).todo).isEqualTo("hi")
+    }
+
+    @Test
+    fun `한 사용자의 할 일이 바뀌어도 다른 사용자의 목록 캐시는 남는다`() {
+        val pita = authService.findUserByUserId("pita")
+        val kim = signUpExtraUser("cache-kim")
+        val pitaTodo = todoService.createTodo(request = TodoCreateServiceRequestDTO(todo = "pita todo"), owner = pita)
+        todoService.createTodo(request = TodoCreateServiceRequestDTO(todo = "kim todo"), owner = kim)
+
+        // 두 사람의 목록 캐시를 채워 둔다 (빈 목록은 캐시되지 않으므로 할 일을 하나씩 만들어 둠)
+        todoService.getPagedTodos("pita", TodoPageServiceDTO(0, 10))
+        todoService.getPagedTodos(kim.userId, TodoPageServiceDTO(0, 10))
+        assertThat(listCache("pita", 0, 10)).isNotNull()
+        assertThat(listCache(kim.userId, 0, 10)).isNotNull()
+
+        todoService.updateTodo(pitaTodo.id, "pita", TodoUpdateServiceRequestDTO(todo = "bye", null, null))
+
+        assertThat(listCache("pita", 0, 10)).isNull()          // 바뀐 사람만 지워지고
+        assertThat(listCache(kim.userId, 0, 10)).isNotNull()   // 다른 사람은 남는다
+    }
+
+    // 이스케이프하지 않으면 아래 아이디들은 모두 SCAN 패턴에서 "pita"와 매칭된다
+    // pi* (* = 아무 글자 여러 개), p?ta (? = 아무 글자 하나), [p]ita ([] = 괄호 안 글자 중 하나), pi\ta (\ = 다음 글자를 그대로)
+    @ParameterizedTest
+    @ValueSource(strings = ["pi*", "p?ta", "[p]ita", "pi\\ta"])
+    fun `아이디에 글롭 문자가 있어도 패턴이 다른 사용자의 목록 캐시를 지우지 않는다`(globUserId: String) {
+        val pita = authService.findUserByUserId("pita")
+        val globUser = signUpExtraUser(globUserId)
+        todoService.createTodo(request = TodoCreateServiceRequestDTO(todo = "pita todo"), owner = pita)
+        val globTodo = todoService.createTodo(request = TodoCreateServiceRequestDTO(todo = "glob todo"), owner = globUser)
+
+        todoService.getPagedTodos("pita", TodoPageServiceDTO(0, 10))
+        todoService.getPagedTodos(globUserId, TodoPageServiceDTO(0, 10))
+        assertThat(listCache("pita", 0, 10)).isNotNull()
+        assertThat(listCache(globUserId, 0, 10)).isNotNull()
+
+        todoService.updateTodo(globTodo.id, globUserId, TodoUpdateServiceRequestDTO(todo = "bye", null, null))
+
+        assertThat(listCache(globUserId, 0, 10)).isNull()      // 본인 캐시는 지워지고
+        assertThat(listCache("pita", 0, 10)).isNotNull()       // pita 캐시는 남는다
+    }
+
+    private fun signUpExtraUser(userId: String): User {
+        authService.signUp(userId, userId, "")
+        extraUserIds += userId
+        return authService.findUserByUserId(userId)
     }
 
     private fun listCache(userId: String, page: Int, size: Int) =

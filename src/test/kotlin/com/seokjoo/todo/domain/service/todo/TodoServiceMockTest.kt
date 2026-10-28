@@ -51,7 +51,7 @@ class TodoServiceMockTest : BehaviorSpec({
 
                 verify(exactly = 1) {
                     eventPublisher.publishEvent(
-                        TodoCacheEvictEvent(isEvictAll = true)
+                        TodoCacheEvictEvent(userIds = setOf(user.userId))
                     )
                 }
             }
@@ -154,8 +154,8 @@ class TodoServiceMockTest : BehaviorSpec({
                 verify(exactly = 1) {
                     eventPublisher.publishEvent(
                         TodoCacheEvictEvent(
-                            isEvictAll = true,
                             todoIds = listOf(id),
+                            userIds = setOf(user.userId),
                         )
                     )
                 }
