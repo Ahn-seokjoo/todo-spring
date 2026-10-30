@@ -15,7 +15,10 @@ import org.junit.jupiter.params.provider.ValueSource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.cache.CacheManager
+import org.springframework.data.redis.core.ScanOptions
+import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.transaction.support.TransactionTemplate
+import java.time.Duration
 
 @TodoTest
 class TodoCacheTest @Autowired constructor(
@@ -23,6 +26,7 @@ class TodoCacheTest @Autowired constructor(
     private val todoService: TodoService,
     @Qualifier("todoCacheManager") private val cacheManager: CacheManager,
     private val transactionTemplate: TransactionTemplate,
+    private val stringRedisTemplate: StringRedisTemplate,
 ) {
     @BeforeEach
     fun setUp() {
@@ -207,6 +211,30 @@ class TodoCacheTest @Autowired constructor(
         assertThat(listCache(globUserId, 0, 10)).isNull()      // 본인 캐시는 지워지고
         assertThat(listCache("pita", 0, 10)).isNotNull()       // pita 캐시는 남는다
     }
+
+    @Test
+    fun `한 사용자의 목록 캐시 키가 100개를 넘어도 남김없이 지워진다`() {
+        val pita = authService.findUserByUserId("pita")
+        val pitaTodo = todoService.createTodo(request = TodoCreateServiceRequestDTO(todo = "pita todo"), owner = pita)
+
+        // pageSize만 바꿔 가며 조회해 키가 많이 생긴 상황을 흉내 낸다
+        // 250개 = 100개 배치 2번 + 마지막에 남는 50개 (나머지 처리까지 검증)
+        (1..250).forEach { size ->
+            stringRedisTemplate.opsForValue().set("todos::pita:page:0:size:$size", "dummy", Duration.ofMinutes(1))
+        }
+        val otherUserKey = "todos::cache-kim:page:0:size:5"
+        stringRedisTemplate.opsForValue().set(otherUserKey, "dummy", Duration.ofMinutes(1))
+        assertThat(scanKeys("todos::pita:*")).hasSize(250)
+
+        todoService.updateTodo(pitaTodo.id, "pita", TodoUpdateServiceRequestDTO(todo = "bye", null, null))
+
+        assertThat(scanKeys("todos::pita:*")).isEmpty()              // 250개 모두 지워지고
+        assertThat(stringRedisTemplate.hasKey(otherUserKey)).isTrue() // 다른 사용자 키는 남는다
+    }
+
+    private fun scanKeys(pattern: String): Set<String> =
+        stringRedisTemplate.scan(ScanOptions.scanOptions().match(pattern).count(1000).build())
+            .use { cursor -> cursor.asSequence().toSet() }
 
     private fun signUpExtraUser(userId: String): User {
         authService.signUp(userId, userId, "")

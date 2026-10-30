@@ -22,12 +22,17 @@ class TodoCacheEvictEventListener(
             runCatching {
                 val pattern = "todos::${escapeGlob(userId)}:*"
                 val options = ScanOptions.scanOptions().match(pattern).count(100).build()
-                val keys = redisTemplate.scan(options).use { cursor ->
-                    cursor.asSequence().toSet()
+                val batch = mutableSetOf<String>()
+                redisTemplate.scan(options).use { cursor ->
+                    cursor.forEach { key ->
+                        batch += key
+                        if (batch.size >= EVICT_BATCH_SIZE) {
+                            redisTemplate.unlink(batch)
+                            batch.clear()
+                        }
+                    }
                 }
-                if (keys.isNotEmpty()) {
-                    redisTemplate.unlink(keys)
-                }
+                if (batch.isNotEmpty()) redisTemplate.unlink(batch)
             }.onFailure { logger.warn("todos 캐시 삭제 실패 userId = $userId", it) }
         }
         event.todoIds.forEach { todoId ->
@@ -42,4 +47,8 @@ class TodoCacheEvictEventListener(
             .replace("?", "\\?")
             .replace("[", "\\[")
             .replace("]", "\\]")
+
+    companion object {
+        private const val EVICT_BATCH_SIZE = 100
+    }
 }
