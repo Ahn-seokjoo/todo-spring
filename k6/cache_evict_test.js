@@ -45,6 +45,11 @@ export const options = {
     },
     thresholds: {
         checks: ['rate>0.99'],
+        // 전체 checks만 보면 수정(30초에 약 60건)이 전부 실패해도 조회(약 1만 3천 건)에 묻혀 통과한다.
+        // 수정이 실패하면 캐시 무효화가 안 일어나 적중률이 거짓으로 높게 나오므로, 요청 종류별로 따로 막는다.
+        // (setup의 가입 요청은 name:setup 태그라 여기에 섞이지 않음)
+        'http_req_failed{name:update}': ['rate<0.01'],
+        'http_req_failed{name:list}': ['rate<0.01'],
         // 조회/수정 응답시간을 요약에 따로 찍기 위한 항목 (기준값은 사실상 통과용)
         'http_req_duration{name:list}': ['p(99)<60000'],
         'http_req_duration{name:update}': ['p(99)<60000'],
