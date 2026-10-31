@@ -185,6 +185,12 @@
     td.title { font-weight: 500; min-width: 180px; overflow-wrap: anywhere; }
     td.cats { color: var(--text-2); }
     td.empty { height: auto; padding: 40px 20px; color: var(--text-2); text-align: center; }
+    td.title .done { text-decoration: line-through; color: var(--text-3); }
+    td.edit-cell { height: auto; padding: 16px 20px; background: var(--bg); }
+    .edit-form { gap: 12px; }
+    .check { display: flex; align-items: center; gap: 8px; height: 40px; cursor: pointer; font-weight: 500; white-space: nowrap; }
+    .check input { width: 16px; height: 16px; padding: 0; margin: 0; accent-color: var(--ink); cursor: pointer; }
+    .edit-actions { display: flex; justify-content: flex-end; gap: 8px; }
     tr.arrive { animation: arrive .24s ease-out both; }
     @keyframes arrive { from { opacity: 0; transform: translateY(4px); } }
     tr.leaving { transition: opacity .3s; opacity: .35; }
@@ -729,7 +735,8 @@
 
   // 금액 입력칸: 숫자만 받고, 앞자리 0을 없애고, 입력하는 동안 천 단위 쉼표를 붙인다
   // 쉼표를 다시 붙여도 커서가 끝으로 튀지 않게, 커서 앞에 있던 숫자 개수만큼 뒤에 커서를 다시 둔다
-  ['charge-amount', 'create-price'].forEach((id) => $(id).addEventListener('input', (e) => {
+  // (Todo 수정 행처럼 나중에 만들어지는 입력칸에도 붙이려고 함수로 뺐다)
+  function formatAmountInput(e) {
     const el = e.target;
     const digitsBeforeCaret = el.value.slice(0, el.selectionStart ?? el.value.length).replace(/[^0-9]/g, '').length;
     const raw = el.value.replace(/[^0-9]/g, '');
@@ -745,7 +752,8 @@
       pos++;
     }
     el.setSelectionRange(pos, pos);
-  }));
+  }
+  ['charge-amount', 'create-price'].forEach((id) => $(id).addEventListener('input', formatAmountInput));
 
   $('charge-btn').addEventListener('click', async (e) => {
     const out = $('balance-result');
@@ -797,7 +805,13 @@
   function todoRow(t) {
     const pending = t.status === 'PENDING_APPROVAL';
     const tr = document.createElement('tr');
-    const titleTd = cell(t.todo, 'title');
+    // 완료한 Todo는 내용에 취소선을 긋는다 (아래 메타 줄까지 그어지지 않게 내용만 span으로 감쌈)
+    const titleTd = document.createElement('td');
+    titleTd.className = 'title';
+    const titleText = document.createElement('span');
+    titleText.textContent = t.todo;
+    if (t.isDone) titleText.className = 'done';
+    titleTd.append(titleText);
     const meta = document.createElement('div');
     meta.className = 'title-meta num';
     meta.textContent = `${t.id}번`;
@@ -832,9 +846,97 @@
       reject.onclick = () => decide(t.id, 'reject', tr, reject);
       wrap.append(approve, reject);
       actionTd.appendChild(wrap);
+    } else {
+      // 구매 요청이 들어온(승인 대기) Todo는 서버가 수정을 막으므로 판매 중일 때만 수정 버튼을 둔다
+      const wrap = document.createElement('div');
+      wrap.className = 'actions';
+      const edit = document.createElement('button');
+      edit.type = 'button';
+      edit.className = 'btn btn-secondary btn-sm';
+      edit.textContent = '수정';
+      edit.onclick = () => startEdit(t, tr);
+      wrap.append(edit);
+      actionTd.appendChild(wrap);
     }
     tr.appendChild(actionTd);
     return tr;
+  }
+
+  // ---------- 내 Todo 수정 (PATCH /api/v1/todos/{id}) ----------
+  // 수정 버튼을 누르면 그 행을 입력 폼 행으로 잠깐 바꾼다. 한 번에 한 행만 편집한다
+  let editing = null; // { tr: 원래 행, editTr: 폼 행 }
+
+  function closeEdit({ focus } = {}) {
+    if (!editing) return;
+    const { tr, editTr } = editing;
+    editing = null;
+    editTr.replaceWith(tr);
+    if (focus) tr.querySelector('.actions button')?.focus();
+  }
+
+  function sameCategories(a, b) {
+    return [...a].sort().join('\u0000') === [...b].sort().join('\u0000');
+  }
+
+  function startEdit(t, tr) {
+    closeEdit();
+    const editTr = document.createElement('tr');
+    editTr.className = 'editing';
+    const td = document.createElement('td');
+    td.colSpan = 6;
+    td.className = 'edit-cell';
+    const form = document.createElement('form');
+    form.className = 'edit-form';
+    // 고정 마크업만 innerHTML로 넣고, 서버에서 온 값은 아래에서 .value / .checked로만 넣는다
+    form.innerHTML = `
+      <div class="row">
+        <label class="field grow"><span>내용</span><input name="todo" autocomplete="off" required></label>
+        <label class="field"><span>가격</span><input name="price" class="num" type="text" inputmode="numeric" autocomplete="off" placeholder="0"></label>
+        <label class="check"><input name="isDone" type="checkbox"><span>완료</span></label>
+      </div>
+      <label class="field"><span>카테고리</span><input name="categories" autocomplete="off" placeholder="공부, 운동"><small>쉼표로 구분합니다. 비워 두면 기존 카테고리를 그대로 둡니다.</small></label>
+      <div class="edit-actions">
+        <button type="button" class="btn btn-secondary btn-sm" data-cancel>취소</button>
+        <button type="submit" class="btn btn-primary btn-sm">저장</button>
+      </div>`;
+    const f = form.elements;
+    f.todo.value = t.todo;
+    f.price.value = won(t.price);
+    f.isDone.checked = Boolean(t.isDone);
+    f.categories.value = (t.categories || []).join(', ');
+    f.price.addEventListener('input', formatAmountInput);
+    form.querySelector('[data-cancel]').onclick = () => closeEdit({ focus: true });
+    form.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeEdit({ focus: true }); });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const out = $('todos-result');
+      const todo = f.todo.value.trim();
+      if (!todo) { show(out, false, null, '내용을 입력하세요.'); f.todo.focus(); return; }
+      const categories = f.categories.value.split(',').map((s) => s.trim()).filter(Boolean);
+      // PATCH는 categories가 비어 있으면 기존 카테고리를 유지한다
+      // → 카테고리를 바꾸지 않았으면 빈 배열을 보내서 불필요한 삭제·재등록을 피한다
+      const body = {
+        todo,
+        price: parseAmount(f.price.value),
+        isDone: f.isDone.checked,
+        categories: sameCategories(categories, t.categories || []) ? [] : categories,
+      };
+      await busy(e.submitter, '저장 중', async () => {
+        try {
+          const res = await api('PATCH', `/api/v1/todos/${t.id}`, body);
+          showResponse(out, 200, res, `${t.id}번 Todo를 수정했습니다.`);
+          if (res.status === 200) await loadTodos(currentPage);
+        } catch (err) { showFetchError(out, err); }
+      });
+    });
+
+    td.appendChild(form);
+    editTr.appendChild(td);
+    tr.replaceWith(editTr);
+    editing = { tr, editTr };
+    f.todo.focus();
+    f.todo.select();
   }
 
   async function loadTodos(page) {
@@ -848,6 +950,7 @@
         return false;
       }
       currentPage = page;
+      editing = null; // 목록을 새로 그리면 열려 있던 수정 폼도 사라진다
       const { isLast, todoList } = res.data;
       $('page-label').textContent = `${page + 1}페이지`;
       $('prev-btn').disabled = page === 0;
