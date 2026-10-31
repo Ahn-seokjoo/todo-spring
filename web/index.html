@@ -589,6 +589,9 @@
     show(el, false, `${err.name}: ${err.message}\n브라우저 개발자 도구의 Console, Network 탭에서 원인을 확인하세요.`, '서버에 연결하지 못했습니다. 네트워크나 CORS 설정을 확인하세요.');
   }
 
+  // 요청을 보낸 뒤 응답이 오기 전에 로그아웃(또는 다른 계정으로 로그인)했으면 그 응답은 화면에 그리지 않는다
+  const sameUser = (who) => sessionStorage.getItem('userId') === who;
+
   function requireLogin(el) {
     const userId = sessionStorage.getItem('userId');
     if (!userId) show(el, false, null, '로그인이 필요합니다. 계정 탭에서 로그인하세요.');
@@ -701,10 +704,32 @@
     });
   });
 
+  // 로그아웃하면 로그인해야 보이던 화면(잔액, 내 Todo, 마켓, 매출)을 모두 비운다
+  // (비우지 않으면 다른 탭을 열었을 때 이전 사용자의 목록이 그대로 보인다)
+  function clearSessionViews() {
+    $('balance-value').textContent = '-';
+    editing = null;
+    currentPage = 0;
+    emptyRow($('todos-body'), 6, '로그인하면 내 Todo가 표시됩니다.');
+    $('page-label').textContent = '-';
+    $('prev-btn').disabled = true;
+    $('next-btn').disabled = true;
+    marketCursor = null;
+    marketShown = 0;
+    emptyRow($('market-body'), 7, '로그인하면 마켓의 Todo가 표시됩니다.');
+    $('market-count').textContent = '-';
+    $('market-more-btn').hidden = true;
+    $('market-end').hidden = true;
+    emptyRow($('sales-body'), 3, '기간을 선택하고 조회하세요.');
+    ['sales-total-count', 'sales-total-amount', 'sales-elapsed'].forEach((id) => { $(id).textContent = '-'; });
+    ['balance-result', 'todos-result', 'create-result', 'market-result', 'purchase-result', 'sales-result']
+      .forEach((id) => { $(id).hidden = true; });
+  }
+
   $('logout-btn').addEventListener('click', () => {
     sessionStorage.removeItem('accessToken');
     sessionStorage.removeItem('userId');
-    $('balance-value').textContent = '-';
+    clearSessionViews();
     renderWhoami();
     selectTab('account');
   });
@@ -716,6 +741,7 @@
     if (!userId) return;
     try {
       const res = await api('GET', `/api/v1/current/${encodeURIComponent(userId)}`);
+      if (!sameUser(userId)) return;
       if (res.status === 200) {
         setBalance(Number(res.data.balance));
         out.hidden = true;
@@ -942,9 +968,11 @@
   async function loadTodos(page) {
     const out = $('todos-result');
     const tbody = $('todos-body');
-    if (!requireLogin(out)) return false;
+    const who = requireLogin(out);
+    if (!who) return false;
     try {
       const res = await api('GET', `/api/v1/todos?pageNumber=${page}&pageSize=${PAGE_SIZE}`);
+      if (!sameUser(who)) return false;
       if (res.status !== 200) {
         showResponse(out, 200, res);
         return false;
@@ -1080,13 +1108,15 @@
   async function loadMarket(reset) {
     const out = $('market-result');
     const tbody = $('market-body');
-    if (!requireLogin(out)) return false;
+    const who = requireLogin(out);
+    if (!who) return false;
     if (marketLoading) return false;
     marketLoading = true;
     const cursor = reset ? null : marketCursor;
     const query = `pageSize=${MARKET_PAGE_SIZE}${cursor !== null ? `&cursor=${cursor}` : ''}`;
     try {
       const res = await api('GET', `/api/v1/market?${query}`);
+      if (!sameUser(who)) return false;
       if (res.status !== 200) {
         showResponse(out, 200, res);
         return false;
@@ -1188,7 +1218,8 @@
   async function loadSales() {
     const out = $('sales-result');
     const tbody = $('sales-body');
-    if (!requireLogin(out)) return;
+    const who = requireLogin(out);
+    if (!who) return;
     const from = $('sales-from').value;
     const toInclusive = $('sales-to').value;
     if (!from || !toInclusive) { show(out, false, null, '시작일과 종료일을 모두 선택하세요.'); return; }
@@ -1198,6 +1229,7 @@
     try {
       const started = performance.now();
       const res = await api('GET', `/api/v1/sales/${salesSource}?from=${from}&to=${to}`);
+      if (!sameUser(who)) return;
       $('sales-elapsed').textContent = won(Math.round(performance.now() - started));
       if (res.status !== 200) {
         showResponse(out, 200, res);
