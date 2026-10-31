@@ -61,7 +61,7 @@ class TodoAuthService(
 
             todoAuthRepository.delete(user)
             eventPublisher.publishEvent(TodoDeletedEvent(categoryIds = categoryIds))
-            eventPublisher.publishEvent(TodoCacheEvictEvent(isEvictAll = true, todoIds = todoIds))
+            eventPublisher.publishEvent(TodoCacheEvictEvent(todoIds = todoIds.toSet(), userIds = setOf(user.userId)))
         } else {
             throw TodoException.of(TodoExceptionType.AUTH_NOT_MATCHED_PASSWORD)
         }

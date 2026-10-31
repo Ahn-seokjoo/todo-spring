@@ -35,7 +35,7 @@ class TodoPurchaseTxService(
         // 구매 대기중이라면 구매할 수 없음
         check(todo.status != TodoStatus.PENDING_APPROVAL) { throw TodoException.of(TodoExceptionType.CAN_NOT_PURCHASE) }
         // Todo 상태 Pending 으로 변경
-        todoService.changeStatus(todoId = todo.id, status = TodoStatus.PENDING_APPROVAL)
+        todoService.changeStatus(todoId = todo.id, sellerId = sellerId, status = TodoStatus.PENDING_APPROVAL)
 
         // 구매 요청 내역 생성
         val purchase = Purchase(sellerId = sellerId, buyerId = buyerId, todoId = todoId, price = todo.price)
@@ -73,7 +73,7 @@ class TodoPurchaseTxService(
         val buyer = todoAuthService.findUserByUserId(purchase.buyerId)
 
         // 상태 다시 AVAILABLE 하게 수정
-        todoService.changeStatus(todoId = todo.id, status = TodoStatus.AVAILABLE)
+        todoService.changeStatus(todoId = todo.id, sellerId = todo.ownerId, status = TodoStatus.AVAILABLE)
 
         // 주문 내역서 업데이트
         val updateSuccessCount = todoPurchaseRepository.updatePurchaseStatus(todoId, PurchaseStatus.APPROVED)
@@ -106,7 +106,7 @@ class TodoPurchaseTxService(
         check(todo.status != TodoStatus.AVAILABLE) { throw TodoException.of(TodoExceptionType.NOT_PENDING) }
 
         // 상태 다시 AVAILABLE 하게 수정
-        todoService.changeStatus(todoId = todo.id, status = TodoStatus.AVAILABLE)
+        todoService.changeStatus(todoId = todo.id, sellerId = todo.ownerId, status = TodoStatus.AVAILABLE)
 
         // 업데이트 이전에 pending된 구매요청서 찾아옴
         val purchase = todoPurchaseRepository.findByTodoIdAndPurchaseStatus(todoId, PurchaseStatus.PENDING)
@@ -147,7 +147,7 @@ class TodoPurchaseTxService(
         }
 
         // 상태 다시 AVAILABLE 하게 수정
-        todoService.changeStatus(todoId = todo.id, status = TodoStatus.AVAILABLE)
+        todoService.changeStatus(todoId = todo.id, sellerId = todo.ownerId, status = TodoStatus.AVAILABLE)
 
         // 주문 내역서 업데이트
         val updateSuccessCount = todoPurchaseRepository.updatePurchaseStatus(todoId, PurchaseStatus.CANCELLED)
