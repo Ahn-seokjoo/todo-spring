@@ -5,6 +5,7 @@ import com.seokjoo.todo.common.exception.TodoException
 import com.seokjoo.todo.common.exception.TodoExceptionType
 import com.seokjoo.todo.domain.entity.todouser.User
 import com.seokjoo.todo.domain.service.auth.TodoAuthService
+import com.seokjoo.todo.domain.service.todo.event.TodoCacheEvictEvent
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -15,6 +16,7 @@ import org.junit.jupiter.params.provider.ValueSource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.cache.CacheManager
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.data.redis.core.ScanOptions
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.transaction.support.TransactionTemplate
@@ -27,6 +29,7 @@ class TodoCacheTest @Autowired constructor(
     @Qualifier("todoCacheManager") private val cacheManager: CacheManager,
     private val transactionTemplate: TransactionTemplate,
     private val stringRedisTemplate: StringRedisTemplate,
+    private val eventPublisher: ApplicationEventPublisher,
 ) {
     @BeforeEach
     fun setUp() {
@@ -230,6 +233,27 @@ class TodoCacheTest @Autowired constructor(
 
         assertThat(scanKeys("todos::pita:*")).isEmpty()              // 250개 모두 지워지고
         assertThat(stringRedisTemplate.hasKey(otherUserKey)).isTrue() // 다른 사용자 키는 남는다
+    }
+
+    @Test
+    fun `아이디가 다른 아이디의 앞부분이어도 그 사용자의 목록 캐시를 지우지 않는다`() {
+        // 콜론은 글롭 특수문자가 아니라 이스케이프로 막을 수 없다: "amy"의 패턴 todos::amy:* 는 "amy:dev"의 키에도 매칭된다
+        val amyKey = "todos::amy:page:0:size:5"
+        val amyDevKey = "todos::amy:dev:page:0:size:5"
+        listOf(amyKey, amyDevKey).forEach { stringRedisTemplate.opsForValue().set(it, "dummy", Duration.ofMinutes(1)) }
+
+        // 트랜잭션 밖에서 발행하면 리스너(fallbackExecution = true)가 바로 실행된다
+        eventPublisher.publishEvent(TodoCacheEvictEvent(userIds = setOf("amy")))
+
+        assertThat(stringRedisTemplate.hasKey(amyKey)).isFalse()
+        assertThat(stringRedisTemplate.hasKey(amyDevKey)).isTrue()      // amy:dev 키는 남는다
+
+        // 반대 방향도 확인
+        stringRedisTemplate.opsForValue().set(amyKey, "dummy", Duration.ofMinutes(1))
+        eventPublisher.publishEvent(TodoCacheEvictEvent(userIds = setOf("amy:dev")))
+
+        assertThat(stringRedisTemplate.hasKey(amyDevKey)).isFalse()
+        assertThat(stringRedisTemplate.hasKey(amyKey)).isTrue()         // amy 키는 남는다
     }
 
     private fun scanKeys(pattern: String): Set<String> =

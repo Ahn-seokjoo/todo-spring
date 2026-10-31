@@ -21,14 +21,18 @@ class TodoCacheEvictEventListener(
         event.userIds.forEach { userId ->
             runCatching {
                 val pattern = "todos::${escapeGlob(userId)}:*"
+                // 지우기 전에 이 사용자의 키 형식인지 정확히 확인한다.
+                val ownKey = Regex("^todos::${Regex.escape(userId)}:page:\\d+:size:\\d+$")
                 val options = ScanOptions.scanOptions().match(pattern).count(100).build()
                 val batch = mutableSetOf<String>()
                 redisTemplate.scan(options).use { cursor ->
                     cursor.forEach { key ->
-                        batch += key
-                        if (batch.size >= EVICT_BATCH_SIZE) {
-                            redisTemplate.unlink(batch)
-                            batch.clear()
+                        if (ownKey.matches(key)) {
+                            batch += key
+                            if (batch.size >= EVICT_BATCH_SIZE) {
+                                redisTemplate.unlink(batch)
+                                batch.clear()
+                            }
                         }
                     }
                 }

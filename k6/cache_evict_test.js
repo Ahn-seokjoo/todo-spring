@@ -40,7 +40,10 @@ export const options = {
             rate: WRITE_RATE,
             timeUnit: '1s',
             duration: DURATION,
-            preAllocatedVUs: 2,
+            // constant-arrival-rate는 쉬는 VU가 없으면 그 차례를 기다리지 않고 버린다(dropped_iterations).
+            // 수정이 느려져도 버려지지 않게 여유를 두고, 버려지면 아래 기준으로 실패시킨다.
+            preAllocatedVUs: 5,
+            maxVUs: 10,
         },
     },
     thresholds: {
@@ -50,6 +53,8 @@ export const options = {
         // (setup의 가입 요청은 name:setup 태그라 여기에 섞이지 않음)
         'http_req_failed{name:update}': ['rate<0.01'],
         'http_req_failed{name:list}': ['rate<0.01'],
+        // writer 반복이 하나라도 버려지면 실제 수정 횟수가 줄어 적중률이 좋게 나오므로 실패 처리
+        dropped_iterations: ['count==0'],
         // 조회/수정 응답시간을 요약에 따로 찍기 위한 항목 (기준값은 사실상 통과용)
         'http_req_duration{name:list}': ['p(99)<60000'],
         'http_req_duration{name:update}': ['p(99)<60000'],
