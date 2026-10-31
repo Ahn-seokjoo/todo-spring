@@ -195,10 +195,12 @@
     .pill.wait { background: var(--warn-soft); color: var(--warn); }
     .pill.wait::before { content: ""; width: 6px; height: 6px; margin-right: 6px; border-radius: 50%; background: currentColor; animation: pulse 1.6s ease-in-out infinite; }
     @keyframes pulse { 50% { opacity: .3; } }
+    .pill.mine { background: var(--surface-2); color: var(--text-2); box-shadow: inset 0 0 0 1px var(--line); }
+    td.owner { color: var(--text-2); white-space: nowrap; }
     .actions { display: flex; gap: 4px; justify-content: flex-end; }
     @media (max-width: 720px) {
       th, td { padding-left: 12px; padding-right: 12px; }
-      .col-cats, .col-id, .col-status { display: none; }
+      .col-cats, .col-id, .col-status, .col-owner { display: none; }
       .title-meta { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
       td.title { min-width: 0; padding-top: 10px; padding-bottom: 10px; }
       .actions { flex-direction: column; align-items: stretch; }
@@ -240,6 +242,7 @@
       <button class="tab" id="tab-account" role="tab" type="button" data-tab="account" aria-controls="panel-account" aria-selected="true" tabindex="0">계정</button>
       <button class="tab" id="tab-wallet" role="tab" type="button" data-tab="wallet" aria-controls="panel-wallet" aria-selected="false" tabindex="-1">잔액</button>
       <button class="tab" id="tab-todos" role="tab" type="button" data-tab="todos" aria-controls="panel-todos" aria-selected="false" tabindex="-1">내 Todo</button>
+      <button class="tab" id="tab-market" role="tab" type="button" data-tab="market" aria-controls="panel-market" aria-selected="false" tabindex="-1">마켓</button>
       <button class="tab" id="tab-purchase" role="tab" type="button" data-tab="purchase" aria-controls="panel-purchase" aria-selected="false" tabindex="-1">구매</button>
       <button class="tab" id="tab-sales" role="tab" type="button" data-tab="sales" aria-controls="panel-sales" aria-selected="false" tabindex="-1">매출</button>
     </nav>
@@ -350,6 +353,28 @@
     </div>
   </section>
 
+  <!-- ===== 마켓 ===== -->
+  <section class="panel" id="panel-market" data-panel="market" role="tabpanel" aria-labelledby="tab-market" hidden>
+    <div class="page-head">
+      <div><h1>마켓</h1><p>모든 사용자의 Todo를 최신순으로 보여줍니다. 구매를 요청하면 금액이 먼저 차감되고, 판매자가 거절하면 환불됩니다.</p></div>
+      <button class="btn btn-secondary btn-sm" id="market-btn" type="button">새로고침</button>
+    </div>
+    <div class="sheet">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th class="col-id">번호</th><th>내용</th><th class="col-cats">카테고리</th><th class="col-owner">판매자</th><th class="r">가격</th><th class="col-status">상태</th><th class="r"><span class="sr-only">구매</span></th></tr></thead>
+          <tbody id="market-body"><tr><td colspan="7" class="empty">로그인하면 마켓의 Todo가 표시됩니다.</td></tr></tbody>
+        </table>
+      </div>
+      <div class="pager">
+        <span id="market-count" class="num">-</span>
+        <button id="market-more-btn" type="button" class="btn btn-secondary btn-sm" hidden>더 보기</button>
+        <span id="market-end" hidden>마지막 Todo입니다</span>
+      </div>
+      <div class="result" id="market-result" role="status" aria-live="polite" hidden></div>
+    </div>
+  </section>
+
   <!-- ===== 구매 ===== -->
   <section class="panel" id="panel-purchase" data-panel="purchase" role="tabpanel" aria-labelledby="tab-purchase" hidden>
     <div class="page-head"><div><h1>구매</h1><p>구매를 요청하면 금액이 먼저 차감되고, 판매자가 거절하면 환불됩니다.</p></div></div>
@@ -422,7 +447,7 @@
   $('env-badge').textContent = IS_LOCAL ? '로컬' : '운영';
 
   // ---------- 탭 ----------
-  const TABS = ['account', 'wallet', 'todos', 'purchase', 'sales'];
+  const TABS = ['account', 'wallet', 'todos', 'market', 'purchase', 'sales'];
   let currentTab = null;
 
   function movePill(instant) {
@@ -482,6 +507,7 @@
     if (!sessionStorage.getItem('userId')) return;
     if (name === 'wallet') loadBalance();
     if (name === 'todos') loadTodos(currentPage).then((ok) => { if (ok) $('todos-result').hidden = true; });
+    if (name === 'market') loadMarket(true).then((ok) => { if (ok) $('market-result').hidden = true; });
     if (name === 'sales') loadSales();
   }
 
@@ -870,6 +896,142 @@
   });
   $('prev-btn').addEventListener('click', () => loadTodos(currentPage - 1));
   $('next-btn').addEventListener('click', () => loadTodos(currentPage + 1));
+
+  // ---------- 마켓 (더 보기: keyset 커서) ----------
+  // 서버가 준 nextCursor(이번 페이지 마지막 id)를 들고 있다가 다음 요청에 그대로 보낸다
+  // nextCursor가 null이면 마지막 페이지 → 더 보기 버튼을 숨긴다
+  const MARKET_PAGE_SIZE = 10;
+  let marketCursor = null;
+  let marketShown = 0;
+  let marketLoading = false;
+
+  function statusPill(pending) {
+    const pill = document.createElement('span');
+    pill.className = pending ? 'pill wait' : 'pill ok';
+    pill.textContent = pending ? '승인 대기' : '판매 중';
+    return pill;
+  }
+
+  function marketRow(t) {
+    // 내 Todo인지는 응답의 owner와 로그인한 아이디를 비교해서 화면에서 판단한다
+    const mine = t.owner === sessionStorage.getItem('userId');
+    const pending = t.status === 'PENDING_APPROVAL';
+    const tr = document.createElement('tr');
+
+    const titleTd = cell(t.todo, 'title');
+    const meta = document.createElement('div');
+    meta.className = 'title-meta num';
+    meta.textContent = `${t.id}번 · ${mine ? '내 Todo' : t.owner}`;
+    meta.append(statusPill(pending));
+    titleTd.append(meta);
+
+    const ownerTd = document.createElement('td');
+    ownerTd.className = 'owner col-owner';
+    if (mine) {
+      const pill = document.createElement('span');
+      pill.className = 'pill mine';
+      pill.textContent = '내 Todo';
+      ownerTd.appendChild(pill);
+    } else {
+      ownerTd.textContent = t.owner;
+    }
+
+    const statusTd = document.createElement('td');
+    statusTd.className = 'col-status';
+    statusTd.appendChild(statusPill(pending));
+
+    // 내 Todo, 이미 구매 요청이 들어간 Todo는 구매 버튼을 두지 않는다
+    const actionTd = document.createElement('td');
+    if (!mine && !pending) {
+      const wrap = document.createElement('div');
+      wrap.className = 'actions';
+      const buyBtn = document.createElement('button');
+      buyBtn.type = 'button';
+      buyBtn.className = 'btn btn-secondary btn-sm';
+      buyBtn.textContent = '구매';
+      buyBtn.onclick = () => buyFromMarket(t, tr, buyBtn);
+      wrap.appendChild(buyBtn);
+      actionTd.appendChild(wrap);
+    }
+
+    tr.append(
+      cell(t.id, 'id num col-id'),
+      titleTd,
+      cell((t.categories || []).join(', ') || '-', 'cats col-cats'),
+      ownerTd,
+      cell(`${won(t.price)}원`, 'r num'),
+      statusTd,
+      actionTd,
+    );
+    return tr;
+  }
+
+  function renderMarketPager() {
+    const hasNext = marketCursor !== null;
+    $('market-count').textContent = `${won(marketShown)}개 표시 중`;
+    $('market-more-btn').hidden = !hasNext;
+    $('market-end').hidden = hasNext || marketShown === 0;
+  }
+
+  // reset=true: 첫 페이지부터 다시 (탭 열기, 새로고침), false: 이어서 더 보기
+  async function loadMarket(reset) {
+    const out = $('market-result');
+    const tbody = $('market-body');
+    if (!requireLogin(out)) return false;
+    if (marketLoading) return false;
+    marketLoading = true;
+    const cursor = reset ? null : marketCursor;
+    const query = `pageSize=${MARKET_PAGE_SIZE}${cursor !== null ? `&cursor=${cursor}` : ''}`;
+    try {
+      const res = await api('GET', `/api/v1/market?${query}`);
+      if (res.status !== 200) {
+        showResponse(out, 200, res);
+        return false;
+      }
+      const { nextCursor, todoList } = res.data;
+      const rows = todoList.map(marketRow);
+      if (reset) {
+        marketShown = 0;
+        if (rows.length === 0) emptyRow(tbody, 7, '마켓에 등록된 Todo가 없습니다. 내 Todo 탭에서 첫 Todo를 등록해 보세요.');
+        else tbody.replaceChildren(...arrive(rows));
+      } else {
+        tbody.append(...arrive(rows));
+      }
+      marketShown += rows.length;
+      marketCursor = nextCursor ?? null;
+      renderMarketPager();
+      return true;
+    } catch (err) {
+      showFetchError(out, err);
+      return false;
+    } finally {
+      marketLoading = false;
+    }
+  }
+
+  // 구매 요청이 성공하면 목록을 다시 불러오지 않고 그 행만 승인 대기로 바꾼다
+  // (다시 불러오면 커서가 처음으로 돌아가서 더 보기로 내려온 위치를 잃는다)
+  function markMarketRowPending(tr) {
+    tr.querySelectorAll('.pill.ok').forEach((p) => p.replaceWith(statusPill(true)));
+    tr.querySelector('.actions')?.remove();
+  }
+
+  async function buyFromMarket(t, tr, btn) {
+    const out = $('market-result');
+    if (!window.confirm(`${t.id}번 "${t.todo}"을(를) ${won(t.price)}원에 구매 요청할까요?\n금액이 먼저 차감되고, 판매자가 거절하면 환불됩니다.`)) return;
+    await busy(btn, '요청 중', async () => {
+      try {
+        const res = await api('POST', `/api/v1/purchase/${t.id}`);
+        showResponse(out, 200, res, `${t.id}번 구매를 요청했습니다. 판매자가 승인하면 완료됩니다.`);
+        if (res.status === 200) markMarketRowPending(tr);
+      } catch (err) { showFetchError(out, err); }
+    });
+  }
+
+  $('market-btn').addEventListener('click', async () => {
+    if (await loadMarket(true)) $('market-result').hidden = true;
+  });
+  $('market-more-btn').addEventListener('click', (e) => busy(e.currentTarget, '불러오는 중', () => loadMarket(false)));
 
   // ---------- 구매 ----------
   async function purchase(suffix, btn) {
