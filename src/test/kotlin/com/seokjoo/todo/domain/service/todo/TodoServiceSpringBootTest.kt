@@ -167,7 +167,7 @@ class TodoServiceSpringBootTest @Autowired constructor(
         assert(exception is TodoException)
         with(exception as TodoException) {
             assert(message == "존재하지 않는 Todo 입니다")
-            assert(errorCode == "T000_TODO_ERROR")
+            assert(errorCode == "TO00_TODO_ERROR")
             assert(httpStatusCode == 404)
         }
     }
@@ -181,7 +181,7 @@ class TodoServiceSpringBootTest @Autowired constructor(
         assert(exception is TodoException)
         with(exception as TodoException) {
             assert(message == "존재하지 않는 Todo 입니다")
-            assert(errorCode == "T000_TODO_ERROR")
+            assert(errorCode == "TO00_TODO_ERROR")
             assert(httpStatusCode == 404)
         }
     }
@@ -195,7 +195,7 @@ class TodoServiceSpringBootTest @Autowired constructor(
         assert(exception is TodoException)
         with(exception as TodoException) {
             assert(message == "존재하지 않는 Todo 입니다")
-            assert(errorCode == "T000_TODO_ERROR")
+            assert(errorCode == "TO00_TODO_ERROR")
             assert(httpStatusCode == 404)
         }
     }

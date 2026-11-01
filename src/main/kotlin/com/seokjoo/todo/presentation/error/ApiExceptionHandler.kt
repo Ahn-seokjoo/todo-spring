@@ -9,6 +9,7 @@ import org.springframework.web.HttpRequestMethodNotSupportedException
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
+import org.springframework.web.method.annotation.HandlerMethodValidationException
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
 
 @RestControllerAdvice
@@ -44,6 +45,7 @@ class ApiExceptionHandler {
             }
 
             "isDone" -> TodoExceptionType.COMMON_VALIDATION_BAD_REQUEST
+            "userId" -> TodoExceptionType.AUTH_VALIDATION_ERROR
             else -> TodoExceptionType.COMMON_VALIDATION_BAD_REQUEST
         }
 
@@ -112,6 +114,19 @@ class ApiExceptionHandler {
     fun handleNotReadable(exception: HttpMessageNotReadableException): ResponseEntity<ApiErrorResponse> {
         logger.info(exception.message)
         val error = TodoExceptionType.COMMON_BAD_REQUEST
+        return ResponseEntity
+            .status(error.httpStatusCode)
+            .body(ApiErrorResponse(errorCode = error.errorCode, message = error.message))
+    }
+
+    @ExceptionHandler
+    fun handleHandlerMethodValidationException(exception: HandlerMethodValidationException): ResponseEntity<ApiErrorResponse> {
+        logger.info("Method validation error", exception)
+        val failedParams = exception.parameterValidationResults.map { it.methodParameter.parameterName }
+        val error = when {
+            "pageSize" in failedParams -> TodoExceptionType.INVALID_PAGE_SIZE
+            else -> TodoExceptionType.COMMON_VALIDATION_BAD_REQUEST
+        }
         return ResponseEntity
             .status(error.httpStatusCode)
             .body(ApiErrorResponse(errorCode = error.errorCode, message = error.message))

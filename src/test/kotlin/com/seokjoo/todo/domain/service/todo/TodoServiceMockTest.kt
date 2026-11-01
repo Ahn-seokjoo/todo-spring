@@ -77,7 +77,7 @@ class TodoServiceMockTest : BehaviorSpec({
                 }
                 exception.message shouldBe "존재하지 않는 Todo 입니다"
                 exception.httpStatusCode shouldBe 404
-                exception.errorCode shouldBe "T000_TODO_ERROR"
+                exception.errorCode shouldBe "TO00_TODO_ERROR"
             }
         }
     }
@@ -136,7 +136,7 @@ class TodoServiceMockTest : BehaviorSpec({
                 }
                 exception.message shouldBe "존재하지 않는 Todo 입니다"
                 exception.httpStatusCode shouldBe 404
-                exception.errorCode shouldBe "T000_TODO_ERROR"
+                exception.errorCode shouldBe "TO00_TODO_ERROR"
             }
         }
 
@@ -231,7 +231,7 @@ class TodoServiceMockTest : BehaviorSpec({
                 }
                 exception.message shouldBe "존재하지 않는 Todo 입니다"
                 exception.httpStatusCode shouldBe expectedStatusCode
-                exception.errorCode shouldBe "T000_TODO_ERROR"
+                exception.errorCode shouldBe "TO00_TODO_ERROR"
             }
         }
     }

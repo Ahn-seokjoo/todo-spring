@@ -24,6 +24,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
+import jakarta.validation.constraints.Max
+import jakarta.validation.constraints.Min
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -59,7 +61,10 @@ class TodoApiController(
     @Operation(summary = "사용자 todo를 페이지네이션을 통해 리턴", description = "사용자가 등록한 todo 와 카테고리 정보를 n개씩 가져옵니다. (default = 20)")
     fun getPagedTodos(
         servletRequest: HttpServletRequest,
+        @Min(value = 0, message = "페이지 넘버는 0 이상힙니다")
         @RequestParam(defaultValue = "0") pageNumber: Int,
+        @Min(value = 1, message = "페이지 크기는 1 이상 20 이하입니다")
+        @Max(value = 20, message = "페이지 크기는 1 이상 20 이하입니다")
         @RequestParam(defaultValue = "20") pageSize: Int,
     ): ResponseEntity<TodoPageResponse> {
         val user = authService.findUser(servletRequest.getBearerToken())

@@ -5,6 +5,8 @@ import com.seokjoo.todo.presentation.market.dto.TodoMarketPageRequest
 import com.seokjoo.todo.presentation.market.dto.TodoMarketPageResponse
 import com.seokjoo.todo.presentation.market.dto.toTodoMarketPageServiceDTO
 import com.seokjoo.todo.presentation.todo.dto.response.toResponse
+import jakarta.validation.constraints.Max
+import jakarta.validation.constraints.Min
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
@@ -19,6 +21,8 @@ class TodoMarketController(
 
     @GetMapping
     fun getMarketTodos(
+        @Min(value = 1, message = "페이지 크기는 1 이상 20 이하입니다")
+        @Max(value = 20, message = "페이지 크기는 1 이상 20 이하입니다")
         @RequestParam(defaultValue = "20") pageSize: Int,
         @RequestParam(required = false) cursor: Long?,
     ): ResponseEntity<TodoMarketPageResponse> {
