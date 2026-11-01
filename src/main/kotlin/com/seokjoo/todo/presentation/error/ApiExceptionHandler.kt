@@ -44,6 +44,7 @@ class ApiExceptionHandler {
             }
 
             "isDone" -> TodoExceptionType.COMMON_VALIDATION_BAD_REQUEST
+            "userId" -> TodoExceptionType.AUTH_VALIDATION_ERROR
             else -> TodoExceptionType.COMMON_VALIDATION_BAD_REQUEST
         }
 

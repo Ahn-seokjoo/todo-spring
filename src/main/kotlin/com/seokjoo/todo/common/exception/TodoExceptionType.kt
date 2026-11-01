@@ -61,6 +61,11 @@ enum class TodoExceptionType(
         errorCode = "A007_AUTH_WRONG_USER_ACCESS",
         httpStatusCode = 403
     ),
+    AUTH_VALIDATION_ERROR(
+        message = "형식에 맞게 입력해주세요",
+        errorCode = "A008_AUTH_VALIDATION_ERROR",
+        httpStatusCode = 400
+    ),
 
     // MONEY
     BALANCE_NOT_ENOUGH(message = "잔액 부족입니다.", errorCode = "M000_BALANCE_NOT_ENOUGH", httpStatusCode = 400),
