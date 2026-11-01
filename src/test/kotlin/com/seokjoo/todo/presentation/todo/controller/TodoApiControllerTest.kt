@@ -15,6 +15,8 @@ import com.seokjoo.todo.presentation.todo.dto.request.TodoUpdateRequest
 import com.seokjoo.todo.presentation.todo.dto.request.toPatchRequest
 import com.seokjoo.todo.presentation.todo.dto.request.toUpdateRequest
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import org.mockito.kotlin.any
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.given
@@ -311,5 +313,36 @@ class TodoApiControllerTest {
             }
 
         verify(todoRetryableService, never()).deleteTodo(any(), any())
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = [0, -1, 21])
+    fun `목록 조회 pageSize가 1~20 밖이면 TO04로 거절하고 조회하지 않는다`(pageSize: Int) {
+        mockMvc.get("/api/v1/todos") {
+            header("Authorization", "Bearer a")
+            param("pageSize", pageSize.toString())
+        }
+            .andDo { print() }
+            .andExpect {
+                status { isBadRequest() }
+                jsonPath("$.errorCode") { value(TodoExceptionType.INVALID_PAGE_SIZE.errorCode) }
+            }
+
+        verify(todoService, never()).getPagedTodos(any(), any())
+    }
+
+    @Test
+    fun `목록 조회 pageNumber가 음수면 C001로 거절하고 조회하지 않는다`() {
+        mockMvc.get("/api/v1/todos") {
+            header("Authorization", "Bearer a")
+            param("pageNumber", "-1")
+        }
+            .andDo { print() }
+            .andExpect {
+                status { isBadRequest() }
+                jsonPath("$.errorCode") { value(TodoExceptionType.COMMON_VALIDATION_BAD_REQUEST.errorCode) }
+            }
+
+        verify(todoService, never()).getPagedTodos(any(), any())
     }
 }
