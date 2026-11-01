@@ -122,9 +122,9 @@ class ApiExceptionHandler {
     @ExceptionHandler
     fun handleHandlerMethodValidationException(exception: HandlerMethodValidationException): ResponseEntity<ApiErrorResponse> {
         logger.info("Method validation error", exception)
-        val paramName = exception.parameterValidationResults.firstOrNull()?.methodParameter?.parameterName
-        val error = when (paramName) {
-            "pageSize" -> TodoExceptionType.INVALID_PAGE_SIZE
+        val failedParams = exception.parameterValidationResults.map { it.methodParameter.parameterName }
+        val error = when {
+            "pageSize" in failedParams -> TodoExceptionType.INVALID_PAGE_SIZE
             else -> TodoExceptionType.COMMON_VALIDATION_BAD_REQUEST
         }
         return ResponseEntity

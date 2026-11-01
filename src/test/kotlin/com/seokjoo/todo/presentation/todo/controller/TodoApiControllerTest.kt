@@ -345,4 +345,19 @@ class TodoApiControllerTest {
 
         verify(todoService, never()).getPagedTodos(any(), any())
     }
+
+    @Test
+    fun `pageNumber와 pageSize가 모두 틀리면 pageSize 오류(TO04)를 우선한다`() {
+        mockMvc.get("/api/v1/todos") {
+            header("Authorization", "Bearer a")
+            param("pageNumber", "-1")
+            param("pageSize", "21")
+        }
+            .andExpect {
+                status { isBadRequest() }
+                jsonPath("$.errorCode") { value(TodoExceptionType.INVALID_PAGE_SIZE.errorCode) }
+            }
+
+        verify(todoService, never()).getPagedTodos(any(), any())
+    }
 }
