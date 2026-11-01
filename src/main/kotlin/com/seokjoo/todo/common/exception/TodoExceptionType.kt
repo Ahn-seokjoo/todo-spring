@@ -6,7 +6,7 @@ enum class TodoExceptionType(
     val httpStatusCode: Int,
 ) {
     // TODO
-    NOT_EXISTED_TODO(message = "존재하지 않는 Todo 입니다", errorCode = "T000_TODO_ERROR", httpStatusCode = 404),
+    NOT_EXISTED_TODO(message = "존재하지 않는 Todo 입니다", errorCode = "TO00_TODO_ERROR", httpStatusCode = 404),
     ID_BAD_REQUEST(message = "ID 형식을 잘못 입력했습니다.", errorCode = "TO01_BAD_REQUEST", httpStatusCode = 400),
     ID_VALIDATION_BAD_REQUEST(
         message = "Todo는 빈 값일 수 없습니다",
@@ -15,8 +15,13 @@ enum class TodoExceptionType(
     ),
     UNAUTHORIZED_TODO_ACCESS(
         message = "자신의 Todo만 접근할 수 있습니다.",
-        errorCode = "T003_GET_TODO_AUTHORIZATION",
+        errorCode = "TO03_GET_TODO_AUTHORIZATION",
         httpStatusCode = 403
+    ),
+    INVALID_PAGE_SIZE(
+        message = "잘못 요청된 Todo 사이즈 입니다 (1이상, 20이하)",
+        errorCode = "TO04_INVALID_PAGE_SIZE",
+        httpStatusCode = 400,
     ),
 
     // CATEGORY
