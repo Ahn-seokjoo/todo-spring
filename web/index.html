@@ -281,9 +281,9 @@
         <div class="sheet-head"><h2>회원가입</h2></div>
         <div class="sheet-body">
           <form id="signup-form">
-            <label class="field"><span>아이디</span><input id="signup-user-id" name="user_id" autocomplete="username" spellcheck="false" autocapitalize="off" required></label>
-            <label class="field"><span>비밀번호</span><input id="signup-password" name="password" type="password" autocomplete="new-password" required></label>
-            <label class="field"><span>이메일</span><input id="signup-email" name="email" type="email" autocomplete="email" spellcheck="false" required><small>구매 요청과 승인 알림이 이 주소로 갑니다.</small></label>
+            <label class="field"><span>아이디</span><input id="signup-user-id" name="user_id" autocomplete="username" spellcheck="false" autocapitalize="off" required minlength="4" maxlength="30" pattern="[A-Za-z0-9_\-]{4,30}" title="4~30자, 영문·숫자·_·- 만 쓸 수 있어요."><small>4~30자, 영문·숫자·밑줄(_)·하이픈(-)만 쓸 수 있어요.</small></label>
+            <label class="field"><span>비밀번호</span><input id="signup-password" name="password" type="password" autocomplete="new-password" required><small>비워 둘 수 없어요. 다른 사이트에서 쓰는 비밀번호는 피하세요.</small></label>
+            <label class="field"><span>이메일</span><input id="signup-email" name="email" type="email" autocomplete="email" spellcheck="false" required maxlength="255" placeholder="name@example.com"><small>name@example.com 형식, 255자 이하예요. 구매 요청과 승인 알림이 이 주소로 갑니다.</small></label>
             <div><button class="btn btn-secondary" type="submit">가입</button></div>
           </form>
           <div class="result" id="signup-result" role="status" aria-live="polite" hidden></div>
@@ -668,18 +668,39 @@
   }
 
   // ---------- 계정 ----------
+  // 로그인 요청 → 성공하면 토큰과 아이디를 저장하고 상단 표시를 갱신한다 (로그인 폼과 가입 직후 자동 로그인이 같이 씀)
+  async function logIn(userId, password) {
+    const res = await api('POST', '/api/v1/auth/login', { user_id: userId, password });
+    if (res.status === 200) {
+      sessionStorage.setItem('accessToken', res.data.accessToken);
+      sessionStorage.setItem('userId', userId);
+      renderWhoami();
+    }
+    return res;
+  }
+
   $('signup-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const out = $('signup-result');
     const form = new FormData(e.target);
     await busy(e.submitter, '가입 중', async () => {
       try {
+        const userId = form.get('user_id');
+        const password = form.get('password');
         const res = await api('POST', '/api/v1/auth/signup', {
-          user_id: form.get('user_id'),
-          password: form.get('password'),
+          user_id: userId,
+          password,
           email: form.get('email'),
         });
-        showResponse(out, 200, res, '가입이 완료됐습니다. 로그인하세요.');
+        if (res.status !== 200) { showResponse(out, 200, res); return; }
+        // 가입에 성공하면 같은 아이디·비밀번호로 바로 로그인한다
+        const login = await logIn(userId, password);
+        if (login.status === 200) {
+          show(out, true, null, `가입하고 ${userId} 계정으로 로그인했습니다.`, `HTTP ${login.status}`);
+          e.target.reset();
+        } else {
+          show(out, false, null, '가입은 됐지만 자동 로그인에 실패했습니다. 로그인 폼에서 다시 시도하세요.', `HTTP ${login.status}`);
+        }
       } catch (err) { showFetchError(out, err); }
     });
   });
@@ -690,15 +711,9 @@
     const form = new FormData(e.target);
     await busy(e.submitter, '로그인 중', async () => {
       try {
-        const { status, data } = await api('POST', '/api/v1/auth/login', {
-          user_id: form.get('user_id'),
-          password: form.get('password'),
-        });
+        const { status, data } = await logIn(form.get('user_id'), form.get('password'));
         if (status === 200) {
-          sessionStorage.setItem('accessToken', data.accessToken);
-          sessionStorage.setItem('userId', form.get('user_id'));
           show(out, true, null, `${form.get('user_id')} 계정으로 로그인했습니다.`, `HTTP ${status}`);
-          renderWhoami();
         } else {
           showResponse(out, 200, { status, data });
         }
