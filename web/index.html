@@ -281,9 +281,9 @@
         <div class="sheet-head"><h2>회원가입</h2></div>
         <div class="sheet-body">
           <form id="signup-form">
-            <label class="field"><span>아이디</span><input id="signup-user-id" name="user_id" autocomplete="username" spellcheck="false" autocapitalize="off" required></label>
-            <label class="field"><span>비밀번호</span><input id="signup-password" name="password" type="password" autocomplete="new-password" required></label>
-            <label class="field"><span>이메일</span><input id="signup-email" name="email" type="email" autocomplete="email" spellcheck="false" required><small>구매 요청과 승인 알림이 이 주소로 갑니다.</small></label>
+            <label class="field"><span>아이디</span><input id="signup-user-id" name="user_id" autocomplete="username" spellcheck="false" autocapitalize="off" required minlength="4" maxlength="30" pattern="[A-Za-z0-9_\-]{4,30}" title="4~30자, 영문·숫자·_·- 만 쓸 수 있어요."><small>4~30자, 영문·숫자·밑줄(_)·하이픈(-)만 쓸 수 있어요.</small></label>
+            <label class="field"><span>비밀번호</span><input id="signup-password" name="password" type="password" autocomplete="new-password" required><small>비워 둘 수 없어요. 다른 사이트에서 쓰는 비밀번호는 피하세요.</small></label>
+            <label class="field"><span>이메일</span><input id="signup-email" name="email" type="email" autocomplete="email" spellcheck="false" required maxlength="255" placeholder="name@example.com"><small>name@example.com 형식, 255자 이하예요. 구매 요청과 승인 알림이 이 주소로 갑니다.</small></label>
             <div><button class="btn btn-secondary" type="submit">가입</button></div>
           </form>
           <div class="result" id="signup-result" role="status" aria-live="polite" hidden></div>
@@ -435,6 +435,8 @@
   // 페이지(web)와 API(todo)는 출처가 다르다 → 브라우저의 CORS 검사 대상
   const IS_LOCAL = location.hostname === 'localhost';
   const API_BASE = IS_LOCAL ? 'http://localhost:8080' : 'https://todo.pita-pat.com';
+  // 로그인·로그아웃마다 바뀌는 세션 번호. 늦게 도착한 재발급 응답이 다른 계정의 세션을 덮어쓰지 않게 한다
+  let sessionGen = 0;
   const PAGE_SIZE = 5;
   // 매출 API 비교용. 배포할 때 하나만 남기면 전환 버튼이 사라진다 (예: ['daily-stats'])
   const SALES_SOURCES = ['daily-stats'];
@@ -520,11 +522,10 @@
   }
 
   // ---------- 공통 ----------
-  async function api(method, path, body) {
+  // 토큰은 브라우저가 자동으로 붙여주지 않는다 → JS가 직접 헤더에 넣는다
+  async function send(method, path, body, token) {
     const headers = {};
     if (body) headers['Content-Type'] = 'application/json';
-    // 토큰은 브라우저가 자동으로 붙여주지 않는다 → JS가 직접 헤더에 넣는다
-    const token = sessionStorage.getItem('accessToken');
     if (token) headers['Authorization'] = `Bearer ${token}`;
 
     const res = await fetch(API_BASE + path, {
@@ -536,6 +537,67 @@
     let data;
     try { data = JSON.parse(text); } catch { data = text; }
     return { status: res.status, data, headers: res.headers };
+  }
+
+  // 액세스 토큰이 만료돼 401이 오면 리프레시 토큰으로 새 액세스 토큰을 받아 같은 요청을 한 번만 다시 보낸다.
+  // 인증 API(로그인, 가입, 재발급) 자체의 401은 재시도하지 않는다.
+  async function api(method, path, body) {
+    const gen = sessionGen;   // 이 요청을 보낸 시점의 세션
+    const res = await send(method, path, body, sessionStorage.getItem('accessToken'));
+    const isAuthApi = path.startsWith('/api/v1/auth/');
+    if (res.status !== 401 || isAuthApi || !sessionStorage.getItem('refreshToken')) return res;
+
+    const result = await refreshAccessToken();
+    // 재발급을 기다리는 동안 로그아웃하거나 다른 계정으로 로그인했으면 이 요청은 버린다
+    if (result === 'stale' || gen !== sessionGen) return res;
+    if (result === 'expired') {
+      endSession();
+      return { status: 401, data: { message: '로그인이 만료됐습니다. 계정 탭에서 다시 로그인하세요.' }, headers: res.headers };
+    }
+    if (result === 'error') {
+      // 서버 오류나 네트워크 문제는 토큰을 지우지 않는다 (잠시 뒤 다시 시도하면 재발급될 수 있음)
+      return { status: 503, data: { message: '로그인 정보를 갱신하지 못했습니다. 잠시 후 다시 시도하세요.' }, headers: res.headers };
+    }
+    return send(method, path, body, sessionStorage.getItem('accessToken'));
+  }
+
+  // 여러 요청이 동시에 401을 받아도 재발급 요청은 한 번만 보낸다 (진행 중인 재발급을 함께 기다림)
+  // 결과: 'ok' 재발급 성공 / 'expired' 리프레시 토큰도 무효(재로그인 필요) / 'error' 서버·네트워크 문제 / 'stale' 그사이 세션이 바뀜
+  let refreshing = null;
+  function refreshAccessToken() {
+    if (!refreshing) {
+      const gen = sessionGen;
+      refreshing = (async () => {
+        try {
+          // 재발급 API는 리프레시 토큰을 Authorization 헤더로, 사용자 아이디를 본문으로 받는다
+          const res = await send('POST', '/api/v1/auth/refresh',
+            { user_id: sessionStorage.getItem('userId') },
+            sessionStorage.getItem('refreshToken'));
+          if (gen !== sessionGen) return 'stale';
+          if (res.status === 200 && res.data?.accessToken) {
+            sessionStorage.setItem('accessToken', res.data.accessToken);
+            return 'ok';
+          }
+          // 400(토큰 없음·형식 오류), 401(만료·위조·타입 오류)은 재로그인이 필요한 경우
+          return res.status === 400 || res.status === 401 ? 'expired' : 'error';
+        } catch {
+          return gen !== sessionGen ? 'stale' : 'error';
+        } finally {
+          refreshing = null;
+        }
+      })();
+    }
+    return refreshing;
+  }
+
+  // 토큰과 화면을 모두 비운다 (로그아웃 버튼, 리프레시 토큰까지 만료됐을 때)
+  function endSession() {
+    sessionGen += 1;
+    sessionStorage.removeItem('accessToken');
+    sessionStorage.removeItem('refreshToken');
+    sessionStorage.removeItem('userId');
+    clearSessionViews();
+    renderWhoami();
   }
 
   // 요청 중에는 버튼에 "…"를 붙이고 잠근다
@@ -668,18 +730,48 @@
   }
 
   // ---------- 계정 ----------
+  // 로그인 요청 → 성공하면 토큰과 아이디를 저장하고 상단 표시를 갱신한다 (로그인 폼과 가입 직후 자동 로그인이 같이 씀)
+  async function logIn(userId, password) {
+    const res = await api('POST', '/api/v1/auth/login', { user_id: userId, password });
+    if (res.status === 200) {
+      sessionGen += 1;
+      sessionStorage.setItem('accessToken', res.data.accessToken);
+      sessionStorage.setItem('refreshToken', res.data.refreshToken);
+      sessionStorage.setItem('userId', userId);
+      renderWhoami();
+    }
+    return res;
+  }
+
   $('signup-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const out = $('signup-result');
     const form = new FormData(e.target);
     await busy(e.submitter, '가입 중', async () => {
       try {
+        const userId = form.get('user_id');
+        const password = form.get('password');
         const res = await api('POST', '/api/v1/auth/signup', {
-          user_id: form.get('user_id'),
-          password: form.get('password'),
+          user_id: userId,
+          password,
           email: form.get('email'),
         });
-        showResponse(out, 200, res, '가입이 완료됐습니다. 로그인하세요.');
+        if (res.status !== 200) { showResponse(out, 200, res); return; }
+        // 가입에 성공하면 같은 아이디·비밀번호로 바로 로그인한다
+        let login;
+        try {
+          login = await logIn(userId, password);
+        } catch (err) {
+          // 가입은 이미 성공했으므로 "가입 실패"처럼 보이지 않게 따로 안내한다
+          show(out, false, `${err.name}: ${err.message}`, '가입은 됐지만 자동 로그인 중 연결 오류가 났습니다. 로그인 폼에서 다시 시도하세요.');
+          return;
+        }
+        if (login.status === 200) {
+          show(out, true, null, `가입하고 ${userId} 계정으로 로그인했습니다.`, `HTTP ${login.status}`);
+          e.target.reset();
+        } else {
+          show(out, false, null, '가입은 됐지만 자동 로그인에 실패했습니다. 로그인 폼에서 다시 시도하세요.', `HTTP ${login.status}`);
+        }
       } catch (err) { showFetchError(out, err); }
     });
   });
@@ -690,15 +782,9 @@
     const form = new FormData(e.target);
     await busy(e.submitter, '로그인 중', async () => {
       try {
-        const { status, data } = await api('POST', '/api/v1/auth/login', {
-          user_id: form.get('user_id'),
-          password: form.get('password'),
-        });
+        const { status, data } = await logIn(form.get('user_id'), form.get('password'));
         if (status === 200) {
-          sessionStorage.setItem('accessToken', data.accessToken);
-          sessionStorage.setItem('userId', form.get('user_id'));
           show(out, true, null, `${form.get('user_id')} 계정으로 로그인했습니다.`, `HTTP ${status}`);
-          renderWhoami();
         } else {
           showResponse(out, 200, { status, data });
         }
@@ -729,10 +815,7 @@
   }
 
   $('logout-btn').addEventListener('click', () => {
-    sessionStorage.removeItem('accessToken');
-    sessionStorage.removeItem('userId');
-    clearSessionViews();
-    renderWhoami();
+    endSession();
     selectTab('account');
   });
 
