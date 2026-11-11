@@ -520,11 +520,10 @@
   }
 
   // ---------- 공통 ----------
-  async function api(method, path, body) {
+  // 토큰은 브라우저가 자동으로 붙여주지 않는다 → JS가 직접 헤더에 넣는다
+  async function send(method, path, body, token) {
     const headers = {};
     if (body) headers['Content-Type'] = 'application/json';
-    // 토큰은 브라우저가 자동으로 붙여주지 않는다 → JS가 직접 헤더에 넣는다
-    const token = sessionStorage.getItem('accessToken');
     if (token) headers['Authorization'] = `Bearer ${token}`;
 
     const res = await fetch(API_BASE + path, {
@@ -536,6 +535,53 @@
     let data;
     try { data = JSON.parse(text); } catch { data = text; }
     return { status: res.status, data, headers: res.headers };
+  }
+
+  // 액세스 토큰이 만료돼 401이 오면 리프레시 토큰으로 새 액세스 토큰을 받아 같은 요청을 한 번만 다시 보낸다.
+  // 인증 API(로그인, 가입, 재발급) 자체의 401은 재시도하지 않는다.
+  async function api(method, path, body) {
+    const res = await send(method, path, body, sessionStorage.getItem('accessToken'));
+    const isAuthApi = path.startsWith('/api/v1/auth/');
+    if (res.status !== 401 || isAuthApi || !sessionStorage.getItem('refreshToken')) return res;
+
+    const refreshed = await refreshAccessToken();
+    if (!refreshed) {
+      endSession();
+      return { status: 401, data: { message: '로그인이 만료됐습니다. 계정 탭에서 다시 로그인하세요.' }, headers: res.headers };
+    }
+    return send(method, path, body, sessionStorage.getItem('accessToken'));
+  }
+
+  // 여러 요청이 동시에 401을 받아도 재발급 요청은 한 번만 보낸다 (진행 중인 재발급을 함께 기다림)
+  let refreshing = null;
+  function refreshAccessToken() {
+    if (!refreshing) {
+      refreshing = (async () => {
+        try {
+          // 재발급 API는 리프레시 토큰을 Authorization 헤더로, 사용자 아이디를 본문으로 받는다
+          const res = await send('POST', '/api/v1/auth/refresh',
+            { user_id: sessionStorage.getItem('userId') },
+            sessionStorage.getItem('refreshToken'));
+          if (res.status !== 200 || !res.data?.accessToken) return false;
+          sessionStorage.setItem('accessToken', res.data.accessToken);
+          return true;
+        } catch {
+          return false;
+        } finally {
+          refreshing = null;
+        }
+      })();
+    }
+    return refreshing;
+  }
+
+  // 토큰과 화면을 모두 비운다 (로그아웃 버튼, 리프레시 토큰까지 만료됐을 때)
+  function endSession() {
+    sessionStorage.removeItem('accessToken');
+    sessionStorage.removeItem('refreshToken');
+    sessionStorage.removeItem('userId');
+    clearSessionViews();
+    renderWhoami();
   }
 
   // 요청 중에는 버튼에 "…"를 붙이고 잠근다
@@ -673,6 +719,7 @@
     const res = await api('POST', '/api/v1/auth/login', { user_id: userId, password });
     if (res.status === 200) {
       sessionStorage.setItem('accessToken', res.data.accessToken);
+      sessionStorage.setItem('refreshToken', res.data.refreshToken);
       sessionStorage.setItem('userId', userId);
       renderWhoami();
     }
@@ -744,10 +791,7 @@
   }
 
   $('logout-btn').addEventListener('click', () => {
-    sessionStorage.removeItem('accessToken');
-    sessionStorage.removeItem('userId');
-    clearSessionViews();
-    renderWhoami();
+    endSession();
     selectTab('account');
   });
 
