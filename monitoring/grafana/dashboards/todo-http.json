@@ -321,7 +321,7 @@
       "id": 5,
       "title": "5xx 에러율",
       "type": "timeseries",
-      "description": "",
+      "description": "5xx 요청이 없으면 분자를 0으로 보정해 0%로 표시. 요청 자체가 없으면 빈 그래프",
       "gridPos": {
         "h": 8,
         "w": 12,
@@ -367,7 +367,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(rate(http_server_requests_seconds_count{job=\"todo-app\", uri=~\"$uri\", uri!~\"/actuator.*\", status=~\"5..\"}[$__rate_interval])) / sum(rate(http_server_requests_seconds_count{job=\"todo-app\", uri=~\"$uri\", uri!~\"/actuator.*\"}[$__rate_interval]))",
+          "expr": "(sum(rate(http_server_requests_seconds_count{job=\"todo-app\", uri=~\"$uri\", uri!~\"/actuator.*\", status=~\"5..\"}[$__rate_interval])) or vector(0)) / sum(rate(http_server_requests_seconds_count{job=\"todo-app\", uri=~\"$uri\", uri!~\"/actuator.*\"}[$__rate_interval]))",
           "legendFormat": "5xx 비율",
           "range": true,
           "refId": "A"
